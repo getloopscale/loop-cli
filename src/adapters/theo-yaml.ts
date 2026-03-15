@@ -1,3 +1,6 @@
+import * as path from 'path';
+import * as fs from 'fs';
+
 export interface TheoYamlApp {
   path: string;
   framework: string;
@@ -74,9 +77,6 @@ export function parseTheoYaml(raw: string): TheoYaml {
  * Walk up from cwd to gitRoot looking for theo.yaml, parse it, and return the result.
  */
 export function findTheoYaml(cwd: string, gitRoot: string): TheoYamlResult | null {
-  const path = require('path');
-  const fs = require('fs');
-
   let dir = cwd;
   while (true) {
     const candidate = path.join(dir, 'theo.yaml');
