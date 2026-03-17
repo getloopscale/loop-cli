@@ -54,6 +54,50 @@ describe('ConfigStore', () => {
       store.saveToken('ghp_abc', 'user@test.com', 'team1');
       expect(store.getToken()).toBe('ghp_abc');
     });
+
+    it('should prefer THEO_TOKEN env var over config file', () => {
+      store.saveToken('ghp_from_file', 'user@test.com', 'team1');
+      const original = process.env.THEO_TOKEN;
+      try {
+        process.env.THEO_TOKEN = 'ghp_from_env';
+        expect(store.getToken()).toBe('ghp_from_env');
+      } finally {
+        if (original === undefined) {
+          delete process.env.THEO_TOKEN;
+        } else {
+          process.env.THEO_TOKEN = original;
+        }
+      }
+    });
+
+    it('should return THEO_TOKEN when no config file exists', () => {
+      const original = process.env.THEO_TOKEN;
+      try {
+        process.env.THEO_TOKEN = 'ghp_env_only';
+        expect(store.getToken()).toBe('ghp_env_only');
+      } finally {
+        if (original === undefined) {
+          delete process.env.THEO_TOKEN;
+        } else {
+          process.env.THEO_TOKEN = original;
+        }
+      }
+    });
+
+    it('should ignore empty THEO_TOKEN and fall back to config file', () => {
+      store.saveToken('ghp_from_file', 'user@test.com', 'team1');
+      const original = process.env.THEO_TOKEN;
+      try {
+        process.env.THEO_TOKEN = '';
+        expect(store.getToken()).toBe('ghp_from_file');
+      } finally {
+        if (original === undefined) {
+          delete process.env.THEO_TOKEN;
+        } else {
+          process.env.THEO_TOKEN = original;
+        }
+      }
+    });
   });
 
   describe('getEmail', () => {

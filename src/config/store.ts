@@ -48,6 +48,11 @@ export class ConfigStore {
   }
 
   getToken(): string | null {
+    // THEO_TOKEN env var takes precedence over config file (CI/CD support)
+    const envToken = process.env.THEO_TOKEN;
+    if (envToken) {
+      return envToken;
+    }
     return this.getConfig()?.token ?? null;
   }
 
