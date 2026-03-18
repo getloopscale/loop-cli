@@ -6,6 +6,14 @@
  * In CI mode (CI=true), behavior may differ — see individual constant docs.
  */
 
+/** Parse an integer from an environment variable, falling back to defaultValue on missing or invalid input. */
+function envInt(name: string, defaultValue: number): number {
+  const raw = process.env[name];
+  if (!raw) return defaultValue;
+  const parsed = parseInt(raw, 10);
+  return isNaN(parsed) ? defaultValue : parsed;
+}
+
 // --- API Connection ---
 
 /** Default API base URL fallback when THEO_API_URL is not set. */
@@ -16,19 +24,25 @@ export function getDefaultApiUrl(): string {
   return process.env.THEO_API_URL || DEFAULT_API_URL_FALLBACK;
 }
 
+/**
+ * Returns true if no explicit THEO_API_URL was provided,
+ * meaning the CLI is using the dev-only localhost fallback.
+ * Commands can use this to warn users in non-dev contexts.
+ */
+export function isUsingDefaultApiUrl(): boolean {
+  return !process.env.THEO_API_URL;
+}
+
 /** HTTP request timeout for API calls (ms). Override: THEO_API_TIMEOUT */
-export const API_REQUEST_TIMEOUT_MS =
-  parseInt(process.env.THEO_API_TIMEOUT || '30000', 10);
+export const API_REQUEST_TIMEOUT_MS = envInt('THEO_API_TIMEOUT', 30000);
 
 /** HTTP timeout for source bundle upload (ms). Override: THEO_UPLOAD_TIMEOUT */
-export const UPLOAD_TIMEOUT_MS =
-  parseInt(process.env.THEO_UPLOAD_TIMEOUT || '30000', 10);
+export const UPLOAD_TIMEOUT_MS = envInt('THEO_UPLOAD_TIMEOUT', 30000);
 
 // --- OAuth ---
 
 /** Local server port for OAuth callback. Override: THEO_OAUTH_PORT */
-export const OAUTH_CALLBACK_PORT =
-  parseInt(process.env.THEO_OAUTH_PORT || '9876', 10);
+export const OAUTH_CALLBACK_PORT = envInt('THEO_OAUTH_PORT', 9876);
 export const OAUTH_CALLBACK_HOST = 'localhost';
 export const OAUTH_CALLBACK_PATH = '/auth';
 export const OAUTH_CALLBACK_URL =
@@ -48,8 +62,7 @@ export const SSE_MAX_RETRIES = 15;
 // --- Deploy ---
 
 /** Total deploy timeout (ms). Override: THEO_DEPLOY_TIMEOUT */
-export const DEPLOY_TIMEOUT_MS =
-  parseInt(process.env.THEO_DEPLOY_TIMEOUT || String(10 * 60 * 1000), 10);
+export const DEPLOY_TIMEOUT_MS = envInt('THEO_DEPLOY_TIMEOUT', 10 * 60 * 1000);
 
 /** Maximum environment name length (RFC 1123 label). */
 export const MAX_ENVIRONMENT_NAME_LENGTH = 63;
