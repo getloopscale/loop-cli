@@ -9,7 +9,7 @@
  * simulating the ApiClient behavior via THEO_API_URL + fetch mock.
  */
 
-import { ApiClient, ApiError } from '../../../src/api/client';
+import { ApiError } from '../../../src/api/client';
 
 describe('validateToken wiring — network error detection (F-12)', () => {
   /**
