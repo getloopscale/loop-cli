@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2025-2026 The Theo Authors
+
 import { DeployRenderer, DeployRendererOptions, DeployEvent, DeployResult, AppResult } from '../../../src/output/deploy-renderer';
 
 function createRenderer(overrides: Partial<DeployRendererOptions> = {}): DeployRenderer {

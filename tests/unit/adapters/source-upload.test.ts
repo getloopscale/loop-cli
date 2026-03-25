@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2025-2026 The Theo Authors
+
 import { uploadSource } from '../../../src/adapters/source-upload';
 import { ApiError } from '../../../src/api/client';
 import * as fs from 'fs';
