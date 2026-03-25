@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2025-2026 The Theo Authors
+
 import { LogoutCommand, LogoutDeps } from '../../../src/commands/logout';
 
 function createMockDeps(overrides: Partial<LogoutDeps> = {}): LogoutDeps {

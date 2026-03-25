@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2025-2026 The Theo Authors
+
 import { SSEClient, SSEEvent } from '../../../src/api/sse-client';
 
 /**

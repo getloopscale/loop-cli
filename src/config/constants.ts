@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2025-2026 The Theo Authors
+
 /**
  * Centralized constants for the Theo CLI.
  * All magic numbers and configurable defaults live here.
