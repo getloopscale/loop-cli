@@ -1274,6 +1274,48 @@ describe('DeployCommand', () => {
     });
   });
 
+  describe('legacy format warning (M7)', () => {
+    it('should warn when theo.yaml has no version field', async () => {
+      const deps = createMockDeps({
+        findTheoYaml: jest.fn().mockReturnValue({
+          path: '/project/theo.yaml',
+          content: {
+            project: 'my-saas',
+            apps: {
+              api: { path: 'apps/api', framework: 'express', port: 3000 },
+            },
+          },
+        }),
+      });
+      const cmd = new DeployCommand(deps);
+      await cmd.execute({ wait: false });
+
+      const output = (deps.writeTo as jest.Mock).mock.calls.map((c: string[]) => c[0]).join(' ');
+      expect(output).toContain('legacy format');
+      expect(output).toContain('theo init --force');
+    });
+
+    it('should not warn when version: 1 is present', async () => {
+      const deps = createMockDeps({
+        findTheoYaml: jest.fn().mockReturnValue({
+          path: '/project/theo.yaml',
+          content: {
+            version: 1,
+            project: 'my-saas',
+            apps: {
+              api: { path: 'apps/api', framework: 'express', port: 3000 },
+            },
+          },
+        }),
+      });
+      const cmd = new DeployCommand(deps);
+      await cmd.execute({ wait: false });
+
+      const output = (deps.writeTo as jest.Mock).mock.calls.map((c: string[]) => c[0]).join(' ');
+      expect(output).not.toContain('legacy format');
+    });
+  });
+
   describe('--json on error paths (F-02)', () => {
     it('should output JSON when --json and no auth token', async () => {
       const deps = createMockDeps({
