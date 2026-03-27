@@ -57,15 +57,15 @@ export class LogsCommand {
       return this.exitWithError(opts, 'Not authenticated. Run: theo login', 4, 'AUTH_REQUIRED');
     }
 
-    // 2. Find theo.yaml
-    const yamlResult = this.deps.findTheoYaml();
-    if (!yamlResult) {
-      return this.exitWithError(opts, 'No theo.yaml found. Run: theo init', 1, 'MISSING_CONFIG');
-    }
-
-    // 3. Validate build ID
+    // 2. Validate build ID — when --build is provided, theo.yaml is not required
+    // (the build ID is globally unique and sufficient for the API query)
     if (!opts.build) {
-      return this.exitWithError(opts, 'Build ID is required. Usage: theo logs --build <id>', 1, 'MISSING_BUILD_ID');
+      return this.exitWithError(
+        opts,
+        'Build ID is required. Find it in the output of \'theo deploy\' or \'theo deploy --no-wait\'.\nUsage: theo logs --build <id>',
+        1,
+        'MISSING_BUILD_ID',
+      );
     }
 
     // 4. Call API
