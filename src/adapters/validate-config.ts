@@ -3,7 +3,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { TheoYaml, TheoYamlApp, BuildStrategy } from './theo-yaml';
+import type { TheoYaml } from './theo-yaml';
 
 export interface ValidationError {
   field: string;

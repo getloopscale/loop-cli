@@ -8,7 +8,7 @@ import {
   MAX_ENVIRONMENT_NAME_LENGTH,
   MAX_BUNDLE_SIZE_BYTES,
 } from '../config/constants';
-import { TheoYaml, TheoYamlResult } from '../adapters/theo-yaml';
+import type { TheoYamlResult } from '../adapters/theo-yaml';
 import { normalizeApps } from '../adapters/app-unit';
 import * as fs from 'fs';
 import * as path from 'path';
