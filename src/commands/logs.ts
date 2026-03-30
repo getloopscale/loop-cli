@@ -2,6 +2,7 @@
 // Copyright 2025-2026 The Theo Authors
 
 import { ApiError } from '../api/client';
+import type { TheoYamlResult } from '../adapters/theo-yaml';
 
 interface LogEntry {
   step: string;
@@ -17,17 +18,6 @@ interface LogsApiResponse {
   total_lines: number;
 }
 
-interface TheoYaml {
-  project: string;
-  apps: Record<string, unknown>;
-}
-
-interface TheoYamlResult {
-  path: string;
-  content: TheoYaml;
-  parseError?: string;
-}
-
 export interface LogsDeps {
   getToken: () => string | null;
   findTheoYaml: () => TheoYamlResult | null;
@@ -40,7 +30,6 @@ export interface LogsOptions {
   build?: string;
   tail?: number;
   step?: string;
-  follow?: boolean;
   json?: boolean;
 }
 
@@ -122,8 +111,8 @@ export class LogsCommand {
       return this.exitWithError(opts, err.message, err.exitCode, err.code);
     }
     if (err instanceof Error) {
-      return this.exitWithError(opts, `Unexpected error: ${err.message}`, 1, 'UNEXPECTED_ERROR');
+      return this.exitWithError(opts, `Unexpected error: ${err.message}`, 3, 'UNEXPECTED_ERROR');
     }
-    return this.exitWithError(opts, 'Unexpected error. Try again later.', 1, 'UNEXPECTED_ERROR');
+    return this.exitWithError(opts, 'Unexpected error. Try again later.', 3, 'UNEXPECTED_ERROR');
   }
 }

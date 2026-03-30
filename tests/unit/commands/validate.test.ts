@@ -14,7 +14,6 @@ function createDeps(yamlResult: ReturnType<ValidateDeps['findTheoYaml']>): Valid
   const output: string[] = [];
   const errors: string[] = [];
   return {
-    getToken: () => 'test-token',
     findTheoYaml: () => yamlResult,
     writeTo: (msg: string) => output.push(msg),
     writeError: (msg: string) => errors.push(msg),

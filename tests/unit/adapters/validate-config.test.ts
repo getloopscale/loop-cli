@@ -71,7 +71,7 @@ describe('validateConfig', () => {
     const config: TheoYaml = {
       project: 'test',
       apps: {
-        web: { path: 'web', framework: 'nextjs', type: 'frontend', port: null },
+        web: { path: 'web', framework: 'nextjs', type: 'frontend', port: null, render: 'static' },
       },
     };
     const { errors } = validateConfig(config, dir);
