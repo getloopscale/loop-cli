@@ -52,8 +52,10 @@ export class LoginCommand {
       } else {
         return this.exitWithError(
           opts,
-          'Authentication failed. Your token may be expired or revoked.\n' +
-          'Generate a new token at your account settings and run: theo login --token <new-token>',
+          'Authentication failed. Your token may be expired, revoked, or missing required scopes.\n' +
+          'Theo requires a GitHub token with read:user scope (Classic PAT) or a GitHub OAuth token.\n' +
+          'Create a Classic PAT at: https://github.com/settings/tokens/new?scopes=read:user\n' +
+          'Then run: theo login --token <new-token>',
           4,
           'AUTH_FAILED'
         );
