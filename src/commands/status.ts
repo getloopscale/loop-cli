@@ -2,25 +2,7 @@
 // Copyright 2025-2026 The Theo Authors
 
 import { ApiError } from '../api/client';
-
-interface TheoYamlApp {
-  path: string;
-  framework: string;
-  type?: string;
-  port: number | null;
-  secrets?: string[];
-}
-
-interface TheoYaml {
-  project: string;
-  apps: Record<string, TheoYamlApp>;
-}
-
-interface TheoYamlResult {
-  path: string;
-  content: TheoYaml;
-  parseError?: string;
-}
+import type { TheoYamlResult } from '../adapters/theo-yaml';
 
 interface StatusApiResponse {
   environment: string;
