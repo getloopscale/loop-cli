@@ -107,15 +107,20 @@ describe('ApiClient', () => {
       }
     });
 
-    it('should fallback to localhost:13001 when no env var', () => {
+    it('should fallback to localhost:8080 when no env var', () => {
       const original = process.env.THEO_API_URL;
+      const originalUrl = process.env.THEO_URL;
       delete process.env.THEO_API_URL;
+      delete process.env.THEO_URL;
 
       const client = new ApiClient({ fetchFn: fakeFetch(200) });
-      expect((client as unknown as { baseURL: string }).baseURL).toBe('http://localhost:13001');
+      expect((client as unknown as { baseURL: string }).baseURL).toBe('http://localhost:8080');
 
       if (original !== undefined) {
         process.env.THEO_API_URL = original;
+      }
+      if (originalUrl !== undefined) {
+        process.env.THEO_URL = originalUrl;
       }
     });
   });
