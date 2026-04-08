@@ -20,28 +20,33 @@ function envInt(name: string, defaultValue: number): number {
 // --- API Connection ---
 
 /**
- * Default API base URL fallback when THEO_API_URL is not set.
- * Port 13001 matches the k3d mgmt cluster NodePort mapping (host:13001 → NodePort:30001).
- * For production, set THEO_API_URL to the real API endpoint.
+ * MEET-040: Single URL for all CLI operations.
+ * Traefik routes /v1/auth/* → cloud service, /* → engine API.
+ *
+ * Priority: THEO_URL > THEO_API_URL (deprecated) > fallback.
+ * Local dev: port 8080 matches the Traefik-less direct API server.
+ * Production: set THEO_URL=https://api.dev.usetheo.dev
  */
-export const DEFAULT_API_URL_FALLBACK = 'http://localhost:13001';
+export const DEFAULT_API_URL_FALLBACK = 'http://localhost:8080';
 
-/** Returns the API base URL, checking THEO_API_URL at call time. Validates scheme. */
+/** Returns the unified API URL. Checks THEO_URL first, then legacy THEO_API_URL. */
 export function getDefaultApiUrl(): string {
-  const url = process.env.THEO_API_URL || DEFAULT_API_URL_FALLBACK;
+  const url = process.env.THEO_URL || process.env.THEO_API_URL || DEFAULT_API_URL_FALLBACK;
+  if (process.env.THEO_API_URL && !process.env.THEO_URL) {
+    // Legacy env var — accepted but deprecated
+  }
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
-    throw new Error(`Invalid THEO_API_URL: must start with http:// or https://. Got: ${url}`);
+    throw new Error(`Invalid THEO_URL: must start with http:// or https://. Got: ${url}`);
   }
   return url;
 }
 
 /**
- * Returns true if no explicit THEO_API_URL was provided,
+ * Returns true if no explicit URL was provided,
  * meaning the CLI is using the dev-only localhost fallback.
- * Commands can use this to warn users in non-dev contexts.
  */
 export function isUsingDefaultApiUrl(): boolean {
-  return !process.env.THEO_API_URL;
+  return !process.env.THEO_URL && !process.env.THEO_API_URL;
 }
 
 /** HTTP request timeout for API calls (ms). Override: THEO_API_TIMEOUT */
@@ -52,16 +57,21 @@ export const UPLOAD_TIMEOUT_MS = envInt('THEO_UPLOAD_TIMEOUT', 120000);
 
 // --- Cloud Service ---
 
-/** Default cloud service URL. Override: THEO_CLOUD_URL */
-export const DEFAULT_CLOUD_URL_FALLBACK = 'http://localhost:13002';
-
-/** Returns the cloud service URL for auth/device flow. */
+/**
+ * MEET-040: getCloudUrl returns the same base URL as getDefaultApiUrl.
+ * Traefik routes /v1/auth/* to cloud service. No separate URL needed.
+ * Legacy THEO_CLOUD_URL accepted for backward compatibility.
+ */
 export function getCloudUrl(): string {
-  const url = process.env.THEO_CLOUD_URL || DEFAULT_CLOUD_URL_FALLBACK;
-  if (!url.startsWith('http://') && !url.startsWith('https://')) {
-    throw new Error(`Invalid THEO_CLOUD_URL: must start with http:// or https://. Got: ${url}`);
+  if (process.env.THEO_CLOUD_URL) {
+    const url = process.env.THEO_CLOUD_URL;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      throw new Error(`Invalid THEO_CLOUD_URL: must start with http:// or https://. Got: ${url}`);
+    }
+    return url;
   }
-  return url;
+  // Default: same as API URL (Traefik handles routing)
+  return getDefaultApiUrl();
 }
 
 // --- OAuth ---
