@@ -1,9 +1,16 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2025-2026 The Theo Authors
+
 describe('CLI config/constants', () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
     jest.resetModules();
     process.env = { ...originalEnv };
+    // Clear all URL env vars for clean test state
+    delete process.env.THEO_URL;
+    delete process.env.THEO_API_URL;
+    delete process.env.THEO_CLOUD_URL;
   });
 
   afterEach(() => {
@@ -35,34 +42,70 @@ describe('CLI config/constants', () => {
     });
   });
 
-  describe('getDefaultApiUrl', () => {
-    it('should return env var when THEO_API_URL is set', () => {
+  describe('getDefaultApiUrl (MEET-040: unified THEO_URL)', () => {
+    it('should return THEO_URL when set', () => {
+      process.env.THEO_URL = 'https://api.usetheo.dev';
+      const constants = loadConstants();
+      expect(constants.getDefaultApiUrl()).toBe('https://api.usetheo.dev');
+    });
+
+    it('should return THEO_API_URL as legacy fallback', () => {
       process.env.THEO_API_URL = 'https://api.usetheo.dev';
       const constants = loadConstants();
       expect(constants.getDefaultApiUrl()).toBe('https://api.usetheo.dev');
     });
 
-    it('should return fallback when THEO_API_URL is empty', () => {
-      delete process.env.THEO_API_URL;
+    it('should prefer THEO_URL over THEO_API_URL', () => {
+      process.env.THEO_URL = 'https://new.usetheo.dev';
+      process.env.THEO_API_URL = 'https://old.usetheo.dev';
       const constants = loadConstants();
-      expect(constants.getDefaultApiUrl()).toBe('http://localhost:13001');
+      expect(constants.getDefaultApiUrl()).toBe('https://new.usetheo.dev');
     });
 
-    it('should return fallback when THEO_API_URL is empty string', () => {
-      process.env.THEO_API_URL = '';
+    it('should return fallback when no URL env vars set', () => {
       const constants = loadConstants();
-      expect(constants.getDefaultApiUrl()).toBe('http://localhost:13001');
+      expect(constants.getDefaultApiUrl()).toBe('http://localhost:8080');
+    });
+
+    it('should return fallback when THEO_URL is empty string', () => {
+      process.env.THEO_URL = '';
+      const constants = loadConstants();
+      expect(constants.getDefaultApiUrl()).toBe('http://localhost:8080');
+    });
+  });
+
+  describe('getCloudUrl (MEET-040: defaults to same as API URL)', () => {
+    it('should return THEO_CLOUD_URL when set (legacy)', () => {
+      process.env.THEO_CLOUD_URL = 'https://cloud.usetheo.dev';
+      const constants = loadConstants();
+      expect(constants.getCloudUrl()).toBe('https://cloud.usetheo.dev');
+    });
+
+    it('should return same as getDefaultApiUrl when THEO_CLOUD_URL not set', () => {
+      process.env.THEO_URL = 'https://api.usetheo.dev';
+      const constants = loadConstants();
+      expect(constants.getCloudUrl()).toBe('https://api.usetheo.dev');
+    });
+
+    it('should return fallback when no URL env vars set', () => {
+      const constants = loadConstants();
+      expect(constants.getCloudUrl()).toBe('http://localhost:8080');
     });
   });
 
   describe('isUsingDefaultApiUrl', () => {
-    it('should return true when THEO_API_URL is not set', () => {
-      delete process.env.THEO_API_URL;
+    it('should return true when no URL env vars set', () => {
       const constants = loadConstants();
       expect(constants.isUsingDefaultApiUrl()).toBe(true);
     });
 
-    it('should return false when THEO_API_URL is set', () => {
+    it('should return false when THEO_URL is set', () => {
+      process.env.THEO_URL = 'https://api.usetheo.dev';
+      const constants = loadConstants();
+      expect(constants.isUsingDefaultApiUrl()).toBe(false);
+    });
+
+    it('should return false when THEO_API_URL is set (legacy)', () => {
       process.env.THEO_API_URL = 'https://api.usetheo.dev';
       const constants = loadConstants();
       expect(constants.isUsingDefaultApiUrl()).toBe(false);
@@ -70,9 +113,9 @@ describe('CLI config/constants', () => {
   });
 
   describe('DEFAULT_API_URL_FALLBACK', () => {
-    it('should be localhost:13001', () => {
+    it('should be localhost:8080', () => {
       const constants = loadConstants();
-      expect(constants.DEFAULT_API_URL_FALLBACK).toBe('http://localhost:13001');
+      expect(constants.DEFAULT_API_URL_FALLBACK).toBe('http://localhost:8080');
     });
   });
 
