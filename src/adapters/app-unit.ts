@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2025-2026 The Theo Authors
 
-import type { TheoYamlApp, TheoYamlAutoscaling, BuildStrategy } from './theo-yaml';
+import type { TheoYamlApp, BuildStrategy } from './theo-yaml';
 
 /**
  * AppUnit is a fully resolved app — all fields required, ready for build plan generation.
