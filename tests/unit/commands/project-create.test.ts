@@ -13,7 +13,7 @@ describe('ProjectCreateCommand', () => {
       createProject: async (name: string) => ({
         id: 'p-1',
         name,
-        team_id: 'tn-usetheo',
+        team: 'tn-usetheo',
         created_at: '2026-03-01T00:00:00Z',
       }),
       writeTo: (msg: string) => output.push(msg),
@@ -162,7 +162,7 @@ describe('ProjectCreateCommand', () => {
       const parsed = JSON.parse(output[0]);
       expect(parsed.name).toBe('my-new-api');
       expect(parsed.status).toBe('created');
-      expect(parsed.team_id).toBe('tn-usetheo');
+      expect(parsed.team).toBe('tn-usetheo');
     });
 
     it('outputs JSON on 409 with status already_exists', async () => {
