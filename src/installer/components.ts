@@ -9,7 +9,7 @@ import { installOrUpgrade, uninstall, test as helmTest, releaseExists } from './
  * OCI registry for Theo Helm charts.
  */
 const CHART_REGISTRY = 'oci://registry.digitalocean.com/theo-system/helm';
-const CHART_VERSION = '0.1.4';
+const CHART_VERSION = '0.2.0';
 const IMAGE_PULL_SECRET_NAME = 'theo-system-pull';
 
 /**
