@@ -166,6 +166,11 @@ function buildPlatformValues(
     'theo-api.secrets.minioAccessKey': tokens.minioAccessKey,
     'theo-api.secrets.minioSecretKey': tokens.minioSecretKey,
     'theo-api.secrets.argoCallbackSecret': tokens.argoCallbackSecret,
+    // CHG-2026-04-25-E2E (Gap 2): bootstrap + service-auth secrets that the
+    // chart now templates. Without bootstrapSecret, POST /internal/bootstrap
+    // returns 401 and the install can't seed the first admin user.
+    'theo-api.secrets.bootstrapSecret': tokens.bootstrapSecret,
+    'theo-api.secrets.serviceAuthSecret': tokens.serviceAuthSecret,
 
     // ── theo-controller ───────────────────────────────────────────────────
     'theo-controller.config.baseDomain': config.domain,
