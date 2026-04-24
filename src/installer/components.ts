@@ -3,6 +3,7 @@
 
 import { execSync } from 'child_process';
 import { PlatformConfig, PlatformStatus, ComponentStatus } from './types';
+import { BootstrapTokens } from './bootstrap';
 import { installOrUpgrade, uninstall, test as helmTest, releaseExists } from './helm';
 
 /**
@@ -97,41 +98,96 @@ export function installCRDs(log: (msg: string) => void): void {
 }
 
 /**
- * Build Helm values for the platform chart based on customer config.
+ * Build Helm values for the platform chart based on customer config + bootstrap tokens.
+ *
+ * This is the central function that wires all runtime configuration.
+ * Every token, credential, and URL needed by every component is set here.
  */
-function buildPlatformValues(config: PlatformConfig): Record<string, unknown> {
+function buildPlatformValues(
+  config: PlatformConfig,
+  tokens: BootstrapTokens,
+): Record<string, unknown> {
   const values: Record<string, unknown> = {
+    // ── Global ────────────────────────────────────────────────────────────
     'global.registry': 'registry.digitalocean.com/theo-system',
     'global.imagePullSecrets[0].name': IMAGE_PULL_SECRET_NAME,
+
     // CRDs installed separately — disable in umbrella
     'theo-crds.enabled': 'false',
-    // Disable components that need external CRDs (Argo Workflows, Prometheus Operator, VAP)
+
+    // Disable components that need external CRDs not yet available
     'theo-monitoring.enabled': 'false',
     'theo-admission-policies.enabled': 'false',
-    'theo-build-cwts.enabled': 'false',
+
+    // ── theo-api ──────────────────────────────────────────────────────────
+    'theo-api.config.baseDomain': config.domain,
+    'theo-api.config.giteaUrl': 'http://gitea-http.gitea.svc.cluster.local:3000',
+    'theo-api.config.argocdUrl': 'http://argocd-server.argocd.svc.cluster.local:80',
+    'theo-api.config.minioEndpoint': 'minio.theo-system.svc.cluster.local:9000',
+    'theo-api.config.registryUrl': config.registry.endpoint,
+    'theo-api.config.jwksUrl': 'http://ory-hydra-public.ory.svc.cluster.local:4444/.well-known/jwks.json',
+    'theo-api.config.jwtIssuer': 'http://ory-hydra-public.ory.svc.cluster.local:4444/',
+    'theo-api.config.argoNamespace': 'argo',
+    'theo-api.config.argocdNamespace': 'argocd',
+
+    // API secrets (Helm creates the K8s Secret with these values)
+    'theo-api.secrets.databaseUrl': config.database.url || 'postgres://theo:theo@postgresql.theo-system.svc:5432/theo?sslmode=disable',
+    'theo-api.secrets.giteaToken': tokens.giteaToken,
+    'theo-api.secrets.argocdToken': tokens.argocdPassword,
+    'theo-api.secrets.minioAccessKey': tokens.minioAccessKey,
+    'theo-api.secrets.minioSecretKey': tokens.minioSecretKey,
+    'theo-api.secrets.argoCallbackSecret': tokens.argoCallbackSecret,
+
+    // ── theo-controller ───────────────────────────────────────────────────
+    'theo-controller.config.baseDomain': config.domain,
+    'theo-controller.config.giteaUrl': 'http://gitea-http.gitea.svc.cluster.local:3000',
+    'theo-controller.config.argocdUrl': 'http://argocd-server.argocd.svc.cluster.local:80',
+    'theo-controller.config.minioEndpoint': 'minio.theo-system.svc.cluster.local:9000',
+    'theo-controller.config.registryUrl': config.registry.endpoint,
+    'theo-controller.config.argoNamespace': 'argo',
+    'theo-controller.config.argocdNamespace': 'argocd',
+    'theo-controller.secrets.databaseUrl': config.database.url || 'postgres://theo:theo@postgresql.theo-system.svc:5432/theo?sslmode=disable',
+    'theo-controller.secrets.giteaToken': tokens.giteaToken,
+    'theo-controller.secrets.argocdToken': tokens.argocdPassword,
+    'theo-controller.secrets.minioAccessKey': tokens.minioAccessKey,
+    'theo-controller.secrets.minioSecretKey': tokens.minioSecretKey,
+
+    // ── theo-tenant-controller ────────────────────────────────────────────
+    'theo-tenant-controller.config.giteaUrl': 'http://gitea-http.gitea.svc.cluster.local:3000',
+    'theo-tenant-controller.config.baseDomain': config.domain,
+    'theo-tenant-controller.config.argocdNamespace': 'argocd',
+    'theo-tenant-controller.secrets.giteaToken': tokens.giteaToken,
+
+    // ── theo-build-cwts ───────────────────────────────────────────────────
+    // CWT templates reference theo-minio-credentials secret directly
+    // (created separately by createMinioCredentialsSecret)
+    'theo-build-cwts.minio.insecure': 'true',
+
+    // ── Network policies ──────────────────────────────────────────────────
+    // Disable for initial install — cross-namespace egress requires known endpoints.
+    // Can be enabled after all services are up via `theo platform upgrade`.
+    'theo-api.networkPolicy.enabled': 'false',
+    'theo-controller.networkPolicy.enabled': 'false',
+    'theo-tenant-controller.networkPolicy.enabled': 'false',
   };
 
-  // API config
-  values['theo-api.config.baseDomain'] = config.domain;
-  values['theo-api.config.giteaUrl'] = `http://gitea-http.gitea.svc.cluster.local:3000`;
-  values['theo-api.config.argocdUrl'] = `http://argocd-server.argocd.svc.cluster.local:80`;
-  values['theo-api.config.minioEndpoint'] = `minio.theo-system.svc.cluster.local:9000`;
-  values['theo-api.config.registryUrl'] = config.registry.endpoint;
-
-  // Database
-  if (config.database.external && config.database.url) {
-    values['theo-api.secrets.databaseUrl'] = config.database.url;
-    values['theo-controller.secrets.databaseUrl'] = config.database.url;
+  // ── Kubeconfig (single-cluster mode) ──────────────────────────────────
+  if (!config.clusters || config.clusters.mode === 'single') {
+    values['theo-api.kubeconfig.build.existingConfigMap'] = 'theo-build-kubeconfig';
+    values['theo-api.kubeconfig.runtime.existingConfigMap'] = 'theo-runtime-kubeconfig';
+    values['theo-controller.kubeconfig.build.existingConfigMap'] = 'theo-build-kubeconfig';
+    values['theo-tenant-controller.kubeconfig.build.existingConfigMap'] = 'theo-build-kubeconfig';
+    values['theo-tenant-controller.kubeconfig.runtime.existingConfigMap'] = 'theo-runtime-kubeconfig';
   }
 
-  // Profile-based sizing
+  // ── Profile-based sizing ──────────────────────────────────────────────
   if (config.profile === 'production') {
     values['theo-api.replicaCount'] = '2';
     values['theo-cloud.replicaCount'] = '2';
     values['theo-dashboard.replicaCount'] = '2';
     values['theo-api.networkPolicy.enabled'] = 'true';
-    values['theo-cloud.networkPolicy.enabled'] = 'true';
-    values['theo-dashboard.networkPolicy.enabled'] = 'true';
+    values['theo-controller.networkPolicy.enabled'] = 'true';
+    values['theo-tenant-controller.networkPolicy.enabled'] = 'true';
   }
 
   return values;
@@ -140,8 +196,12 @@ function buildPlatformValues(config: PlatformConfig): Record<string, unknown> {
 /**
  * Install Theo platform components via umbrella chart.
  */
-export function installPlatform(config: PlatformConfig, log: (msg: string) => void): void {
-  const values = buildPlatformValues(config);
+export function installPlatform(
+  config: PlatformConfig,
+  tokens: BootstrapTokens,
+  log: (msg: string) => void,
+): void {
+  const values = buildPlatformValues(config, tokens);
 
   log('  Installing Theo platform...');
   installOrUpgrade({
@@ -160,8 +220,13 @@ export function installPlatform(config: PlatformConfig, log: (msg: string) => vo
 /**
  * Upgrade Theo platform to a new version.
  */
-export function upgradePlatform(version: string, config: PlatformConfig, log: (msg: string) => void): void {
-  const values = buildPlatformValues(config);
+export function upgradePlatform(
+  version: string,
+  config: PlatformConfig,
+  tokens: BootstrapTokens,
+  log: (msg: string) => void,
+): void {
+  const values = buildPlatformValues(config, tokens);
 
   log(`  Upgrading to v${version}...`);
 
@@ -215,9 +280,10 @@ export function validateInstallation(log: (msg: string) => void): boolean {
 /**
  * Wait for all pods in theo-system to be Ready.
  */
-export function waitForPods(log: (msg: string) => void, timeoutSec = 120): boolean {
+export function waitForPods(log: (msg: string) => void, timeoutSec = 180): boolean {
   log('  Waiting for pods...');
-  const deadline = Date.now() + timeoutSec * 1000;
+  const start = Date.now();
+  const deadline = start + timeoutSec * 1000;
 
   while (Date.now() < deadline) {
     try {
@@ -228,13 +294,27 @@ export function waitForPods(log: (msg: string) => void, timeoutSec = 120): boole
       const statuses = output.split(' ').filter(Boolean);
       const allReady = statuses.length > 0 && statuses.every((s) => s === 'True');
       if (allReady) {
-        log(`  ✓ All ${statuses.length} pods Ready (${Math.round((Date.now() - (deadline - timeoutSec * 1000)) / 1000)}s)`);
+        const elapsed = Math.round((Date.now() - start) / 1000);
+        log(`  ✓ All ${statuses.length} pods Ready (${elapsed}s)`);
         return true;
       }
     } catch {
       // kubectl may fail transiently
     }
-    execSync('sleep 3');
+    execSync('sleep 5');
+  }
+
+  // Show which pods aren't ready for debugging
+  try {
+    const notReady = execSync(
+      `kubectl get pods -n theo-system --field-selector=status.phase!=Running --no-headers 2>/dev/null || true`,
+      { encoding: 'utf-8', timeout: 5_000 },
+    ).trim();
+    if (notReady) {
+      log(`  Pods not ready:\n${notReady}`);
+    }
+  } catch {
+    // ignore
   }
 
   log('  ✗ Timeout waiting for pods');
