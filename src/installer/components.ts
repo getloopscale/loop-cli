@@ -146,6 +146,11 @@ function buildPlatformValues(
     'theo-controller.config.registryUrl': config.registry.endpoint,
     'theo-controller.config.argoNamespace': 'argo',
     'theo-controller.config.argocdNamespace': 'argocd',
+    // THEO_CLUSTER_ISSUER: cert-manager ClusterIssuer for TLS. Customer can
+    // override via config.clusterIssuer; default production "letsencrypt-prod"
+    // assumes cert-manager is wired to Let's Encrypt. For self-signed or
+    // internal-only installs, customer should point to a custom issuer.
+    'theo-controller.config.clusterIssuer': config.clusterIssuer || 'letsencrypt-prod',
     'theo-controller.secrets.databaseUrl': config.database.url || 'postgres://theo:theo@postgresql.theo-system.svc:5432/theo?sslmode=disable',
     'theo-controller.secrets.giteaToken': tokens.giteaToken,
     'theo-controller.secrets.argocdToken': tokens.argocdPassword,
