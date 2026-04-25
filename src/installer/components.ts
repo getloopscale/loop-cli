@@ -14,6 +14,21 @@ const CHART_VERSION = '0.2.0';
 const IMAGE_PULL_SECRET_NAME = 'theo-system-pull';
 
 /**
+ * For E2E smoke testing of in-flight chart changes that haven't been
+ * published yet, set THEO_LOCAL_CHARTS=/path/to/theo/charts. The installer
+ * will resolve theo-platform / theo-crds from that path instead of pulling
+ * from OCI. This is ONLY for development; production installs always use
+ * OCI for reproducibility.
+ */
+function chartRef(name: string): { chart: string; version?: string } {
+  const localPath = process.env.THEO_LOCAL_CHARTS;
+  if (localPath) {
+    return { chart: `${localPath}/${name}` };
+  }
+  return { chart: `${CHART_REGISTRY}/${name}`, version: CHART_VERSION };
+}
+
+/**
  * Ensure DOCR imagePullSecret exists in the target namespace.
  * Uses doctl to generate a docker config, or falls back to existing docker config.
  */
@@ -76,10 +91,11 @@ export function ensureImagePullSecret(namespace: string, log: (msg: string) => v
  */
 export function installCRDs(log: (msg: string) => void): void {
   log('  Installing CRDs...');
+  const { chart, version } = chartRef('theo-crds');
   installOrUpgrade({
     name: 'theo-crds',
-    chart: `${CHART_REGISTRY}/theo-crds`,
-    version: CHART_VERSION,
+    chart,
+    version: version || '',
     namespace: 'theo-system',
     createNamespace: true,
     wait: true,
@@ -261,17 +277,24 @@ export function installPlatform(
   const values = buildPlatformValues(config, tokens);
 
   log('  Installing Theo platform...');
+  const platformRef = chartRef('theo-platform');
+  // CHG-2026-04-25-E2E: don't `--wait` for pods here. The Helm release
+  // applies manifests in seconds; pod readiness then takes 60-120s for
+  // leader election + DB connection pools to converge. Step 9 is the
+  // dedicated wait-for-pods step (uses `kubectl wait` with longer timeout
+  // and per-pod diagnostics on failure). Keeping --wait here just doubles
+  // the time and makes failures less debuggable.
   installOrUpgrade({
     name: 'theo',
-    chart: `${CHART_REGISTRY}/theo-platform`,
-    version: CHART_VERSION,
+    chart: platformRef.chart,
+    version: platformRef.version || '',
     namespace: 'theo-system',
     createNamespace: true,
     values,
-    wait: true,
-    timeout: '5m',
+    wait: false,
+    timeout: '2m',
   });
-  log('  ✓ Theo platform installed');
+  log('  ✓ Theo platform manifests applied (pod readiness awaited in Step 9)');
 }
 
 /**
