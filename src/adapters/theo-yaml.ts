@@ -12,9 +12,10 @@ import YAML from 'js-yaml';
 export type BuildStrategy = 'dockerfile' | 'buildpack' | 'custom';
 
 export interface TheoYamlAutoscaling {
-  min?: number;           // minimum replicas (default: 1)
+  min?: number;           // minimum replicas (default: 1, 0 = scale-to-zero via KEDA)
   max?: number;           // maximum replicas (default: 3)
   targetCPU?: number;     // target CPU utilization % (default: 80)
+  cooldown?: number;      // seconds before scale-to-zero (default: 300, only when min = 0)
 }
 
 export interface TheoYamlApp {
@@ -122,11 +123,13 @@ export function parseTheoYaml(raw: string): TheoYaml {
         const min = coerce(asCfg.min);
         const max = coerce(asCfg.max);
         const targetCPU = coerce(asCfg.targetCPU);
+        const cooldown = coerce(asCfg.cooldown);
 
         autoscaling = {
           ...(min !== undefined ? { min } : {}),
           ...(max !== undefined ? { max } : {}),
           ...(targetCPU !== undefined ? { targetCPU } : {}),
+          ...(cooldown !== undefined ? { cooldown } : {}),
         };
       }
 
