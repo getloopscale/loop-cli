@@ -176,8 +176,8 @@ export class ScaleCommand {
       }
     }
     this.deps.writeTo('');
-    this.deps.writeTo('Scaling applied. Changes will take effect on the next deploy.');
-    this.deps.writeTo('Run `theo deploy` to apply immediately.');
+    this.deps.writeTo('Scaling configuration acknowledged. Changes take effect on the next deploy.');
+    this.deps.writeTo('Update autoscaling in theo.yaml, then run `theo deploy`.');
 
     return 0;
   }
