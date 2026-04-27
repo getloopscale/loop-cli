@@ -298,6 +298,14 @@ export class InitCommand {
     // Call API
     let projectId: string | undefined;
     let warning: string | undefined;
+    // CHG-2026-04-23-AUDIT-36: exit 5 (partial failure per Rule 4)
+    // when createProject returns a confirmed-bad status (4xx ≠ 409).
+    // theo.yaml is still generated so the operator can inspect/edit
+    // before retrying, but the exit code tells `theo init && theo
+    // deploy` scripts to stop. 409 is idempotent (project already
+    // exists) → exit 0. ECONNREFUSED and 5xx are transient → exit 0
+    // (deploy retry will likely succeed or fail for same reason).
+    let partialFailure = false;
 
     try {
       const result = await this.deps.createProject({ name: projectName, apps });
@@ -307,6 +315,7 @@ export class InitCommand {
         warning = 'Project already registered.';
       } else if (err instanceof ApiError && err.statusCode >= 400 && err.statusCode < 500) {
         warning = err.message;
+        partialFailure = true;
         if (!opts.json) {
           this.deps.writeError(warning);
         }
@@ -339,10 +348,17 @@ export class InitCommand {
       this.deps.writeTo(JSON.stringify(jsonOutput));
     } else {
       this.deps.writeTo(`\nGenerated theo.yaml with ${apps.length} app${apps.length > 1 ? 's' : ''}.`);
-      this.deps.writeTo('Review and edit if needed, then run: theo deploy');
+      if (partialFailure) {
+        // CHG-2026-04-23-AUDIT-36: tell operator the backend rejected
+        // the project. theo.yaml remains for inspection; deploy will
+        // fail until the cause is addressed (plan limit, validation).
+        this.deps.writeTo('Review theo.yaml. Address the error above before `theo deploy`.');
+      } else {
+        this.deps.writeTo('Review and edit if needed, then run: theo deploy');
+      }
     }
 
-    return 0;
+    return partialFailure ? 5 : 0;
   }
 
   /**

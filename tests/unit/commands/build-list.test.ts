@@ -230,6 +230,37 @@ describe('BuildListCommand', () => {
     });
   });
 
+  // CHG-2026-04-23-AUDIT-24: same rationale as team-list / project-list.
+  describe('API unreachable (AUDIT-24)', () => {
+    it('network error produces API_UNREACHABLE code + Check THEO_URL hint', async () => {
+      const deps = createMockDeps({
+        listBuilds: jest.fn().mockRejectedValue(new Error('fetch failed')),
+      });
+      const cmd = new BuildListCommand(deps);
+
+      const exitCode = await cmd.execute({ json: true });
+
+      expect(exitCode).toBe(1);
+      const parsed = JSON.parse((deps.writeTo as jest.Mock).mock.calls[0][0]);
+      expect(parsed.code).toBe('API_UNREACHABLE');
+      expect(parsed.error).toContain('Cannot reach API');
+      expect(parsed.error).toContain('Check THEO_URL');
+    });
+
+    it('non-network Error keeps UNEXPECTED_ERROR code', async () => {
+      const deps = createMockDeps({
+        listBuilds: jest.fn().mockRejectedValue(new Error('random logic error')),
+      });
+      const cmd = new BuildListCommand(deps);
+
+      const exitCode = await cmd.execute({ json: true });
+
+      expect(exitCode).toBe(1);
+      const parsed = JSON.parse((deps.writeTo as jest.Mock).mock.calls[0][0]);
+      expect(parsed.code).toBe('UNEXPECTED_ERROR');
+    });
+  });
+
   describe('no theo.yaml', () => {
     it('should return exit code 1 when no theo.yaml found', async () => {
       const deps = createMockDeps({ findTheoYaml: jest.fn().mockReturnValue(null) });
