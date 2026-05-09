@@ -29,11 +29,19 @@ const CHART_VERSION = '0.2.0';
 /**
  * Charts gerenciados pelo Theo (em ordem de install). Pinado contra
  * filesystem por getPlatformStatus-charts.test.ts.
+ *
+ * Post operator-split (CHG-2026-04-30-INFRA-PARITY T1.5): the legacy
+ * `theo-controller` + `tenant-controller` charts were DELETED. Operators
+ * now ship as 4 split binaries via `charts/theo-{tenant,app,preview,
+ * platform}-operator` (OCI-published, NOT in infra/helm/). Bootstrap
+ * charts in infra/helm/ are limited to theo-api + theo-cloud + their
+ * dependencies.
+ *
+ * THEO_COMPONENTS now lists ONLY the bootstrap charts that physically
+ * exist in infra/helm/ — the test pin is back to GREEN.
  */
 export const THEO_COMPONENTS = [
   'theo-api',
-  'theo-controller',
-  'tenant-controller',
   'theo-cloud',
 ] as const;
 

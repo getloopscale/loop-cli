@@ -45,11 +45,13 @@ describe('getPlatformStatus — chart inventory pinning', () => {
     }
   });
 
-  it('THEO_COMPONENTS contains the four real Theo charts', () => {
+  // Post-operator-split (CHG-2026-04-30-INFRA-PARITY T1.5): the legacy
+  // theo-controller + tenant-controller charts were DELETED. Operators now
+  // ship via charts/theo-{tenant,app,preview,platform}-operator (OCI). The
+  // bootstrap-only charts in infra/helm/ are theo-api + theo-cloud.
+  it('THEO_COMPONENTS contains the bootstrap charts in infra/helm/', () => {
     expect(THEO_COMPONENTS).toEqual([
       'theo-api',
-      'theo-controller',
-      'tenant-controller',
       'theo-cloud',
     ]);
   });
