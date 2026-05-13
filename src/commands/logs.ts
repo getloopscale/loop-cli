@@ -5,14 +5,14 @@ import { ApiError } from '../api/client';
 import { classifyNetworkError } from '../output/error-message';
 import type { TheoYamlResult } from '../adapters/theo-yaml';
 
-interface LogEntry {
+export interface LogEntry {
   step: string;
   stream: string;
   content: string;
   timestamp: string;
 }
 
-interface LogsApiResponse {
+export interface LogsApiResponse {
   build_id: string;
   status: string;
   entries: LogEntry[];
