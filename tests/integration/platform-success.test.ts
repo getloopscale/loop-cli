@@ -11,7 +11,6 @@ import {
   spawnTheo,
   mkTmpHome,
   cleanupTmpHome,
-  parseLastJsonLine,
 } from './_fixtures/spawn-helper';
 
 const tmpHomes: string[] = [];
