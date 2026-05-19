@@ -80,7 +80,7 @@ export function createProgram(): Command {
   program
     .name('theo')
     .version(cliVersion)
-    .description('CLI-first Kubernetes PaaS for monorepo deployments')
+    .description('CLI-first Kubernetes TheoCloud for monorepo deployments')
     .option('--json', 'Output in JSON format');
 
   // F-05: Configure Commander to output JSON errors when --json is present.
