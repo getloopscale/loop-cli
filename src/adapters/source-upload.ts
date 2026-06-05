@@ -25,21 +25,30 @@ function fileBlob(filePath: string, contentType: string): Blob {
   return new Blob([data], { type: contentType });
 }
 
+/**
+ * Plan B v3.1 T-B.3 (2026-06-05) — `theoYamlPath` parameter renamed to
+ * `servicesJsonPath`; multipart form field `theo_yaml` renamed to
+ * `services_json` per ADR D4. Caller passes the path to the
+ * `.theo/services.json` emitted by `theokit build` (Plan A v2.2 thin
+ * adapter). API-side payload inspection (per blueprint v2 D8) keeps
+ * legacy `theo_yaml` field rejected with actionable E-009 error during
+ * the transition window.
+ */
 export async function uploadSource(
   baseURL: string,
   token: string | null,
   bundlePath: string,
-  theoYamlPath: string,
+  servicesJsonPath: string,
 ): Promise<UploadResult> {
   const bundleBlob = fileBlob(bundlePath, 'application/octet-stream');
 
-  // theo.yaml is always small — readFileSync is fine
-  const theoYamlContent = fs.readFileSync(theoYamlPath, 'utf-8');
-  const yamlBlob = new Blob([theoYamlContent], { type: 'text/yaml' });
+  // services.json is always small — readFileSync is fine
+  const servicesJsonContent = fs.readFileSync(servicesJsonPath, 'utf-8');
+  const jsonBlob = new Blob([servicesJsonContent], { type: 'application/json' });
 
   const formData = new FormData();
   formData.append('bundle', bundleBlob, path.basename(bundlePath));
-  formData.append('theo_yaml', yamlBlob, 'theo.yaml');
+  formData.append('services_json', jsonBlob, 'services.json');
 
   const headers: Record<string, string> = {};
   if (token) {

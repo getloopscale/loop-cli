@@ -20,7 +20,9 @@ import { Formatter } from './output/formatter';
 import { ensureFreshToken } from './auth/token-refresh';
 
 import { registerAuthCommands } from './register/auth';
-import { registerInitCommand } from './register/init';
+// Plan B v3.1 T-B.2 (2026-06-05) — `theo init` deleted post TheoKit-only cutover.
+// All apps must use TheoKit ≥0.5.0 + emit `.theo/services.json` via `theokit build`.
+// import { registerInitCommand } from './register/init';
 import { registerDeployCommands } from './register/deploy';
 import { registerProjectCommands } from './register/project';
 import { registerTeamCommands } from './register/team';
@@ -159,7 +161,7 @@ export function createProgram(): Command {
 
   // Register all command groups
   registerAuthCommands(deps);
-  registerInitCommand(deps);
+  // Plan B v3.1 T-B.2 — `theo init` removed (TheoKit-only cutover).
   registerDeployCommands(deps);
   registerProjectCommands(deps);
   registerTeamCommands(deps);

@@ -58,11 +58,11 @@ export function registerDeployCommands(deps: CommandDeps): void {
         getSourceIdentifier,
         createSourceBundle,
         checkSensitiveFiles,
-        uploadSource: (bundlePath: string, theoYamlPath: string) =>
+        uploadSource: (bundlePath: string, servicesJsonPath: string) =>
           // configStore.getToken() honors the THEO_TOKEN env var; the older
           // getConfig()?.token path silently ignored env-only auth (CI mode),
           // which broke `theo deploy` whenever no config file was written.
-          uploadSource(apiUrl, configStore.getToken(), bundlePath, theoYamlPath),
+          uploadSource(apiUrl, configStore.getToken(), bundlePath, servicesJsonPath),
         submitBuild: async (input) => {
           const headers: Record<string, string> = {
             'Idempotency-Key': input.idempotencyKey,
