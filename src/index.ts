@@ -173,11 +173,30 @@ export function createProgram(): Command {
   registerPlatformCommands(deps);
   registerDiagnosticsCommands(deps);
 
-  // Handle case when no subcommand is given (e.g., `theo` or `theo --json`)
+  // Plan v1.1 T4.1 (theo-cli-vercel-like-ux) — zero-config delegation.
+  // `theo` with no positional subcommand and no --help/--version routes to
+  // `theo deploy` (Vercel-parity ergonomic). EC-8 absorbed: help/version
+  // flags ALWAYS win, regardless of argv position; Commander handles them
+  // via exitOverride before this action fires, but we also guard
+  // defensively in case the action is reached.
   program.argument('[args...]');
-  program.action((args: string[]) => {
+  program.action(async (args: string[]) => {
     const globalOpts = program.opts();
     const unknownCommand = args.length > 0 ? args[0] : null;
+
+    // EC-8 — explicit guard: never delegate when --help/-h/--version/-V is
+    // anywhere in argv. Commander typically handles these earlier; this is a
+    // belt-and-suspenders check.
+    const argv = process.argv.slice(2);
+    if (
+      argv.includes('--help') ||
+      argv.includes('-h') ||
+      argv.includes('--version') ||
+      argv.includes('-V')
+    ) {
+      program.help();
+      return;
+    }
 
     if (unknownCommand) {
       if (globalOpts.json) {
@@ -189,18 +208,23 @@ export function createProgram(): Command {
         writeError(`Unknown command: ${unknownCommand}. Run: theo --help`);
       }
       process.exitCode = 1;
-    } else {
-      if (globalOpts.json) {
-        const commandNames = program.commands.map((cmd) => cmd.name());
-        writeTo(JSON.stringify({
-          error: 'No command specified. Run: theo --help',
-          commands: commandNames,
-          exit_code: 1,
-        }));
-        process.exitCode = 1;
-      } else {
-        program.help();
-      }
+      return;
+    }
+
+    // No positional subcommand → delegate to `theo deploy` per Plan v1.1 D3.
+    const deployCmd = program.commands.find((cmd) => cmd.name() === 'deploy');
+    if (deployCmd === undefined) {
+      // Defensive: deploy registration somehow missing. Fall back to help.
+      program.help();
+      return;
+    }
+    // Reconstruct argv with `deploy` injected as the subcommand so commander
+    // re-parses with the right action wired.
+    const newArgv = [process.argv[0], process.argv[1], 'deploy', ...argv];
+    try {
+      await program.parseAsync(newArgv);
+    } catch {
+      // parseAsync errors already surface via Commander's exitOverride hook.
     }
   });
 
