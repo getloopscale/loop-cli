@@ -93,25 +93,6 @@ describe('CLI config/constants', () => {
     });
   });
 
-  describe('isUsingDefaultApiUrl', () => {
-    it('should return true when no URL env vars set', () => {
-      const constants = loadConstants();
-      expect(constants.isUsingDefaultApiUrl()).toBe(true);
-    });
-
-    it('should return false when THEO_URL is set', () => {
-      process.env.THEO_URL = 'https://api.usetheo.dev';
-      const constants = loadConstants();
-      expect(constants.isUsingDefaultApiUrl()).toBe(false);
-    });
-
-    it('should return false when THEO_API_URL is set (legacy)', () => {
-      process.env.THEO_API_URL = 'https://api.usetheo.dev';
-      const constants = loadConstants();
-      expect(constants.isUsingDefaultApiUrl()).toBe(false);
-    });
-  });
-
   describe('DEFAULT_API_URL_FALLBACK', () => {
     it('should be localhost:8080', () => {
       const constants = loadConstants();
