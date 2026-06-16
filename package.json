@@ -1,5 +1,5 @@
 {
-  "name": "@theo/cli",
+  "name": "@usetheo/cli",
   "version": "0.1.0",
   "description": "CLI-first Kubernetes TheoCloud for monorepo deployments",
   "main": "dist/index.js",
