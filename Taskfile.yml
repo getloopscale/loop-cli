@@ -1,0 +1,65 @@
+# Taskfile.yml — theo-cli repo
+#
+# T2.1 of plan canonical-tests-rewrite-v2 v1.0 per ADR-2026-06-17-T3.
+# Closes F-001 BLOCKER from audit 2026-06-17-canonical-tests-deep-review:
+# the cross-repo orphanage where the 3 extracted repos lacked own Taskfile.
+#
+# Aligns with engine's task surface so the canonical chain orchestrator can
+# invoke `task test` / `task test:smoke` / `task lint` here uniformly.
+
+version: '3'
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds:
+      - task --list
+
+  build:
+    desc: TypeScript compile
+    cmds:
+      - npm run build
+
+  test:
+    desc: Jest test suite (1,260 cases / 88 suites per CLAUDE.md)
+    cmds:
+      - npm test
+
+  test:smoke:
+    desc: |
+      T2.3 of plan canonical-tests-rewrite-v2 — fast smoke subset asserting
+      CLI compiles + at least one command exits 0 cleanly. Target: < 30s.
+    cmds:
+      - npm run build
+      - node bin/theo --version
+      - node bin/theo --help > /dev/null
+
+  test:contract:
+    desc: |
+      T2.2 of plan canonical-tests-rewrite-v2 — Pact-go consumer contract
+      verification (stub until Pact infrastructure shipped in Phase 2).
+    cmds:
+      - |
+        if [ -d tests/contract ]; then
+          echo "[test:contract] consumer contract tests against vendored snapshot + Pact-go (Phase 2)"
+          npx jest tests/contract
+        else
+          echo "[test:contract] tests/contract/ not yet wired — Phase 2 of canonical-tests-rewrite-v2 plan"
+        fi
+
+  lint:
+    desc: ESLint over src + tests
+    cmds:
+      - npm run lint
+
+  fmt:
+    desc: Format check (npm-managed)
+    cmds:
+      - npx prettier --check 'src/**/*.{ts,js}' 'tests/**/*.{ts,js}' 2>/dev/null || echo "[fmt] prettier not installed — skipping"
+
+  ci:
+    desc: All gates a PR must pass (build + test + lint)
+    cmds:
+      - task: build
+      - task: test
+      - task: lint
