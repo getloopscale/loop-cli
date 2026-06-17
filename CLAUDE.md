@@ -30,7 +30,12 @@ npm run lint        # eslint
 ## Invariants
 
 - **Dependency direction:** theo-cli imports nothing from the engine repo (HTTP only).
-  Enforced workspace-wide by the engine's `theo-ops quality acyclic-graph` gate.
+  Upheld today by the HTTP-only design (production deps are commander + HTTP/telemetry,
+  zero `theo-*` packages) + the vendored OpenAPI contract test. The engine's Go
+  `theo-ops quality acyclic-graph` gate prevents the *reverse* edge (engine → cli) but
+  does NOT scan TypeScript, so it does not mechanically guard cli's own imports. A TS
+  import-boundary check (dependency-cruiser / eslint import rule) is a follow-up — until
+  it lands, a reviewer must reject any `theo-*` dependency added to `package.json`.
 - **Exit codes are a permanent contract:** `0` success, `1` usage, `2` build, `3` deploy,
   `4` auth, `5` partial. No others (130/143 only in signal handlers).
 - **`--json` is a stability contract** — field names need a major bump to change.

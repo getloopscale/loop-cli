@@ -16,5 +16,6 @@ Format: Keep a Changelog + Semantic Versioning.
 - Renamed the npm package from `@theo/cli` to `@usetheo/cli` (the `@theo` scope is
   unavailable on the public registry; `@usetheo` matches the `usetheodev` org).
 - Expanded `CLAUDE.md` into a self-governing repo contract (build/test, the cli↔engine
-  seam, exit-code + `--json` invariants, acyclic dependency-direction) — M5 of the
-  decomposition roadmap.
+  seam, exit-code + `--json` invariants, and the dependency-direction invariant — upheld
+  by HTTP-only design + the vendored OpenAPI contract test; a TS import-boundary check is
+  a noted follow-up) — M5 of the decomposition roadmap.
