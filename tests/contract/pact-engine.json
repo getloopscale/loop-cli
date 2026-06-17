@@ -1,0 +1,149 @@
+{
+  "_comment": "T2.2 of plan canonical-tests-rewrite-v2 v1.0 per ADR-2026-06-17-T3 D7 + ADR-V2-D2 (Pact broker location: theo-contracts hosts config + Pact Foundation public broker for storage; pending sponsor sign-off).",
+  "consumer": {
+    "name": "theo-cli"
+  },
+  "provider": {
+    "name": "theo-engine"
+  },
+  "interactions": [
+    {
+      "description": "POST /api/v1/login returns 200 with session token",
+      "providerState": "anonymous request with valid credentials",
+      "request": {
+        "method": "POST",
+        "path": "/api/v1/login",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "email": "admin@usetheo.dev",
+          "password": "theo-dev-password"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "session_token": "string-non-empty",
+          "expires_at": "ISO-8601"
+        }
+      }
+    },
+    {
+      "description": "GET /api/v1/projects returns list with array shape",
+      "providerState": "authenticated user with >= 1 project",
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/projects",
+        "headers": {
+          "Authorization": "Bearer string-non-empty"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "projects": "array",
+          "total": "integer"
+        }
+      }
+    },
+    {
+      "description": "POST /api/v1/projects creates project; idempotency-key honored",
+      "providerState": "authenticated user under plan project cap",
+      "request": {
+        "method": "POST",
+        "path": "/api/v1/projects",
+        "headers": {
+          "Authorization": "Bearer string-non-empty",
+          "Idempotency-Key": "uuid-v4"
+        },
+        "body": {
+          "name": "string-rfc1123",
+          "repo": "string-uri"
+        }
+      },
+      "response": {
+        "status": 201,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "id": "uuid-v4",
+          "name": "string-rfc1123",
+          "created_at": "ISO-8601"
+        }
+      }
+    },
+    {
+      "description": "POST /api/v1/builds creates build; concurrent submit returns 409",
+      "providerState": "authenticated user with project; no concurrent build in env",
+      "request": {
+        "method": "POST",
+        "path": "/api/v1/builds",
+        "headers": {
+          "Authorization": "Bearer string-non-empty",
+          "Idempotency-Key": "uuid-v4"
+        },
+        "body": {
+          "project_id": "string-project-name",
+          "environment": "string"
+        }
+      },
+      "response": {
+        "status": 202,
+        "body": {
+          "build_id": "uuid-v4",
+          "status": "QUEUED"
+        }
+      }
+    },
+    {
+      "description": "GET /api/v1/builds/{id} returns build state",
+      "providerState": "build exists with id",
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/builds/{id}",
+        "headers": {
+          "Authorization": "Bearer string-non-empty"
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "id": "uuid-v4",
+          "status": "enum[QUEUED, RUNNING, RELEASING, SUCCEEDED, FAILED, CANCELLING, CANCELLED]"
+        }
+      }
+    },
+    {
+      "description": "GET /api/v1/health returns 200",
+      "providerState": "service is up",
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/health"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "status": "ok"
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "2.0.0"
+    },
+    "notes": [
+      "ADR-V2-D2 broker decision: theo-contracts hosts config + Pact Foundation public broker for storage. Pending sponsor verbatim sign-off.",
+      "Full Pact-go library integration deferred to T2.2 follow-up. This JSON file is shape-asserted by tests/contract/pact-engine.test.ts.",
+      "Field types like 'string-rfc1123' are placeholder semantic hints; full Pact JSON spec uses matchers like { matchingRules: { ... } } which will be added when library integration ships."
+    ]
+  }
+}
