@@ -371,7 +371,7 @@ export function registerInfraCommands(deps: CommandDeps): void {
           || /HTTP method is not supported/i.test(msg)
           || /NO_STRIPE_CUSTOMER|payment method on file/i.test(msg);
         if (isBillingMissing) {
-          const friendly = 'Billing portal is not available in self-hosted mode. Run `theo platform secrets backup` for license info.';
+          const friendly = 'Billing portal is not available in self-hosted mode.';
           if (globalOpts.json) { writeTo(JSON.stringify({ code: 'BILLING_NOT_AVAILABLE', error: friendly, exit_code: 1 })); }
           else { writeError(friendly); }
           return 1;
@@ -411,7 +411,7 @@ export function registerInfraCommands(deps: CommandDeps): void {
           || /endpoint does not exist|not implemented|not available/i.test(msg)
           || /HTTP method is not supported/i.test(msg);
         if (isBillingMissing) {
-          const friendly = 'Billing is not available in self-hosted mode. Run `theo platform secrets backup` for license info.';
+          const friendly = 'Billing is not available in self-hosted mode.';
           if (globalOpts.json) { writeTo(JSON.stringify({ code: 'BILLING_NOT_AVAILABLE', error: friendly, exit_code: 1 })); }
           else { writeError(friendly); }
           return 1;
