@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2025-2026 The Theo Authors
 //
-// Audit gap M01 #22 (active-execution-plan §6.E.1): these 7 tests previously
-// existed as `it.skip` stubs with only a comment describing the requirement.
-// This file implements them with real bodies and gates the staging-API-dependent
-// ones via the CLI_E2E_LIVE=1 env var. Local CI runs continue to skip the live
-// ones (so the suite stays green without a running API); when staging-API is
-// available the operator flips the env var and the same suite exercises the
-// full flow.
+// Audit gap M01 #22 (active-execution-plan §6.E.1): these live-API smoke tests
+// implement real bodies and gate the staging-API-dependent ones via the
+// CLI_E2E_LIVE=1 env var. Local CI runs skip the live ones (so the suite stays
+// green without a running API); when staging-API is available the operator flips
+// the env var and the same suite exercises the full flow.
 //
 // Test classification:
-//   - Test 3 (init: detect monorepo) runs UNCONDITIONALLY because it uses
-//     fs.mkdtemp + fs.writeFile only — no external service dependency.
-//   - Tests 1, 2, 4, 5, 6, 7 require a running API. They share a common
-//     `requiresLive()` skip guard so a single env var turns them all on.
+//   - All tests require a running API. They share a common `requiresLive()` skip
+//     guard so a single env var turns them all on.
+//
+// Note: the former local-only `init: detect monorepo` test was removed together
+// with the `theo init` command and the `src/detection/monorepo` module
+// (TheoKit-only cutover — apps emit `.theo/services.json` via `theokit build`).
 //
 // Operator runbook to enable the live tests:
 //   1. `task setup`            — bootstraps k3d-theo-mgmt + build + workload
@@ -21,11 +21,6 @@
 //   3. `CLI_E2E_LIVE=1 CLI_E2E_API_URL=https://theo-local.usetheo.dev \
 //       CLI_E2E_TOKEN=$(cat ~/.theo/local-dogfood-token.txt) \
 //       npm test -- cli-e2e`
-
-import * as fs from 'fs';
-import * as os from 'os';
-import * as path from 'path';
-import { detectMonorepoTool } from '../../src/detection/monorepo';
 
 const liveMode = process.env.CLI_E2E_LIVE === '1';
 const apiURL = process.env.CLI_E2E_API_URL ?? '';
@@ -65,93 +60,6 @@ describe('CLI Integration Tests (requires running API for most cases)', () => {
       });
       expect(res.status).toBe(401);
     }, 30000);
-  });
-
-  describe('init flow', () => {
-    // PURELY LOCAL — runs unconditionally. Detects a turborepo workspace
-    // in a synthesized temp directory without contacting the API.
-    it('should detect monorepo in real git repo', () => {
-      const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'theo-init-test-'));
-      try {
-        // Synthesize a minimal turborepo: package.json with workspaces +
-        // turbo.json marker + two app dirs each with their own package.json.
-        fs.writeFileSync(
-          path.join(tmp, 'package.json'),
-          JSON.stringify(
-            {
-              name: 'fake-monorepo',
-              private: true,
-              workspaces: ['apps/*'],
-            },
-            null,
-            2,
-          ),
-        );
-        fs.writeFileSync(
-          path.join(tmp, 'turbo.json'),
-          JSON.stringify({ tasks: {} }, null, 2),
-        );
-        fs.mkdirSync(path.join(tmp, 'apps', 'api'), { recursive: true });
-        fs.writeFileSync(
-          path.join(tmp, 'apps', 'api', 'package.json'),
-          JSON.stringify({ name: 'api' }),
-        );
-        fs.mkdirSync(path.join(tmp, 'apps', 'web'), { recursive: true });
-        fs.writeFileSync(
-          path.join(tmp, 'apps', 'web', 'package.json'),
-          JSON.stringify({ name: 'web' }),
-        );
-
-        const result = detectMonorepoTool(tmp);
-        expect(result).not.toBeNull();
-        expect(result!.tool).toBe('turborepo');
-        // Workspaces should resolve the apps/* glob to the two actual dirs.
-        expect(result!.workspaces.sort()).toEqual(['apps/api', 'apps/web']);
-      } finally {
-        fs.rmSync(tmp, { recursive: true, force: true });
-      }
-    });
-
-    (requiresLive() ? it.skip : it)(
-      'should create theo.yaml with correct detection',
-      async () => {
-        // Live test: creates a fixture repo, invokes the API's init endpoint
-        // (which performs detection + persists project), and asserts that
-        // the returned monorepo config matches what local detection produced.
-        const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'theo-init-live-'));
-        try {
-          fs.writeFileSync(
-            path.join(tmp, 'package.json'),
-            JSON.stringify({ name: 'live-test', workspaces: ['apps/*'] }),
-          );
-          fs.writeFileSync(path.join(tmp, 'turbo.json'), '{}');
-
-          const local = detectMonorepoTool(tmp);
-          expect(local).not.toBeNull();
-
-          // The API doesn't run detection — the CLI does — so we just assert
-          // the API accepts a Create with the locally-detected metadata.
-          const res = await fetch(`${apiURL}/api/v1/projects`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${liveToken}`,
-            },
-            body: JSON.stringify({
-              name: `e2e-init-${Date.now()}`,
-              monorepo_tool: local!.tool,
-            }),
-          });
-          // The API should accept the project (201) OR reject for plan cap
-          // (402) — both are valid responses depending on the test tenant's
-          // current state. A 5xx is the failure condition.
-          expect([201, 402, 409].includes(res.status)).toBe(true);
-        } finally {
-          fs.rmSync(tmp, { recursive: true, force: true });
-        }
-      },
-      60000,
-    );
   });
 
   describe('deploy flow', () => {

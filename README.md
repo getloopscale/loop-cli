@@ -1,4 +1,4 @@
-# `@theo/cli` — deploy CLI for TheoCloud
+# `@usetheo/cli` — deploy CLI for TheoCloud
 
 The `theo` CLI is the deploy companion to the [TheoKit OSS framework](https://github.com/usetheo/theokit). It authenticates with TheoCloud, uploads your application bundle + `.theo/services.json` artifact, streams the build/deploy events, and surfaces logs and rollback controls.
 
@@ -6,10 +6,10 @@ The `theo` CLI is the deploy companion to the [TheoKit OSS framework](https://gi
 
 ```bash
 # In your project (recommended — version-pinned in package.json):
-npm install --save-dev @theo/cli
+npm install --save-dev @usetheo/cli
 
 # Or globally:
-npm install -g @theo/cli
+npm install -g @usetheo/cli
 ```
 
 You also need TheoKit installed so `theo deploy` can build the `.theo/services.json` artifact automatically. In typical TheoKit projects it is already a dev dependency:
@@ -52,7 +52,7 @@ jobs:
     steps:
       - run: npm ci
       - uses: actions/download-artifact@v4
-      - run: npx @theo/cli deploy --prebuilt
+      - run: npx @usetheo/cli deploy --prebuilt
         env:
           THEO_TOKEN: ${{ secrets.THEO_TOKEN }}
 ```
@@ -117,4 +117,4 @@ theo --version | awk -F. '{ if ($1 == 0 && $2 < 2) print "old"; else print "new"
 
 ## Source
 
-This package lives in [theo-cloud/theo/cli](https://github.com/usetheo/theo-cloud). See the `docs/architecture/` folder for the integration flow with the TheoKit framework.
+This package is developed at [usetheodev/theo-cli](https://github.com/usetheodev/theo-cli). See [`CLAUDE.md`](./CLAUDE.md) for the architecture and the integration flow with the [TheoKit framework](https://github.com/usetheo/theokit).
