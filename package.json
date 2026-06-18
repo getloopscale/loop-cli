@@ -1,17 +1,44 @@
 {
   "name": "@usetheo/cli",
-  "version": "0.2.0",
-  "description": "CLI-first Kubernetes TheoCloud for monorepo deployments",
+  "version": "0.2.1",
+  "description": "CLI-first deploys for TheoCloud \u2014 one command from monorepo to running service.",
+  "keywords": [
+    "cli",
+    "deploy",
+    "deployment",
+    "kubernetes",
+    "monorepo",
+    "theo",
+    "theocloud",
+    "paas",
+    "devops"
+  ],
+  "homepage": "https://usetheo.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/usetheodev/theo-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/usetheodev/theo-cli/issues"
+  },
   "main": "dist/index.js",
   "bin": {
     "theo": "./bin/theo"
   },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
     "build": "tsc",
     "test": "jest",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint src/ tests/"
   },
   "dependencies": {
@@ -38,7 +65,7 @@
     "ts-jest": "^29.2.0",
     "typescript": "^5.5.0"
   },
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "engines": {
     "node": ">=20.0.0"
   }
