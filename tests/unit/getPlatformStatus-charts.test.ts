@@ -19,13 +19,13 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 jest.mock('child_process', () => ({
-  execSync: jest.fn(),
+  execFileSync: jest.fn(),
 }));
 
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { getPlatformStatus, THEO_COMPONENTS } from '../../src/installer/status';
 
-const mockExec = execSync as jest.MockedFunction<typeof execSync>;
+const mockExec = execFileSync as jest.MockedFunction<typeof execFileSync>;
 
 afterEach(() => {
   jest.resetAllMocks();
@@ -68,29 +68,46 @@ describe('getPlatformStatus — kubectl query template (Achado #34)', () => {
 
   it('query uses label `app=X` not `app.kubernetes.io/name=X`', () => {
     getPlatformStatus();
-    const calls = mockExec.mock.calls.map((c) => c[0] as string);
-    const deployCalls = calls.filter((c) => c.includes('kubectl get deploy'));
+    const deployCalls = mockExec.mock.calls.filter(
+      (c) => c[0] === 'kubectl' && Array.isArray(c[1]) && (c[1] as string[]).includes('deploy'),
+    );
     expect(deployCalls.length).toBeGreaterThan(0);
-    for (const cmd of deployCalls) {
-      expect(cmd).toMatch(/-l app=/);
-      expect(cmd).not.toMatch(/-l app\.kubernetes\.io\/name=/);
+    for (const call of deployCalls) {
+      const args = call[1] as string[];
+      const labelIdx = args.indexOf('-l');
+      expect(labelIdx).toBeGreaterThanOrEqual(0);
+      // selector value is the arg right after `-l`
+      expect(args[labelIdx + 1]).toMatch(/^app=/);
+      expect(args[labelIdx + 1]).not.toMatch(/^app\.kubernetes\.io\/name=/);
     }
   });
 
   it('queries one selector per Theo component', () => {
     getPlatformStatus();
-    const calls = mockExec.mock.calls.map((c) => c[0] as string);
+    const selectors = mockExec.mock.calls
+      .filter((c) => Array.isArray(c[1]))
+      .flatMap((c) => c[1] as string[]);
     for (const name of THEO_COMPONENTS) {
-      expect(calls.some((c) => c.includes(`-l app=${name}`))).toBe(true);
+      expect(selectors).toContain(`app=${name}`);
+    }
+  });
+
+  it('never builds a shell command string (no shell-interpolated args)', () => {
+    getPlatformStatus();
+    // Every call passes the binary as argv[0] and an args ARRAY as argv[1] —
+    // execFileSync runs without a shell, so component names can't be injected.
+    for (const call of mockExec.mock.calls) {
+      expect(call[0]).toBe('kubectl');
+      expect(Array.isArray(call[1])).toBe(true);
     }
   });
 });
 
 describe('getPlatformStatus — phase calculation (Achado #35)', () => {
   it('phase=Ready when all components return Running pods (no fake "theo" sentinel)', () => {
-    mockExec.mockImplementation(((cmd: string) => {
-      if (cmd.includes('kubectl get deploy')) return '1/1';
-      if (cmd.includes('kubectl get crd')) return '10';
+    mockExec.mockImplementation(((_file: string, args: string[]) => {
+      if (args.includes('deploy')) return '1/1';
+      if (args.includes('crd')) return 'customresourcedefinition.apiextensions.k8s.io/apps.theo.io';
       return '';
     }) as never);
 
@@ -101,12 +118,12 @@ describe('getPlatformStatus — phase calculation (Achado #35)', () => {
 
   it('phase=Degraded when at least one component is Pending', () => {
     let i = 0;
-    mockExec.mockImplementation(((cmd: string) => {
-      if (cmd.includes('kubectl get deploy')) {
+    mockExec.mockImplementation(((_file: string, args: string[]) => {
+      if (args.includes('deploy')) {
         i++;
         return i === 1 ? '0/1' : '1/1';
       }
-      if (cmd.includes('kubectl get crd')) return '10';
+      if (args.includes('crd')) return 'customresourcedefinition.apiextensions.k8s.io/apps.theo.io';
       return '';
     }) as never);
 

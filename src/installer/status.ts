@@ -21,7 +21,7 @@
 //     none reachable → NotInstalled, demais → Degraded).
 //   • Pinned por tests/unit/getPlatformStatus-charts.test.ts.
 
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { ComponentStatus, PlatformStatus } from './types';
 
 const CHART_VERSION = '0.2.0';
@@ -58,15 +58,21 @@ export function getPlatformStatus(): PlatformStatus {
 
   for (const name of THEO_COMPONENTS) {
     try {
-      // 2026-05-20: append `2>/dev/null` so kubectl jsonpath errors do not
-      // leak to process.stderr — execSync default stdio inherits child stderr,
-      // corrupting `theo platform status --json` output when items[] is empty
-      // (NotInstalled component). The empty-jsonpath path is intentional; we
-      // catch the throw and record NotInstalled. The stderr leak was a real
-      // CLI bug exposed by drill JSON probe.
-      const output = execSync(
-        `kubectl get deploy -n theo-system -l app=${name} -o jsonpath="{.items[0].status.readyReplicas}/{.items[0].spec.replicas}" 2>/dev/null`,
-        { encoding: 'utf-8', timeout: 5_000 },
+      // execFileSync (no shell) — args are passed as an array so the component
+      // name can never be interpreted by a shell. `stdio: ignore stderr`
+      // replaces the former `2>/dev/null`: kubectl jsonpath errors must not
+      // leak to process.stderr and corrupt `theo platform status --json` when
+      // items[] is empty (NotInstalled). The empty-jsonpath throw is caught
+      // below and recorded as NotInstalled.
+      const output = execFileSync(
+        'kubectl',
+        [
+          'get', 'deploy',
+          '-n', 'theo-system',
+          '-l', `app=${name}`,
+          '-o', 'jsonpath={.items[0].status.readyReplicas}/{.items[0].spec.replicas}',
+        ],
+        { encoding: 'utf-8', timeout: 5_000, stdio: ['ignore', 'pipe', 'ignore'] },
       ).trim();
       components.push({
         name,
@@ -80,10 +86,16 @@ export function getPlatformStatus(): PlatformStatus {
 
   let platformDefinitions = 0;
   try {
-    platformDefinitions = parseInt(
-      execSync('kubectl get crd -o name 2>/dev/null | grep theo.io | wc -l', { encoding: 'utf-8' }).trim(),
-      10,
-    );
+    // Count theo.io CRDs in-process (no shell pipe to grep/wc) so there is no
+    // shell involved anywhere in this module.
+    const crdOutput = execFileSync(
+      'kubectl',
+      ['get', 'crd', '-o', 'name'],
+      { encoding: 'utf-8', timeout: 5_000, stdio: ['ignore', 'pipe', 'ignore'] },
+    ).trim();
+    platformDefinitions = crdOutput
+      ? crdOutput.split('\n').filter((line) => line.includes('theo.io')).length
+      : 0;
   } catch {
     // ignore
   }

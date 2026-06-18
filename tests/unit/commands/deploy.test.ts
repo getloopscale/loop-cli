@@ -99,6 +99,34 @@ describe('DeployCommand', () => {
       );
     });
 
+    it('should not hang on a malformed terminal event; resolves to deploy failure', async () => {
+      // A malformed `deploy.completed` (missing `apps`) makes the event
+      // handler throw. Without a .catch on the fire-and-forget chain this
+      // became an unhandled rejection and the deploy promise never resolved
+      // (the CLI hung until the 15-min watchdog). It must degrade to a
+      // deploy failure (exit 3) instead.
+      const deps = createMockDeps({
+        connectSSE: jest.fn().mockImplementation(
+          (_buildId: string, onEvent: (event: SSEEvent) => void) => {
+            onEvent({
+              type: 'deploy.completed',
+              data: { deploy_id: 'd-8f3a', status: 'success' }, // no `apps`
+            });
+            return { close: jest.fn() };
+          }
+        ),
+      });
+      const cmd = new DeployCommand(deps);
+
+      const exitCode = await cmd.execute({ env: 'production', wait: true });
+
+      expect(exitCode).toBe(3);
+      const errOutput = (deps.writeError as jest.Mock).mock.calls
+        .map((c: string[]) => c[0])
+        .join('\n');
+      expect(errOutput.length).toBeGreaterThan(0);
+    }, 10000);
+
     it('should send idempotency key and commitSha with build submission', async () => {
       const deps = createMockDeps();
       const cmd = new DeployCommand(deps);

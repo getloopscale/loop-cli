@@ -580,6 +580,28 @@ export class DeployCommand {
                 this.deps.writeTo(progressLine);
               }
             }
+          })
+          .catch((err: unknown) => {
+            // A throw in the async event handler (e.g. a malformed terminal
+            // payload) must NOT become an unhandled rejection — that would
+            // bypass the exit-code contract and hang the deploy until the
+            // bin/theo watchdog. Degrade to a deploy failure (exit 3) and
+            // surface the cause (THEO_DEBUG carries the full chain).
+            if (resolved) {
+              return;
+            }
+            const message = err instanceof Error ? err.message : String(err);
+            if (opts.json) {
+              this.deps.writeTo(JSON.stringify({
+                code: 'STREAM_HANDLER_ERROR',
+                error: `Deploy stream handler error: ${message}`,
+                exit_code: 3,
+                build_id: buildResult.build_id,
+              }));
+            } else {
+              this.deps.writeError(`Deploy stream handler error: ${message}. Check \`theo build inspect ${buildResult.build_id}\` for current state.`);
+            }
+            finish(3);
           });
       });
     });

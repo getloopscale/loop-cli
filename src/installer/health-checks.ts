@@ -59,21 +59,3 @@ export function runHealthCheck(
   }
   return { role, status: 'pass', durationMs, exitCode: 0 };
 }
-
-/**
- * Run health checks for ALL roles in install order, stopping on first failure.
- */
-export function runFullHealthCheck(
-  opts: HealthCheckOptions = {},
-): { ok: boolean; results: HealthCheckResult[] } {
-  const roles: HealthCheckRole[] = ['infra', 'build', 'mgmt', 'runtime', 'wire'];
-  const results: HealthCheckResult[] = [];
-  for (const role of roles) {
-    const r = runHealthCheck(role, opts);
-    results.push(r);
-    if (r.status !== 'pass') {
-      return { ok: false, results };
-    }
-  }
-  return { ok: true, results };
-}

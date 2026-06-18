@@ -342,6 +342,60 @@ describe('SSEClient', () => {
 
       jest.useRealTimers();
     });
+
+    it('should give up polling after maxRetries consecutive poll failures', async () => {
+      jest.useFakeTimers();
+
+      const stream = createSSEStream([
+        'id: 1\nevent: JOURNAL_EXPIRED\ndata: {}\n\n',
+      ]);
+
+      let call = 0;
+      const fetchMock = jest.fn().mockImplementation(() => {
+        call++;
+        // Call 1 = SSE stream that immediately falls back to polling.
+        if (call === 1) {
+          return Promise.resolve(sseResponse(stream));
+        }
+        // Every subsequent poll fails with a 500.
+        return Promise.resolve(new Response(null, { status: 500 }));
+      });
+
+      const errors: Error[] = [];
+      const onClose = jest.fn();
+
+      const client = new SSEClient({
+        url: 'http://localhost:3001/builds/b1/stream',
+        pollUrl: 'http://localhost:3001/builds/b1',
+        pollInterval: 1000,
+        maxRetries: 3,
+        onEvent: () => {},
+        onError: (err) => errors.push(err),
+        onClose,
+        fetchFn: fetchMock,
+      });
+
+      const connectPromise = client.connect();
+      await flushMicrotasks();
+
+      // Drive 3 failing polls + the terminal give-up tick.
+      for (let i = 0; i < 4; i++) {
+        jest.advanceTimersByTime(1000);
+        await flushMicrotasks();
+      }
+
+      await connectPromise.catch(() => {});
+
+      // A terminal give-up error is surfaced and the client closes — it must
+      // NOT poll forever.
+      expect(errors.some((e) => /failed after 3 retries/.test(e.message))).toBe(
+        true
+      );
+      expect(errors.some((e) => /theo status/.test(e.message))).toBe(true);
+      expect(onClose).toHaveBeenCalled();
+
+      jest.useRealTimers();
+    });
   });
 
   describe('close stops processing', () => {
@@ -389,6 +443,22 @@ describe('SSEClient', () => {
 
       // Should only have tried once (no reconnect after close)
       expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('should invoke onClose only once even when close() is called repeatedly', () => {
+      const onClose = jest.fn();
+      const client = new SSEClient({
+        url: 'http://localhost:3001/builds/b1/stream',
+        onEvent: () => {},
+        onClose,
+        fetchFn: jest.fn(),
+      });
+
+      client.close();
+      client.close();
+      client.close();
+
+      expect(onClose).toHaveBeenCalledTimes(1);
     });
   });
 
