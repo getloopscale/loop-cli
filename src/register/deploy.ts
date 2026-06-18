@@ -108,6 +108,8 @@ export function registerDeployCommands(deps: CommandDeps): void {
                 ...(a.port ? { port: a.port } : {}),
                 ...(a.path ? { path: a.path } : {}),
                 ...(a.framework ? { framework: a.framework } : {}),
+                ...(a.runtime ? { runtime: a.runtime } : {}),
+                ...(a.start ? { start: a.start } : {}),
                 ...(a.build ? { build: a.build } : {}),
                 ...(a.rendering ? { rendering: a.rendering } : {}),
                 ...(a.secrets && a.secrets.length > 0 ? { secrets: a.secrets } : {}),

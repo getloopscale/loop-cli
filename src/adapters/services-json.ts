@@ -90,3 +90,27 @@ export function parseServicesRuntimes(jsonContent: string): Record<string, strin
   }
   return out;
 }
+
+/**
+ * parseServicesStarts mirrors parseServicesRuntimes but extracts the `start`
+ * command per service. The canonical Dockerfile generator on the API side
+ * requires it (no heuristic CMD fallback per simplify-deploy-theokit-only v2.0).
+ * Without this the build step `generate-dockerfile` fails with
+ * `app "X" has no declared start command`.
+ */
+export function parseServicesStarts(jsonContent: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  try {
+    const parsed = JSON.parse(jsonContent) as {
+      services?: Array<{ name?: string; start?: string }>;
+    };
+    for (const s of parsed.services ?? []) {
+      if (s.name && s.start) {
+        out[s.name] = s.start;
+      }
+    }
+  } catch {
+    // malformed JSON → empty map
+  }
+  return out;
+}
