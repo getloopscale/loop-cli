@@ -13,6 +13,10 @@ coverage/
 # Code-review / audit artifacts
 code-review-output/
 
+# Local agent / cycle tooling (skills, hooks, knowledge-base, run state) —
+# developer-local in this standalone repo (never tracked here).
+.claude/
+
 # Logs
 *.log
 npm-debug.log*
