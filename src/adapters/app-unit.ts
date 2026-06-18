@@ -22,6 +22,7 @@ export interface AppUnit {
   path: string;
   framework: string;
   runtime: string;                    // services.json runtime ("python" | "node") — the build-strategy key the API dispatches on (F-dom-2). Enriched from .theo/services.json at deploy time.
+  start: string;                      // services.json start command (canonical Dockerfile CMD). Enriched from .theo/services.json at deploy time.
   port: number | null;
   build: BuildStrategy;
   dockerfile: string | null;          // resolved Dockerfile path (relative to app path)
@@ -106,6 +107,7 @@ export function normalizeApp(name: string, raw: TheoYamlApp): AppUnit {
     path: raw.path || '.',
     framework: raw.framework || 'custom',
     runtime: '', // enriched from .theo/services.json at deploy time (F-dom-2 — the build-strategy key)
+    start: '', // enriched from .theo/services.json at deploy time (canonical Dockerfile CMD)
     port: (type === 'server' || type === 'frontend') ? (raw.port ?? (type === 'server' ? 8080 : 80)) : null,
     build,
     dockerfile,

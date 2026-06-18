@@ -7,7 +7,7 @@ import {
   MAX_BUNDLE_SIZE_BYTES,
 } from '../config/constants';
 import { normalizeApps } from '../adapters/app-unit';
-import { parseServicesRuntimes } from '../adapters/services-json';
+import { parseServicesRuntimes, parseServicesStarts } from '../adapters/services-json';
 import { validateConfig } from '../adapters/validate-config';
 import { getTracer, SpanStatusCode } from '../tracing';
 import * as fs from 'fs';
@@ -235,7 +235,9 @@ export class DeployCommand {
     // failure is non-fatal — the API re-validates services.json on upload, and
     // an empty runtime fails closed clearly at build time (D4).
     try {
-      const runtimeByName = parseServicesRuntimes(fs.readFileSync(servicesJsonResult.path, 'utf-8'));
+      const servicesJsonContent = fs.readFileSync(servicesJsonResult.path, 'utf-8');
+      const runtimeByName = parseServicesRuntimes(servicesJsonContent);
+      const startByName = parseServicesStarts(servicesJsonContent);
       const unmatched: string[] = [];
       for (const unit of appUnits) {
         const rt = runtimeByName[unit.name];
@@ -243,6 +245,10 @@ export class DeployCommand {
           unit.runtime = rt;
         } else {
           unmatched.push(unit.name);
+        }
+        const st = startByName[unit.name];
+        if (st) {
+          unit.start = st;
         }
       }
       // F-dom-1 (review polish): warn EARLY when an app has no matching
@@ -435,6 +441,7 @@ export class DeployCommand {
         path: unit.path,
         framework: unit.framework,
         runtime: unit.runtime || undefined, // F-dom-2: the build-strategy key the API dispatches on
+        start: unit.start || undefined, // canonical Dockerfile CMD from services.json
         build: unit.build,
         dockerfile: unit.dockerfile,
         rendering: unit.rendering,
