@@ -6,19 +6,8 @@ Format: Keep a Changelog + Semantic Versioning.
 ## [Unreleased]
 
 ### Added
-- `LICENSE` (Apache-2.0) + `NOTICE` (third-party attributions), materializing the
-  per-file SPDX headers the source already declared.
-- `CONTRIBUTING.md` documenting setup, the HTTP-only dependency-direction
-  invariant, and the permanent exit-code / `--json` contracts.
-- npm package metadata for OSS publishing: `repository`, `homepage`, `bugs`,
-  `keywords`, `files` allowlist, and a `typecheck` script.
 
 ### Changed
-- Rewrote `README.md` into an OSS-grade landing page (outcome-shaped hero,
-  command reference, contracts, architecture, comparison, roadmap, honest
-  pre-release status).
-- Corrected the `package.json` `license` field from `UNLICENSED` to `Apache-2.0`
-  to match the source SPDX headers and the rest of the Theo platform.
 
 ### Deprecated
 
@@ -27,6 +16,24 @@ Format: Keep a Changelog + Semantic Versioning.
 ### Fixed
 
 ### Security
+
+## [0.2.1] - 2026-06-18
+
+### Added
+- `LICENSE` (Apache-2.0) + `NOTICE` (third-party attributions), materializing the
+  per-file SPDX headers the source already declared.
+- `CONTRIBUTING.md` documenting setup, the HTTP-only dependency-direction
+  invariant, and the permanent exit-code / `--json` contracts.
+- npm package metadata for OSS publishing: `repository`, `homepage`, `bugs`,
+  `keywords`, `files` allowlist, and a `typecheck` script.
+
+
+### Changed
+- Rewrote `README.md` into an OSS-grade landing page (outcome-shaped hero,
+  command reference, contracts, architecture, comparison, roadmap, honest
+  pre-release status).
+- Corrected the `package.json` `license` field from `UNLICENSED` to `Apache-2.0`
+  to match the source SPDX headers and the rest of the Theo platform.
 
 ## [0.2.0] - 2026-06-18
 
