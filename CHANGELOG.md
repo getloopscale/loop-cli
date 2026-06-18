@@ -8,10 +8,21 @@ Format: Keep a Changelog + Semantic Versioning.
 ### Added
 
 ### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [0.3.0] - 2026-06-18
+
+### Changed
 - Scoped the CLI to the end-user experience only. Updated the README command
   reference, comparison, architecture, and roadmap accordingly.
 
-### Deprecated
 
 ### Removed
 - BREAKING: removed the `theo platform` command group (`install` / `upgrade` /
@@ -21,10 +32,6 @@ Format: Keep a Changelog + Semantic Versioning.
   attack surface.
 - BREAKING: removed the operator-only `theo admin` command group (`tenants`,
   `release`), gated by `THEO_SERVICE_AUTH`. Not part of the end-user experience.
-
-### Fixed
-
-### Security
 
 ## [0.2.1] - 2026-06-18
 
