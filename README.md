@@ -68,8 +68,6 @@ fast to install, and decoupled from the platform's internals.
   build and deploy across stages (Vercel-style).
 - **Progressive delivery aware** — renders canary rollout progress and surfaces
   aborts with the right exit code.
-- **Self-hostable platform installer** — `theo platform install` brings up the
-  control plane (Helmfile + optional Pulumi infra) with health gates per step.
 - **OpenTelemetry tracing** — opt-in via `THEO_TRACING_ENABLED`; W3C trace
   context is propagated into the engine so a CLI command and its API spans share
   one trace.
@@ -121,8 +119,10 @@ theo deploy --prebuilt              # upload only — skip auto-build
 
 ## Commands
 
-26 top-level commands. Every command accepts `--json` for machine-readable
-output. Run `theo <command> --help` for the full flag set.
+24 end-user commands. Every command accepts `--json` for machine-readable
+output. Run `theo <command> --help` for the full flag set. (Platform
+installation and operator tooling are intentionally **not** part of the
+end-user CLI.)
 
 <details open>
 <summary><b>Auth</b> — identity & credentials</summary>
@@ -185,8 +185,6 @@ output. Run `theo <command> --help` for the full flag set.
 | `theo billing` | View plan and usage, or open the billing portal |
 | `theo audit` | View the audit log (requires `admin` or `owner`) |
 | `theo doctor` | Run a health check on the CLI environment |
-| `theo admin` | Operator-only commands (require `THEO_SERVICE_AUTH`) |
-| `theo platform` | Manage the TheoCloud platform installation (self-host) |
 
 </details>
 
@@ -253,11 +251,10 @@ bin/theo                  node launcher (+ 15-min watchdog)
 src/
 ├── index.ts              createProgram() — composition root, signals, exit-code wiring
 ├── register/             Commander wiring: subcommands → command actions
-├── commands/             use-case orchestration (deploy, platform, domain, env, …)
+├── commands/             use-case orchestration (deploy, domain, env, scale, …)
 ├── api/                  HTTP client + SSE stream (the only cross-repo seam)
 ├── auth/                 device-flow OAuth, token refresh, browser opener
 ├── adapters/             theo.yaml · services.json · source bundle + multipart upload · git
-├── installer/            platform install (Helmfile / Pulumi runners, preflight, health)
 ├── config/              ConfigStore (XDG, 0o600 tokens) + constants
 ├── output/               renderers, formatter (CI/json detection), prompts
 ├── lib/                  exit-code contract, theokit bin/build helpers
@@ -285,7 +282,7 @@ Where Theo CLI fits among deploy CLIs:
 | | **Theo CLI** | Vercel CLI | Railway CLI | Fly.io `flyctl` | Heroku CLI |
 |---|---|---|---|---|---|
 | Open source | ✅ Apache-2.0 | ❌ | ✅ MIT | ✅ Apache-2.0 | ✅ (deprecated OSS) |
-| Self-hostable control plane | ✅ `theo platform install` | ❌ (managed) | ❌ (managed) | ❌ (managed) | ❌ (managed) |
+| Self-hostable control plane | ✅ (operator-provisioned) | ❌ (managed) | ❌ (managed) | ❌ (managed) | ❌ (managed) |
 | Primary language | **TypeScript** | TypeScript | Rust | Go | TypeScript |
 | Zero-config deploy | ✅ `theo` | ✅ `vercel` | ✅ `railway up` | partial (`fly launch`) | ❌ (git push) |
 | Monorepo multi-app in one deploy | ✅ | partial | partial | ❌ (per-app) | ❌ |
@@ -331,8 +328,8 @@ the platform decomposition and now ships as a standalone repo.
 | Exit-code + `--json` contracts | **Shipped** |
 | Device-flow auth + transparent token refresh | **Shipped** |
 | Consumer-driven engine contract test (+ Pact) | **Shipped** |
-| Self-host platform installer (Helmfile / Pulumi) | **Shipped** |
 | OpenTelemetry tracing | **Shipped** |
+| Scope CLI to end-user experience (platform/operator tooling removed) | **Shipped** |
 | Publish `@usetheo/cli` to npm | Planned |
 | TS import-boundary lint (enforce HTTP-only mechanically) | Planned |
 

@@ -35,9 +35,6 @@
 /api/v1/teams/members/{}
 /api/v1/health
 /api/v1/source/upload
-/api/v1/admin/tenants/evict
-/api/v1/admin/tenants/pin
-/api/v1/admin/releases/{}/inspect
 /api/v1/builds/{}/logs/stream
 /api/v1/builds/{}/stream
 /api/v1/projects/{}/logs/stream
