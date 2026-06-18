@@ -3,7 +3,7 @@
 //
 // Phase 4 T4.2 — `infra` register integration test.
 // `infra.ts` register hosts the most subcommands of any register
-// (16 distinct: build/secret/connect/disconnect/billing/audit/admin).
+// (build/secret/connect/disconnect/billing/audit).
 // This test exercises a representative slice; other groups will get
 // dedicated tests in follow-up if blast radius warrants.
 
@@ -97,12 +97,3 @@ describe('theo audit', () => {
   });
 });
 
-describe('theo admin --help', () => {
-  it('exit 0 + lists tenants', async () => {
-    const tmp = mkTmpHome();
-    tmpHomes.push(tmp);
-    const r = await spawnTheo({ args: ['admin', '--help'], cwd: tmp });
-    expect(r.exitCode).toBe(0);
-    expect(r.stdout).toMatch(/tenants/);
-  });
-});

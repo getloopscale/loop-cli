@@ -17,6 +17,22 @@ Format: Keep a Changelog + Semantic Versioning.
 
 ### Security
 
+## [0.3.0] - 2026-06-18
+
+### Changed
+- Scoped the CLI to the end-user experience only. Updated the README command
+  reference, comparison, architecture, and roadmap accordingly.
+
+
+### Removed
+- BREAKING: removed the `theo platform` command group (`install` / `upgrade` /
+  `uninstall` / `status` / `secrets`) and the entire `src/installer/` module.
+  Platform installation is operator tooling — end users never install the
+  platform themselves, so shipping an installer in the user CLI was needless
+  attack surface.
+- BREAKING: removed the operator-only `theo admin` command group (`tenants`,
+  `release`), gated by `THEO_SERVICE_AUTH`. Not part of the end-user experience.
+
 ## [0.2.1] - 2026-06-18
 
 ### Added

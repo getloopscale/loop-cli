@@ -21,7 +21,7 @@ import * as os from 'os';
 export const BIN_PATH = path.resolve(__dirname, '../../../bin/theo');
 
 export interface SpawnTheoOptions {
-  /** Subcommand args, e.g. ['platform', 'status', '--json']. */
+  /** Subcommand args, e.g. ['status', '--json']. */
   args: string[];
   /** Override env. Always merged with process.env first. */
   env?: NodeJS.ProcessEnv;

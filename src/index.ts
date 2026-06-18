@@ -31,7 +31,6 @@ import { registerDomainCommands } from './register/domain';
 import { registerInfraCommands } from './register/infra';
 import { registerPreviewCommands } from './register/preview';
 import { registerScaleCommands } from './register/scale';
-import { registerPlatformCommands } from './register/platform';
 import { registerDiagnosticsCommands } from './register/diagnostics';
 import type { CommandDeps } from './register/types';
 
@@ -170,7 +169,6 @@ export function createProgram(): Command {
   registerInfraCommands(deps);
   registerPreviewCommands(deps);
   registerScaleCommands(deps);
-  registerPlatformCommands(deps);
   registerDiagnosticsCommands(deps);
 
   // Plan v1.1 T4.1 (theo-cli-vercel-like-ux) — zero-config delegation.
