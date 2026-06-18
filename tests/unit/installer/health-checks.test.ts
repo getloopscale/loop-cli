@@ -3,7 +3,7 @@
 //
 // CHG-2026-04-28-LAYERED-BOOTSTRAP / T4.1 — unit tests for health-checks.
 
-import { runHealthCheck, runFullHealthCheck } from '../../../src/installer/health-checks';
+import { runHealthCheck } from '../../../src/installer/health-checks';
 
 describe('health-checks', () => {
   describe('runHealthCheck', () => {
@@ -40,26 +40,6 @@ describe('health-checks', () => {
       const elapsed = Date.now() - start;
       // Even with kubectl waiting on DNS, 1 retry × 1s should not exceed 30s.
       expect(elapsed).toBeLessThan(30_000);
-    });
-  });
-
-  describe('runFullHealthCheck', () => {
-    it('returns ok=false stopping on first failure', () => {
-      // No cluster → first role (infra) fails → stops there.
-      const r = runFullHealthCheck({ retries: 1, retryIntervalSec: 1 });
-      expect(typeof r.ok).toBe('boolean');
-      expect(Array.isArray(r.results)).toBe(true);
-      expect(r.results.length).toBeGreaterThanOrEqual(1);
-      // The first result should be 'infra' (per documented order)
-      expect(r.results[0].role).toBe('infra');
-    });
-
-    it('on failure, results array stops at first failure (does not run remaining)', () => {
-      const r = runFullHealthCheck({ retries: 1, retryIntervalSec: 1 });
-      if (!r.ok) {
-        // Should stop early — not run all 5 roles
-        expect(r.results.length).toBeLessThanOrEqual(5);
-      }
     });
   });
 });

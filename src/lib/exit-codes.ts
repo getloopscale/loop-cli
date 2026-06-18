@@ -25,27 +25,6 @@ export const EXIT_CODES = {
 export type ExitCode = typeof EXIT_CODES[keyof typeof EXIT_CODES];
 
 /**
- * Map a terminal release state to its Rule 4 exit code.
- *
- * Plan T1.2 ADR D3 — single source of truth for state → exit mapping.
- */
-export function releaseStateToExitCode(releaseState: string | undefined): ExitCode {
-  switch (releaseState) {
-    case 'ACTIVE':
-    case 'SUPERSEDED':
-      return EXIT_CODES.SUCCESS;
-    case 'SYNC_FAILED':
-    case 'GIT_MIRROR_FAILED':
-    case 'ROLLBACK_FAILED':
-    case 'CANCELLED':
-      return EXIT_CODES.DEPLOY_FAILED;
-    default:
-      // Unknown state — treat as deploy failure (safe default)
-      return EXIT_CODES.DEPLOY_FAILED;
-  }
-}
-
-/**
  * Map a terminal build state to its Rule 4 exit code.
  */
 export function buildStateToExitCode(buildState: string | undefined): ExitCode {
@@ -59,23 +38,6 @@ export function buildStateToExitCode(buildState: string | undefined): ExitCode {
       // Non-terminal or unknown — caller decides; default to build failure
       return EXIT_CODES.BUILD_FAILED;
   }
-}
-
-/**
- * Map a terminal state combination (build + release) to the appropriate exit
- * code. Plan T1.2 — releaseState wins when set (deploy failure semantically
- * happens AFTER build success).
- */
-export function mapTerminalStateToExitCode(
-  buildState: string | undefined,
-  releaseState: string | undefined,
-): ExitCode {
-  // If release reached a terminal state, that wins (deploy-level concern)
-  if (releaseState) {
-    return releaseStateToExitCode(releaseState);
-  }
-  // Otherwise fall through to build state
-  return buildStateToExitCode(buildState);
 }
 
 /**

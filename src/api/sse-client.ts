@@ -50,6 +50,7 @@ export class SSEClient {
   private abortController: AbortController | null = null;
   private pollTimer: ReturnType<typeof setTimeout> | null = null;
   private retryCount = 0;
+  private pollFailureCount = 0;
 
   private readonly url: string;
   private readonly headers: Record<string, string>;
@@ -88,6 +89,13 @@ export class SSEClient {
   }
 
   close(): void {
+    // Idempotent: close() is called from internal terminal paths
+    // (retry-exhaustion, terminal poll status) AND by external callers in a
+    // finally block. Without this guard onClose() would fire multiple times,
+    // triggering double cleanup in consumers.
+    if (this.closed) {
+      return;
+    }
     this.closed = true;
 
     if (this.abortController) {
@@ -333,14 +341,17 @@ export class SSEClient {
         });
 
         if (!response.ok) {
-          this.onError(
-            new ApiError(
-              `Poll request failed with status ${response.status}`,
-              response.status >= 400 && response.status < 500 ? 1 : 3,
-              response.status,
-            ),
+          const apiError = new ApiError(
+            `Poll request failed with status ${response.status}`,
+            response.status >= 400 && response.status < 500 ? 1 : 3,
+            response.status,
           );
+          if (this.handlePollFailure(apiError)) {
+            return; // gave up — do not reschedule
+          }
         } else {
+          // Successful poll — reset the consecutive-failure counter.
+          this.pollFailureCount = 0;
           const data = await response.json();
           const pollEvent: SSEEvent = {
             id: '',
@@ -360,9 +371,11 @@ export class SSEClient {
         }
       } catch (err) {
         if (!this.closed) {
-          this.onError(
-            err instanceof Error ? err : new ApiError(String(err), 3, 0),
-          );
+          const pollError =
+            err instanceof Error ? err : new ApiError(String(err), 3, 0);
+          if (this.handlePollFailure(pollError)) {
+            return; // gave up — do not reschedule
+          }
         }
       }
 
@@ -371,6 +384,32 @@ export class SSEClient {
         this.schedulePoll(url);
       }
     }, this.pollInterval);
+  }
+
+  /**
+   * Record a polling failure. Surfaces the underlying error, then — after
+   * `maxRetries` CONSECUTIVE failures — emits a terminal give-up error and
+   * closes the client. Mirrors the streaming-mode retry ceiling so the
+   * polling fallback cannot loop forever on a persistently unreachable
+   * endpoint. Returns true when the client gave up (caller must NOT
+   * reschedule).
+   */
+  private handlePollFailure(error: Error): boolean {
+    this.pollFailureCount++;
+    this.onError(error);
+
+    if (this.pollFailureCount >= this.maxRetries) {
+      this.onError(
+        new ApiError(
+          `Build status polling failed after ${this.maxRetries} retries. The build may still be running — check status with theo status.`,
+          3,
+          0,
+        ),
+      );
+      this.close();
+      return true;
+    }
+    return false;
   }
 
   private delay(ms: number): Promise<void> {

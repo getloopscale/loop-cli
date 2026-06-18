@@ -150,4 +150,36 @@ describe('refreshAccessToken', () => {
     const result = await refreshAccessToken(fetchFn, 'http://localhost:13002', 'expired-rt');
     expect(result).toBeNull();
   });
+
+  it('surfaces the network cause under THEO_DEBUG while still returning null', async () => {
+    const original = process.env.THEO_DEBUG;
+    process.env.THEO_DEBUG = '1';
+    const writeSpy = jest
+      .spyOn(process.stderr, 'write')
+      .mockReturnValue(true);
+    const fetchFn = jest
+      .fn()
+      .mockRejectedValue(new Error('fetch failed: ECONNRESET'));
+
+    try {
+      const result = await refreshAccessToken(
+        fetchFn,
+        'http://localhost:13002',
+        'rt',
+      );
+      // Contract preserved: still returns null on failure.
+      expect(result).toBeNull();
+      // But the cause is now diagnosable instead of silently swallowed.
+      const output = writeSpy.mock.calls.map((c) => String(c[0])).join('');
+      expect(output).toContain('auth:refreshAccessToken');
+      expect(output).toContain('ECONNRESET');
+    } finally {
+      writeSpy.mockRestore();
+      if (original === undefined) {
+        delete process.env.THEO_DEBUG;
+      } else {
+        process.env.THEO_DEBUG = original;
+      }
+    }
+  });
 });

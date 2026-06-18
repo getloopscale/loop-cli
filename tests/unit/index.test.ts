@@ -58,10 +58,6 @@ describe('CLI entrypoint', () => {
       expect(commandNames).toContain('whoami');
     });
 
-    it('should register init command', () => {
-      expect(commandNames).toContain('init');
-    });
-
     it('should register project command', () => {
       expect(commandNames).toContain('project');
     });
@@ -89,31 +85,6 @@ describe('CLI entrypoint', () => {
         (opt) => opt.long === '--team'
       );
       expect(teamOpt).toBeDefined();
-    });
-  });
-
-  describe('init command options', () => {
-    const initCmd = program.commands.find((cmd) => cmd.name() === 'init');
-
-    it('should have --yes option', () => {
-      const yesOpt = initCmd?.options.find(
-        (opt) => opt.long === '--yes'
-      );
-      expect(yesOpt).toBeDefined();
-    });
-
-    it('should have --force option', () => {
-      const forceOpt = initCmd?.options.find(
-        (opt) => opt.long === '--force'
-      );
-      expect(forceOpt).toBeDefined();
-    });
-
-    it('should have --name option', () => {
-      const nameOpt = initCmd?.options.find(
-        (opt) => opt.long === '--name'
-      );
-      expect(nameOpt).toBeDefined();
     });
   });
 

@@ -2,6 +2,7 @@
 // Copyright 2025-2026 The Theo Authors
 
 import { getDefaultApiUrl, API_REQUEST_TIMEOUT_MS } from '../config/constants';
+import { debugError } from '../lib/debug';
 
 /** Device authorization response from the cloud service. */
 export interface DeviceAuthResponse {
@@ -131,7 +132,8 @@ async function requestDeviceCode(
 
     if (!resp.ok) return null;
     return await resp.json() as DeviceAuthResponse;
-  } catch {
+  } catch (err) {
+    debugError('auth:requestDeviceCode', err);
     return null;
   }
 }
@@ -171,7 +173,8 @@ async function pollDeviceToken(
       };
     }
     return null;
-  } catch {
+  } catch (err) {
+    debugError('auth:pollDeviceToken', err);
     return null;
   }
 }
@@ -204,7 +207,8 @@ export async function refreshAccessToken(
       };
     }
     return null;
-  } catch {
+  } catch (err) {
+    debugError('auth:refreshAccessToken', err);
     return null;
   }
 }
