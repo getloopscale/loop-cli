@@ -94,24 +94,37 @@ function pulumiOutputsToEnv(outputs: Record<string, unknown>): Record<string, st
 }
 
 /**
- * `theo platform install -f values.yaml [--profile <name>] [--provider <name>] [--dry-run]`
- *
- * 6 steps (post-CHG-2026-04-28-LAYERED-BOOTSTRAP):
- *   1. Validate (config, cluster reachable OR --provider set)
- *   2. Preflight (helmfile installed, tokens valid if --provider)
- *   3. Infrastructure (CONDITIONAL — only with --provider)
- *      → pulumi up → outputs (kubeconfigs, DB, registry, ...)
- *   4. Bootstrap (helmfile sync per cluster role)
- *      → multi-cluster: build → mgmt → runtime × N
- *      → standalone: mgmt only with environment="standalone"
- *   5. Wire (cross-cluster: register clusters, RBAC, wiring ConfigMap)
- *   6. Validate (smoke test, regression checks)
+ * Resolved, shared state threaded through every install phase. Built once by
+ * resolveInstallContext so each step is a small, single-responsibility unit.
  */
-export async function platformInstall(
+interface InstallContext {
+  deps: PlatformDeps;
+  opts: PlatformInstallOptions;
+  config: PlatformConfig;
+  isJson: boolean;
+  writeTo: (msg: string) => void;
+  writeError: (msg: string) => void;
+  progress: (
+    step: string,
+    phase: string,
+    status: 'running' | 'complete' | 'failed' | 'skipped',
+    extra?: Record<string, unknown>,
+  ) => void;
+  environment: string;
+  isMultiCluster: boolean;
+  useInfra: boolean;
+  projectRoot: string;
+}
+
+/**
+ * Parse options, load + validate the values file, derive environment/flags, and
+ * print the banner. Returns the InstallContext on success or an exit code.
+ */
+function resolveInstallContext(
   deps: PlatformDeps,
   optsOrFile: PlatformInstallOptions | string,
   legacyProfile?: string,
-): Promise<number> {
+): InstallContext | number {
   const { writeError } = deps;
   // Backwards-compat: callers may pass (deps, valuesFile, profile) (old signature).
   const opts: PlatformInstallOptions =
@@ -176,8 +189,16 @@ export async function platformInstall(
   if (opts.dryRun) writeTo('  Mode:        DRY RUN (helmfile diff)');
   writeTo('');
 
-  // ── Step 1: Validate ──────────────────────────────────────────────
-  progress('1/6', 'validate', 'running'); writeTo('Step 1/6: Validating configuration...');
+  return {
+    deps, opts, config, isJson, writeTo, writeError, progress,
+    environment, isMultiCluster, useInfra, projectRoot,
+  };
+}
+
+/** Step 1 — validate config + cluster reachability. Returns exit code or null. */
+function stepValidate(ctx: InstallContext): number | null {
+  const { writeTo, writeError, config, isMultiCluster } = ctx;
+  ctx.progress('1/6', 'validate', 'running'); writeTo('Step 1/6: Validating configuration...');
   if (!isMultiCluster) {
     const validation = validateCluster();
     for (const check of validation.checks) {
@@ -190,9 +211,13 @@ export async function platformInstall(
   } else {
     writeTo(`  ✓ provider=${config.provider} — cluster will be provisioned`);
   }
+  return null;
+}
 
-  // ── Step 2: Preflight ─────────────────────────────────────────────
-  progress('2/6', 'preflight', 'running'); writeTo('Step 2/6: Preflight checks...');
+/** Step 2 — preflight tooling/token checks. Returns exit code or null. */
+function stepPreflight(ctx: InstallContext): number | null {
+  const { writeTo, writeError, config } = ctx;
+  ctx.progress('2/6', 'preflight', 'running'); writeTo('Step 2/6: Preflight checks...');
   const preflightResult = runPreflight({
     provider: config.provider,
     cfAccountId: config.providerConfig?.cfAccountId,
@@ -203,11 +228,18 @@ export async function platformInstall(
     writeError('Preflight checks failed. Fix the issues above and retry.');
     return 1;
   }
+  return null;
+}
 
-  // ── Step 3: Infrastructure (CONDITIONAL — only with --provider) ────
+/**
+ * Step 3 — provision (or skip) cloud infrastructure. Returns the L1→L2 env map
+ * on success, or an exit code on failure.
+ */
+function stepInfrastructure(ctx: InstallContext): { extraEnv: Record<string, string> } | number {
+  const { writeTo, writeError, config, opts, environment, useInfra, projectRoot } = ctx;
   let extraEnv: Record<string, string> = {};
   if (useInfra) {
-    progress('3/6', 'infrastructure', 'running'); writeTo('Step 3/6: Provisioning cloud infrastructure (Pulumi L1)...');
+    ctx.progress('3/6', 'infrastructure', 'running'); writeTo('Step 3/6: Provisioning cloud infrastructure (Pulumi L1)...');
     const pulumiCtx = {
       projectDir: resolvePulumiProjectDir(projectRoot),
       stack: environment,
@@ -268,62 +300,72 @@ export async function platformInstall(
   } else {
     writeTo('Step 3/6: Skipping infrastructure (no --provider) — using existing cluster');
   }
+  return { extraEnv };
+}
 
-  // ── Step 3.5: Secret backup restore (ADR D2) ──────────────────────
-  // Detect ~/.theo/backups/secrets-*.yaml from a prior install. CI mode
-  // requires explicit --restore-secrets <file> or --no-restore-secrets.
-  // Interactive mode prompts. Without this, destroy + install loses every
-  // tenant secret silently and tenant pods fail at CreateContainerConfigError.
-  if (!opts.dryRun) {
-    const decision = decideRestore({
-      isCI: process.env.CI === 'true',
-      restoreFile: opts.restoreSecretsFile,
-      skip: opts.skipRestoreSecrets,
-    });
-    switch (decision.action) {
-      case 'restore': {
-        writeTo(`Step 3.5/6: Restoring Secrets from ${decision.file}...`);
-        const r = spawnSync('kubectl', ['apply', '-f', decision.file], { stdio: 'inherit' });
+/**
+ * Step 3.5 — restore tenant Secrets from a prior backup (ADR D2). Returns an
+ * exit code on failure or null to continue.
+ */
+async function stepRestoreSecrets(ctx: InstallContext): Promise<number | null> {
+  const { writeTo, writeError, opts } = ctx;
+  if (opts.dryRun) return null;
+
+  const decision = decideRestore({
+    isCI: process.env.CI === 'true',
+    restoreFile: opts.restoreSecretsFile,
+    skip: opts.skipRestoreSecrets,
+  });
+  switch (decision.action) {
+    case 'restore': {
+      writeTo(`Step 3.5/6: Restoring Secrets from ${decision.file}...`);
+      const r = spawnSync('kubectl', ['apply', '-f', decision.file], { stdio: 'inherit' });
+      if (r.status !== 0) {
+        writeError('  ✗ kubectl apply failed during Secret restore');
+        return 3;
+      }
+      writeTo('  ✓ Secrets restored');
+      break;
+    }
+    case 'fail':
+      writeError(`Step 3.5/6: ${decision.error}`);
+      return 1;
+    case 'prompt': {
+      writeTo(`Step 3.5/6: Found Secret backup ${decision.latest.path} (${decision.latest.mtime.toISOString()}).`);
+      const { createInterface } = await import('readline');
+      const rl = createInterface({ input: process.stdin, output: process.stdout });
+      const answer = await new Promise<string>((resolve) =>
+        rl.question('  Restore Secrets from this backup before helmfile sync? (yes/no) ', (a) => {
+          rl.close();
+          resolve(a.trim().toLowerCase());
+        }),
+      );
+      if (answer === 'yes' || answer === 'y') {
+        const r = spawnSync('kubectl', ['apply', '-f', decision.latest.path], { stdio: 'inherit' });
         if (r.status !== 0) {
           writeError('  ✗ kubectl apply failed during Secret restore');
           return 3;
         }
         writeTo('  ✓ Secrets restored');
-        break;
+      } else {
+        writeTo('  Skipped Secret restore (operator declined)');
       }
-      case 'fail':
-        writeError(`Step 3.5/6: ${decision.error}`);
-        return 1;
-      case 'prompt': {
-        writeTo(`Step 3.5/6: Found Secret backup ${decision.latest.path} (${decision.latest.mtime.toISOString()}).`);
-        const { createInterface } = await import('readline');
-        const rl = createInterface({ input: process.stdin, output: process.stdout });
-        const answer = await new Promise<string>((resolve) =>
-          rl.question('  Restore Secrets from this backup before helmfile sync? (yes/no) ', (a) => {
-            rl.close();
-            resolve(a.trim().toLowerCase());
-          }),
-        );
-        if (answer === 'yes' || answer === 'y') {
-          const r = spawnSync('kubectl', ['apply', '-f', decision.latest.path], { stdio: 'inherit' });
-          if (r.status !== 0) {
-            writeError('  ✗ kubectl apply failed during Secret restore');
-            return 3;
-          }
-          writeTo('  ✓ Secrets restored');
-        } else {
-          writeTo('  Skipped Secret restore (operator declined)');
-        }
-        break;
-      }
-      case 'skip':
-        writeTo(`Step 3.5/6: Skipping Secret restore (${decision.reason})`);
-        break;
+      break;
     }
+    case 'skip':
+      writeTo(`Step 3.5/6: Skipping Secret restore (${decision.reason})`);
+      break;
   }
+  return null;
+}
 
-  // ── Step 4: Bootstrap (Helmfile L2) ────────────────────────────────
-  progress('4/6', 'helmfile', 'running'); writeTo('Step 4/6: Installing platform via Helmfile...');
+/**
+ * Step 4 — Helmfile bootstrap per cluster role, each gated by a health check.
+ * Returns an exit code on failure or null to continue.
+ */
+function stepBootstrap(ctx: InstallContext, extraEnv: Record<string, string>): number | null {
+  const { writeTo, writeError, config, opts, environment, isMultiCluster, projectRoot } = ctx;
+  ctx.progress('4/6', 'helmfile', 'running'); writeTo('Step 4/6: Installing platform via Helmfile...');
   const clusterRoles: Array<'mgmt' | 'build' | 'runtime'> = isMultiCluster
     ? ['build', 'mgmt', 'runtime']
     : ['mgmt']; // standalone
@@ -334,7 +376,7 @@ export async function platformInstall(
 
     // Pre-sync secret generation (replaces helmfile prepare hooks; idempotent).
     if (!opts.dryRun) {
-      
+
       const presyncEnv = { ...process.env, ...extraEnv, ...(kubeconfig ? { KUBECONFIG: kubeconfig } : {}) };
       const presyncScripts: Array<{ script: string; args: string[] }> = role === 'build'
         ? [
@@ -386,9 +428,13 @@ export async function platformInstall(
       writeTo(`  ✓ health-check ${role} passed (${(hc.durationMs / 1000).toFixed(1)}s)`);
     }
   }
+  return null;
+}
 
-  // ── Step 5: Wire ───────────────────────────────────────────────────
-  progress('5/6', 'wire', 'running'); writeTo('Step 5/6: Wiring cross-cluster connectivity...');
+/** Step 5 — cross-cluster wiring (multi-cluster only). Returns exit code or null. */
+function stepWire(ctx: InstallContext, extraEnv: Record<string, string>): number | null {
+  const { writeTo, writeError, opts, environment, isMultiCluster, projectRoot } = ctx;
+  ctx.progress('5/6', 'wire', 'running'); writeTo('Step 5/6: Wiring cross-cluster connectivity...');
   if (isMultiCluster && !opts.dryRun) {
 
     const wireScript = `${projectRoot}/infra/helmfile/scripts/wire-clusters.sh`;
@@ -404,66 +450,78 @@ export async function platformInstall(
   } else {
     writeTo('  (skipping cross-cluster wiring — standalone mode)');
   }
+  return null;
+}
 
-  // ── Step 6: Validate ───────────────────────────────────────────────
-  progress('6/6', 'validate-install', 'running'); writeTo('Step 6/6: Validating installation...');
-  if (!opts.dryRun) {
-    const status = getPlatformStatus();
-    writeTo(`  Platform phase: ${status.phase}`);
-    for (const c of status.components) {
-      writeTo(`    ${c.status === 'Running' ? '✓' : '✗'} ${c.name}: ${c.status}`);
+/**
+ * Step 6 (+6.5 L3 smoke) — validate the live install. Returns an exit code on
+ * failure or null to continue to the success summary.
+ */
+function stepValidateInstall(ctx: InstallContext): number | null {
+  const { deps, writeTo, writeError, config, opts, isJson } = ctx;
+  ctx.progress('6/6', 'validate-install', 'running'); writeTo('Step 6/6: Validating installation...');
+  if (opts.dryRun) return null;
+
+  const status = getPlatformStatus();
+  writeTo(`  Platform phase: ${status.phase}`);
+  for (const c of status.components) {
+    writeTo(`    ${c.status === 'Running' ? '✓' : '✗'} ${c.name}: ${c.status}`);
+  }
+  if (status.phase !== 'Ready' && status.phase !== 'Installing') {
+    writeError('Installation completed but platform is not Ready.');
+    ctx.progress('6/6', 'validate-install', 'failed', { phase: status.phase });
+    if (isJson) {
+      deps.writeTo(JSON.stringify({
+        status: 'failed',
+        phase: status.phase,
+        domain: config.domain,
+        components: status.components,
+        errors: ['platform is not Ready'],
+      }));
     }
-    if (status.phase !== 'Ready' && status.phase !== 'Installing') {
-      writeError('Installation completed but platform is not Ready.');
-      progress('6/6', 'validate-install', 'failed', { phase: status.phase });
+    return 5;
+  }
+  ctx.progress('6/6', 'validate-install', 'complete', { phase: status.phase });
+
+  // ── Step 6.5: --validate-l3 (T8.1, ADR D5) ──────────────────────
+  // Optional release gate: 100-tenant smoke against the freshly installed
+  // platform. Only runs when phase=Ready (no point hammering a broken
+  // install). Failure → exit 5 (partial failure: install is up, capacity
+  // assertions missed). Skipped silently when flag absent.
+  if (opts.validateL3 && status.phase === 'Ready') {
+    ctx.progress('6.5', 'validate-l3', 'running');
+    writeTo('Step 6.5: L3 100-tenant smoke (--validate-l3)...');
+    const l3 = spawnSync('go', [
+      'test',
+      '-tags=l3',
+      '-timeout=30m',
+      '-run', 'TestRealDeploy_L3RealisticWithChurn',
+      './infra/tests/load',
+    ], { stdio: isJson ? 'pipe' : 'inherit', env: process.env });
+    if (l3.status !== 0) {
+      writeError('  ✗ L3 smoke failed (DoD #20 miss)');
+      ctx.progress('6.5', 'validate-l3', 'failed', { exit: l3.status ?? -1 });
       if (isJson) {
         deps.writeTo(JSON.stringify({
           status: 'failed',
-          phase: status.phase,
+          phase: 'l3-smoke',
           domain: config.domain,
-          components: status.components,
-          errors: ['platform is not Ready'],
+          errors: ['L3 100-tenant smoke failed'],
         }));
       }
       return 5;
     }
-    progress('6/6', 'validate-install', 'complete', { phase: status.phase });
-
-    // ── Step 6.5: --validate-l3 (T8.1, ADR D5) ──────────────────────
-    // Optional release gate: 100-tenant smoke against the freshly installed
-    // platform. Only runs when phase=Ready (no point hammering a broken
-    // install). Failure → exit 5 (partial failure: install is up, capacity
-    // assertions missed). Skipped silently when flag absent.
-    if (opts.validateL3 && status.phase === 'Ready') {
-      progress('6.5', 'validate-l3', 'running');
-      writeTo('Step 6.5: L3 100-tenant smoke (--validate-l3)...');
-      const l3 = spawnSync('go', [
-        'test',
-        '-tags=l3',
-        '-timeout=30m',
-        '-run', 'TestRealDeploy_L3RealisticWithChurn',
-        './infra/tests/load',
-      ], { stdio: isJson ? 'pipe' : 'inherit', env: process.env });
-      if (l3.status !== 0) {
-        writeError('  ✗ L3 smoke failed (DoD #20 miss)');
-        progress('6.5', 'validate-l3', 'failed', { exit: l3.status ?? -1 });
-        if (isJson) {
-          deps.writeTo(JSON.stringify({
-            status: 'failed',
-            phase: 'l3-smoke',
-            domain: config.domain,
-            errors: ['L3 100-tenant smoke failed'],
-          }));
-        }
-        return 5;
-      }
-      writeTo('  ✓ L3 smoke passed (100/100 tenants healthy)');
-      progress('6.5', 'validate-l3', 'complete');
-    } else if (opts.validateL3) {
-      progress('6.5', 'validate-l3', 'skipped', { reason: `phase=${status.phase}` });
-    }
+    writeTo('  ✓ L3 smoke passed (100/100 tenants healthy)');
+    ctx.progress('6.5', 'validate-l3', 'complete');
+  } else if (opts.validateL3) {
+    ctx.progress('6.5', 'validate-l3', 'skipped', { reason: `phase=${status.phase}` });
   }
+  return null;
+}
 
+/** Final success summary (prose + JSON). Always returns 0. */
+function renderInstallSuccess(ctx: InstallContext): number {
+  const { deps, writeTo, config, environment, isJson } = ctx;
   writeTo('');
   writeTo('  ✓ Theo platform installed.');
   writeTo(`    Domain:    https://${config.domain}`);
@@ -484,6 +542,53 @@ export async function platformInstall(
     }));
   }
   return 0;
+}
+
+/**
+ * `theo platform install -f values.yaml [--profile <name>] [--provider <name>] [--dry-run]`
+ *
+ * Orchestrates the 6-step layered bootstrap (post-CHG-2026-04-28-LAYERED-BOOTSTRAP).
+ * Each step is a focused helper that returns an exit code (failure) or null
+ * (continue):
+ *   1. Validate (config, cluster reachable OR --provider set)
+ *   2. Preflight (helmfile installed, tokens valid if --provider)
+ *   3. Infrastructure (CONDITIONAL — only with --provider) → pulumi up → outputs
+ *   3.5 Restore tenant Secrets from a prior backup (ADR D2)
+ *   4. Bootstrap (helmfile sync per cluster role, each health-gated)
+ *   5. Wire (cross-cluster: register clusters, RBAC, wiring ConfigMap)
+ *   6. Validate (smoke test, optional L3 100-tenant gate)
+ */
+export async function platformInstall(
+  deps: PlatformDeps,
+  optsOrFile: PlatformInstallOptions | string,
+  legacyProfile?: string,
+): Promise<number> {
+  const ctx = resolveInstallContext(deps, optsOrFile, legacyProfile);
+  if (typeof ctx === 'number') return ctx;
+
+  const v1 = stepValidate(ctx);
+  if (v1 !== null) return v1;
+
+  const v2 = stepPreflight(ctx);
+  if (v2 !== null) return v2;
+
+  const infra = stepInfrastructure(ctx);
+  if (typeof infra === 'number') return infra;
+  const { extraEnv } = infra;
+
+  const restore = await stepRestoreSecrets(ctx);
+  if (restore !== null) return restore;
+
+  const bootstrap = stepBootstrap(ctx, extraEnv);
+  if (bootstrap !== null) return bootstrap;
+
+  const wire = stepWire(ctx, extraEnv);
+  if (wire !== null) return wire;
+
+  const validate = stepValidateInstall(ctx);
+  if (validate !== null) return validate;
+
+  return renderInstallSuccess(ctx);
 }
 
 /**
