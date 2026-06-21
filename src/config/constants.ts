@@ -25,9 +25,14 @@ function envInt(name: string, defaultValue: number): number {
  *
  * Priority: THEO_URL > THEO_API_URL (deprecated) > fallback.
  * Local dev: port 8080 matches the Traefik-less direct API server.
- * Development cluster: set THEO_URL=https://api-dev.usetheo.dev
- * (note hyphen — canonical dev-public DNS pattern per the
- * `dev-public-domain-canonicalization` plan 2026-06-04).
+ * Dev-public cluster: set THEO_URL=https://app-dev.usetheo.dev/engine
+ * (engine REST is proxied under /engine/* on the dashboard host;
+ * canonical per the QA test-scenarios doc 2026-06-21 LIVE close).
+ * Standalone-multi local: set THEO_URL=http://localhost:13001 or
+ * whatever canonical local port the helmfile overlay exposes.
+ *
+ * Stale value `https://api-dev.usetheo.dev` does NOT resolve in DNS
+ * — issue #130 lock 2026-06-21.
  */
 export const DEFAULT_API_URL_FALLBACK = 'http://localhost:8080';
 
