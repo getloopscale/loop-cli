@@ -5,6 +5,20 @@ Format: Keep a Changelog + Semantic Versioning.
 
 ## [Unreleased]
 
+### Fixed
+- `src/config/constants.ts` — canonical `THEO_URL` comment rewritten per the
+  QA dogfooding 2026-06-21 close (#130). The legacy comment said `set
+  THEO_URL=https://api-dev.usetheo.dev` but that hostname does NOT resolve in
+  the dev-public DNS. New canonical: `set
+  THEO_URL=https://app-dev.usetheo.dev/engine` (the engine REST is proxied
+  under `/engine/*` on the dashboard host). Standalone-multi local
+  alternative + reference to the stale value preserved for archaeology.
+  NEW hermetic regression-lock at
+  `tests/unit/constants-comment-canonical.test.ts` (3 specs PASS) with
+  anchored regex so the audit only fires on the directive shape
+  (`set THEO_URL=...`) and NOT on prose references that document the
+  history.
+
 ### Added
 
 ### Changed
