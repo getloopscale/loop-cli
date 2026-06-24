@@ -61,8 +61,27 @@ function withJitter(intervalMs: number): number {
  * - Jitter on polling interval prevents thundering herd
  * - Max retry count as safety limit alongside timeout
  */
+/**
+ * Strips the trailing `/engine` suffix from a base URL so device-flow
+ * endpoints hit the cloud root, not the engine proxy.
+ *
+ * Per `src/config/constants.ts:22` (MEET-040) the canonical dev-public
+ * value is `THEO_URL=https://app-dev.usetheo.dev/engine`; Caddy routes
+ * `/v1/auth/*` → cloud service (13002) while `/*` falls through to the
+ * dashboard/engine plane. The device-flow endpoints (`/v1/auth/device/*`)
+ * live at the cloud ROOT, not under `/engine/...`. Without this strip the
+ * CLI hits `/engine/v1/auth/device/authorize` and dev-public returns 401
+ * because that path traverses the auth-required middleware to the cloud
+ * catchall.
+ *
+ * Tested by `tests/unit/device-flow.test.ts § strips /engine suffix`.
+ */
+function stripEngineSuffix(baseURL: string): string {
+  return baseURL.replace(/\/engine\/?$/, '');
+}
+
 export async function executeDeviceCodeFlow(deps: DeviceFlowDeps): Promise<TokenResponse | null> {
-  const baseURL = deps.baseURL || getDefaultApiUrl();
+  const baseURL = stripEngineSuffix(deps.baseURL || getDefaultApiUrl());
 
   // Step 1: Request device code
   const authResp = await requestDeviceCode(deps.fetchFn, baseURL);
@@ -188,8 +207,9 @@ export async function refreshAccessToken(
   baseURL: string,
   refreshToken: string,
 ): Promise<TokenResponse | null> {
+  const rootURL = stripEngineSuffix(baseURL);
   try {
-    const resp = await fetchFn(`${baseURL}/v1/auth/token/refresh`, {
+    const resp = await fetchFn(`${rootURL}/v1/auth/token/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh_token: refreshToken }),

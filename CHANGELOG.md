@@ -6,6 +6,22 @@ Format: Keep a Changelog + Semantic Versioning.
 ## [Unreleased]
 
 ### Fixed
+- `src/auth/device-flow.ts` — **`theo login --device-flow` 401 on dev-public**
+  (root cause: CLI prepended canonical
+  `THEO_URL=https://app-dev.usetheo.dev/engine` to `/v1/auth/device/*` and the
+  resulting `/engine/v1/auth/device/*` falls through Caddy `/v1/*` route → 401
+  catchall). Per MEET-040 design (`src/config/constants.ts:22`) Caddy routes
+  `/v1/auth/*` → cloud service; device-flow + token-refresh endpoints live at
+  the cloud ROOT, not the engine proxy. New `stripEngineSuffix` helper drops
+  the trailing `/engine` (also covers `/engine/`) before the 3 endpoint URLs
+  (`/v1/auth/device/{authorize,token}`, `/v1/auth/token/refresh`).
+  LIVE-validated post-strip: `POST app-dev.usetheo.dev/v1/auth/device/authorize`
+  returns 200 with real Hydra `device_code` + canonical
+  `verification_uri=https://auth-dev.usetheo.dev/oauth2/device/verify`. 2 NEW
+  hermetic anti-regression tests at
+  `tests/unit/device-flow.test.ts § strips /engine suffix`. Full suite 1298
+  PASS / 0 FAIL.
+
 - `src/config/constants.ts` — canonical `THEO_URL` comment rewritten per the
   QA dogfooding 2026-06-21 close (#130). The legacy comment said `set
   THEO_URL=https://api-dev.usetheo.dev` but that hostname does NOT resolve in
