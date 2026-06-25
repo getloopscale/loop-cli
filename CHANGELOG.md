@@ -5,7 +5,12 @@ Format: Keep a Changelog + Semantic Versioning.
 
 ## [Unreleased]
 
-## [0.3.2] - 2026-06-25
+## [0.3.3] - 2026-06-25
+
+### Changed
+- **`publish.yml` workflow runs only hermetic suites (unit + contract)** — `npm test` blocks publish on integration tests that require a live theo backend (real auth + real `/api/v1` surface), failing CI with exit-code 4 even though 1294/1303 tests pass. v0.3.1 + v0.3.2 publish steps were SKIPPED because of this; both releases were published manually by sponsor. Sprint 4 `READY_TO_READ_TEAM` mandate (sponsor 2026-06-25) requires automated publish to unblock QA. Split: new `test:unit` (1230 tests) + `test:contract` (14 tests) scripts; publish workflow runs `test:unit` + `test:contract` only. Integration tests run locally + canonical on operator side (1303/1303 PASS local). Closes the recurring sponsor-manual-publish friction documented in feedback `cto_issue_fix_publish_chain_2026_06_24`.
+
+## [0.3.2] - 2026-06-25 [SKIPPED — publish gated on integration tests; superseded by 0.3.3]
 
 ### Fixed
 - `src/adapters/services-json.ts` — **`theo deploy` fails with `services.json not found` even when `theokit build` succeeded** (closes usetheodev/theo-cloud#29.B2). theokit v0.5.0+ writes manifests to `.theokit/services.json` by default; theo-cli previously only searched `.theo/services.json`. The walk-up loop now cascades through both at each dir level, preferring `.theo/` for backward compat with users who built via `theokit build --target theo-cloud` (still emits `.theo/`). The `--services-json <path>` override flag continues to short-circuit the cascade. 5 NEW hermetic regression tests at `tests/unit/adapters/services-json.test.ts § cascade .theo/ → .theokit/ (Sprint 4 #29.B2)`. Full suite 1303 PASS / 0 FAIL (was 1298 pre-Sprint-4 + 5 new). Plan reference: `theo/.claude/knowledge-base/plans/qa-sprint4-cleanup-2026-06-25-plan.md` Phase 1 (T1.0..T1.3). EC-1 absorption: T1.0 pre-flight probe caught that `jest.config.js roots: ['<rootDir>/tests']` would have silently skipped tests at `src/adapters/*.test.ts`; placed under canonical `tests/unit/adapters/`.
