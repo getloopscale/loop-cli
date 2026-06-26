@@ -5,6 +5,8 @@ Format: Keep a Changelog + Semantic Versioning.
 
 ## [Unreleased]
 
+## [0.3.5] - 2026-06-26
+
 ### Fixed
 
 - **theo-cloud#62 J-00.Deploy: `theo status` sem `--env` mostra `production` vazio mesmo com deploy ativo em `preview` (sem pista para usar `--env`)** — Plan `release-blockers-2026-06-25-set` v1.1 (closes #62 MINOR). Root cause: `src/commands/status.ts:74` defaultava a `production` sem distinguir "usuário não passou `--env`" de "usuário passou `--env <X>` e o env está vazio". Mensagem genérica "No deploys yet. Run `theo deploy` to get started." escondia a possibilidade de existir deploy em outro env (preview). User com deploy ativo em preview rodando `theo status --json` (sem flag) via vazio e achava que o deploy "sumiu". Fix m37 honest-signal pattern: tracking `envExplicit = opts.env !== undefined` permite ramificar a mensagem. Default env vazio (`envExplicit=false`): hint canonical `"No deploy in 'production'. Try \`theo status --env preview\` or run \`theo env list\` to see all environments."` — distingue verbatim o caso #62. Explicit `--env <X>` vazio: terse `"No deploy in '<env>'. Run \`theo deploy --env <env>\` to get started."` (preserva escolha do usuário). Test footprint (36/36 PASS): atualizado `displays no-deploys message when no builds exist` para assertar `"No deploy in 'production'"` + `--env preview` + `theo env list`; novo `#62: explicit --env without deploy does NOT spam the alternate-env hint` (anti-regression: explicit env scope NÃO ecoa hint cross-env). Plan: `theo/.claude/knowledge-base/plans/release-blockers-2026-06-25-set-plan.md` v1.1.
