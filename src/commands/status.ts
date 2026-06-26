@@ -71,6 +71,12 @@ export class StatusCommand {
   }
 
   async execute(opts: StatusOptions = {}): Promise<number> {
+    // release-blockers-2026-06-25-set v1.1 #62: track whether the user
+    // explicitly passed --env so the empty-deploy branch can hint at
+    // alternate envs (instead of silently showing a vazio 'production'
+    // when the actual deploy lives in 'preview' — the QA Red Team
+    // scenario verbatim).
+    const envExplicit = opts.env !== undefined && opts.env !== '';
     const environment = opts.env ?? 'production';
 
     // 1. Auth check
@@ -116,7 +122,17 @@ export class StatusCommand {
     this.deps.writeTo(`Environment: ${status.environment}`);
 
     if (!status.last_build) {
-      this.deps.writeTo('No deploys yet. Run `theo deploy` to get started.');
+      // release-blockers-2026-06-25-set v1.1 #62: when the user did NOT
+      // pass --env (default 'production') and there's no deploy in
+      // production, hint at the other-env path so users with a preview
+      // deploy don't think the deploy "disappeared" (the Red Team verbatim
+      // scenario). When the user DID pass --env explicitly, keep the
+      // shorter message — they already chose the env scope.
+      if (!envExplicit) {
+        this.deps.writeTo(`No deploy in '${environment}'. Try \`theo status --env preview\` or run \`theo env list\` to see all environments.`);
+      } else {
+        this.deps.writeTo(`No deploy in '${environment}'. Run \`theo deploy --env ${environment}\` to get started.`);
+      }
       return 0;
     }
 
