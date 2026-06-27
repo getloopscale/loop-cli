@@ -165,10 +165,18 @@ export class DeployRenderer {
   private renderTTYResult(result: DeployResult): string {
     const lines: string[] = [];
 
+    // Red Team theo-cloud#84 closure: result.duration_seconds measures
+    // only the post-build phase (deliver + verify), NOT the build itself.
+    // For a deploy whose build took 718s and post-build verify took 104s,
+    // "Deploy completed in 104s" undercounts by ~7x and misleads the user
+    // about what `theo deploy` actually cost. Surface the build duration
+    // (when known) + the total wall-clock so the number matches lived
+    // experience.
+    const total = formatDeployTotal(result);
     if (result.status === 'success') {
-      lines.push(`\x1b[32m✓\x1b[0m Deploy completed in ${result.duration_seconds}s`);
+      lines.push(`\x1b[32m✓\x1b[0m Deploy completed in ${total}`);
     } else {
-      lines.push(`\x1b[31m✗\x1b[0m Deploy ${result.status} (${result.duration_seconds}s)`);
+      lines.push(`\x1b[31m✗\x1b[0m Deploy ${result.status} (${total})`);
     }
 
     lines.push('');
@@ -196,10 +204,12 @@ export class DeployRenderer {
   private renderCIResult(result: DeployResult): string {
     const lines: string[] = [];
 
+    // Red Team theo-cloud#84 closure (see renderTTYResult for context).
+    const total = formatDeployTotal(result);
     if (result.status === 'success') {
-      lines.push(`Deploy completed in ${result.duration_seconds}s`);
+      lines.push(`Deploy completed in ${total}`);
     } else {
-      lines.push(`Deploy ${result.status} (${result.duration_seconds}s)`);
+      lines.push(`Deploy ${result.status} (${total})`);
     }
 
     for (const app of result.apps) {
@@ -220,4 +230,42 @@ export class DeployRenderer {
 
     return lines.join('\n');
   }
+}
+
+// Red Team theo-cloud#84 closure — format the deploy total so the
+// number matches lived experience. Sums the max build duration across
+// apps (builds run in parallel — sum would double-count) with the
+// post-build phase. When no app reports build_duration_seconds, falls
+// back to the post-build phase alone (legacy behavior).
+//
+// Output shape examples:
+//   "104s"                      — no build duration available
+//   "13m 42s (build 11m 58s)"   — build dominates total
+//   "1m 44s (build 0s)"         — cached / no rebuild
+export function formatDeployTotal(result: DeployResult): string {
+  const postBuild = Math.max(0, result.duration_seconds || 0);
+  let maxBuild = 0;
+  for (const app of result.apps) {
+    const bd = app.build_duration_seconds ?? 0;
+    if (bd > maxBuild) {
+      maxBuild = bd;
+    }
+  }
+  if (maxBuild <= 0) {
+    return `${postBuild}s`;
+  }
+  const total = postBuild + maxBuild;
+  return `${humanizeSeconds(total)} (build ${humanizeSeconds(maxBuild)})`;
+}
+
+function humanizeSeconds(s: number): string {
+  if (!Number.isFinite(s) || s <= 0) {
+    return '0s';
+  }
+  if (s < 60) {
+    return `${Math.round(s)}s`;
+  }
+  const m = Math.floor(s / 60);
+  const sec = Math.round(s - m * 60);
+  return `${m}m ${sec}s`;
 }

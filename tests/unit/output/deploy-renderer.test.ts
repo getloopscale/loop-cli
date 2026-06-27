@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2025-2026 The Theo Authors
 
-import { DeployRenderer, DeployRendererOptions, DeployEvent, DeployResult } from '../../../src/output/deploy-renderer';
+import {
+  DeployRenderer,
+  DeployRendererOptions,
+  DeployEvent,
+  DeployResult,
+  formatDeployTotal,
+} from '../../../src/output/deploy-renderer';
 
 function createRenderer(overrides: Partial<DeployRendererOptions> = {}): DeployRenderer {
   return new DeployRenderer({
@@ -378,5 +384,80 @@ describe('DeployRenderer', () => {
     });
 
     // JSON output is tested in deploy.test.ts where the inline JSON rendering happens
+  });
+
+  // Red Team theo-cloud#84 regression-protectors. The CLI summary
+  // line "Deploy completed in Xs" was rendering only `duration_seconds`
+  // (post-build phase), undercounting by ~7x when build took 718s and
+  // verify took 104s. formatDeployTotal surfaces the build duration
+  // when known and humanizes >= 60s into "Xm Ys".
+  describe('Red Team theo-cloud#84 — formatDeployTotal', () => {
+    it('renders the verbatim Red Team observation correctly (build 718s + verify 104s)', () => {
+      const result: DeployResult = {
+        deploy_id: 'd-1',
+        status: 'success',
+        duration_seconds: 104,
+        apps: [
+          { name: 'web', status: 'success', url: 'https://x', build_duration_seconds: 718 },
+        ],
+      };
+      // build dominates: total = 104 + 718 = 822s = 13m 42s; build = 11m 58s.
+      expect(formatDeployTotal(result)).toBe('13m 42s (build 11m 58s)');
+    });
+
+    it('falls back to post-build duration when no build_duration_seconds reported (legacy shape)', () => {
+      const result: DeployResult = {
+        deploy_id: 'd-1',
+        status: 'success',
+        duration_seconds: 42,
+        apps: [{ name: 'web', status: 'success', url: 'https://x' }],
+      };
+      expect(formatDeployTotal(result)).toBe('42s');
+    });
+
+    it('uses the MAX build_duration_seconds across parallel apps (builds run in parallel — sum would double-count)', () => {
+      const result: DeployResult = {
+        deploy_id: 'd-1',
+        status: 'success',
+        duration_seconds: 10,
+        apps: [
+          { name: 'web', status: 'success', build_duration_seconds: 120 },
+          { name: 'api', status: 'success', build_duration_seconds: 200 },
+        ],
+      };
+      // total = 10 + max(120, 200) = 210s = 3m 30s; build = 3m 20s.
+      expect(formatDeployTotal(result)).toBe('3m 30s (build 3m 20s)');
+    });
+
+    it('TTY summary line surfaces the build-aware total (NOT just duration_seconds)', () => {
+      const renderer = createRenderer();
+      const result: DeployResult = {
+        deploy_id: 'd-1',
+        status: 'success',
+        duration_seconds: 104,
+        apps: [
+          { name: 'web', status: 'success', url: 'https://x', build_duration_seconds: 718 },
+        ],
+      };
+      const out = renderer.renderResult(result);
+      expect(out).toContain('Deploy completed in 13m 42s (build 11m 58s)');
+      // Defensive: must NOT regress to the misleading short-form.
+      expect(out).not.toContain('Deploy completed in 104s');
+    });
+
+    it('CI summary line surfaces the build-aware total', () => {
+      const renderer = createRenderer({ isCI: true });
+      const result: DeployResult = {
+        deploy_id: 'd-1',
+        status: 'success',
+        duration_seconds: 104,
+        apps: [
+          { name: 'web', status: 'success', url: 'https://x', build_duration_seconds: 718 },
+        ],
+      };
+      const out = renderer.renderResult(result);
+      expect(out).toContain('Deploy completed in 13m 42s (build 11m 58s)');
+      expect(out).not.toContain('Deploy completed in 104s');
+    });
   });
 });
