@@ -328,7 +328,20 @@ export function registerDeployCommands(deps: CommandDeps): void {
           const path = `/api/v1/builds/${encodeURIComponent(buildID)}/logs${query ? `?${query}` : ''}`;
           return apiClient.get(path);
         },
-        // F-03: infer last build ID from project status when --build not provided
+        // Red Team theo-cloud#160: PRIMARY build inference source — same
+        // endpoint `theo build list` uses. Fixes "No builds found" silent lie
+        // when builds exist but no active release binds them yet.
+        listBuilds: async (project: string, env?: string, limit?: number) => {
+          const params = new URLSearchParams();
+          if (env) params.set('env', env);
+          if (limit !== undefined) params.set('limit', String(limit));
+          const query = params.toString();
+          const path = `/api/v1/projects/${encodeURIComponent(project)}/builds${query ? `?${query}` : ''}`;
+          return apiClient.get(path);
+        },
+        // F-03: back-compat fallback for build inference (release-bound view).
+        // Prefer listBuilds when available — #160 exposed that last_build here
+        // reflects the ACTIVE release's build, not the most recent build in env.
         getProjectStatus: async (project: string, env: string) => {
           return apiClient.get<{ last_build?: { id: string } }>(
             `/api/v1/projects/${encodeURIComponent(project)}/status?environment=${encodeURIComponent(env)}`
