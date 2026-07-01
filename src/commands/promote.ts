@@ -20,6 +20,15 @@ export interface PromoteDeps {
   writeTo: (msg: string) => void;
   writeError: (msg: string) => void;
   isCI?: boolean;
+  /**
+   * Red Team theo-cloud#161: true when stdin has no TTY (e.g., pipes /
+   * redirects / harnesses). Without this, `theo promote --from X --to Y`
+   * without `--yes` hung on the [y/N] prompt reading a stdin that would
+   * never produce input, and the outer withTimeout wrapper eventually
+   * mis-blamed "Promotion timed out. Check your connection." Fail-fast
+   * with the same CONFIRMATION_REQUIRED contract used in CI mode.
+   */
+  isNonInteractive?: boolean;
 }
 
 export interface PromoteOptions {
@@ -64,8 +73,18 @@ export class PromoteCommand {
 
     // 4. Confirmation required (unless --yes)
     if (!opts.yes) {
-      if (this.deps.isCI) {
-        return this.exitWithError(opts, 'Confirmation required. Use --yes in CI mode.', 1, 'CONFIRMATION_REQUIRED');
+      // Red Team #161: fail-fast in ANY non-interactive context (CI env OR
+      // stdin without a TTY — pipes, redirects, harnesses). Pre-fix the
+      // prompt hung on stdin EOF and the outer 40s withTimeout wrapper
+      // eventually surfaced "Promotion timed out. Check your connection"
+      // — misleading the operator into blaming the network.
+      if (this.deps.isCI || this.deps.isNonInteractive) {
+        return this.exitWithError(
+          opts,
+          'Confirmation required. Pass --yes in non-interactive contexts (CI, pipes, redirected stdin).',
+          1,
+          'CONFIRMATION_REQUIRED',
+        );
       }
       if (this.deps.confirm) {
         const confirmed = await this.deps.confirm(

@@ -512,6 +512,10 @@ export function registerDeployCommands(deps: CommandDeps): void {
           const readline = await import('readline');
           const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
           return new Promise<boolean>((resolve) => {
+            // Red Team #161 defense-in-depth: treat stdin EOF as "N" instead
+            // of hanging the prompt (which would then be mis-attributed to a
+            // network timeout by the outer withTimeout wrapper).
+            rl.on('close', () => resolve(false));
             rl.question(message, (answer) => {
               rl.close();
               resolve(answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes');
@@ -521,6 +525,9 @@ export function registerDeployCommands(deps: CommandDeps): void {
         writeTo,
         writeError,
         isCI,
+        // Red Team #161: non-TTY stdin (pipes, redirects, harnesses) triggers
+        // the same CONFIRMATION_REQUIRED fail-fast path as CI env.
+        isNonInteractive: !process.stdin.isTTY,
       });
 
       const exitCode = await withTimeout(

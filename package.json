@@ -1,6 +1,6 @@
 {
   "name": "@usetheo/cli",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "description": "CLI-first deploys for TheoCloud \u2014 one command from monorepo to running service.",
   "keywords": [
     "cli",
