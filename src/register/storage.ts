@@ -59,7 +59,21 @@ export function registerStorageCommands(deps: CommandDeps): void {
         size: body.length,
       })),
     download: (path) => httpBinary('GET', `${apiUrl}/v1/storage/objects/${objectPath(path)}`, token()),
-    list: (prefix) => api().get<StorageListResult>(`/v1/storage/objects?prefix=${enc(prefix)}`),
+    // MEDIUM-3: follow next_cursor to completion so `theo storage list` shows ALL
+    // files, not just the first server page.
+    list: async (prefix) => {
+      const c = api();
+      const all: StorageListResult['files'] = [];
+      let cursor = '';
+      for (;;) {
+        const qs = `prefix=${enc(prefix)}${cursor ? `&cursor=${enc(cursor)}` : ''}`;
+        const page = await c.get<StorageListResult>(`/v1/storage/objects?${qs}`);
+        all.push(...page.files);
+        if (!page.next_cursor) break;
+        cursor = page.next_cursor;
+      }
+      return { files: all, next_cursor: '' };
+    },
     stat: (path) => api().get<StorageStatResult>(`/v1/storage/stat/${objectPath(path)}`),
     del: (path) => api().del<void>(`/v1/storage/objects/${objectPath(path)}`),
     share: (path, expires) =>
