@@ -356,3 +356,37 @@ describe('storage-sync T2.2 — apply / idempotency / conflict', () => {
     expect(remote.store.has('x.txt')).toBe(false);
   });
 });
+
+describe('storage-sync — .theoignore predicate (injected, gitignore-style)', () => {
+  // The engine is pure over the ports (ADR D3): the ignore matcher is injected as
+  // a predicate, so the fs read of .theoignore happens at the composition root and
+  // the engine stays testable with an in-memory function.
+  it('never pushes a locally ignored path (knowledge-base/)', async () => {
+    const dir = await tmp();
+    const local = createFsLocalPort(dir);
+    await local.write('rules/keep.md', Buffer.from('K'));
+    await local.write('knowledge-base/plans/huge.md', Buffer.from('H'));
+    const remote = new FakeRemote();
+    const ignoreMatch = (rel: string): boolean => rel === 'knowledge-base' || rel.startsWith('knowledge-base/');
+    const engine = new SyncEngine(remote, local, dir, '', [], ignoreMatch);
+    const plan = await engine.plan();
+    expect(plan.applied).toEqual([{ kind: 'push', path: 'rules/keep.md' }]);
+    expect(plan.applied.some((o) => o.path.startsWith('knowledge-base/'))).toBe(false);
+  });
+
+  it('never pulls (nor downloads) a remotely ignored path — RCE/quota fence', async () => {
+    const dir = await tmp();
+    const local = createFsLocalPort(dir);
+    const remote = new FakeRemote(
+      new Map([
+        ['rules/y.md', { buf: Buffer.from('Y'), contentType: 'text/plain' }],
+        ['knowledge-base/audit.md', { buf: Buffer.from('A'), contentType: 'text/plain' }],
+      ]),
+    );
+    const ignoreMatch = (rel: string): boolean => rel.startsWith('knowledge-base/');
+    const engine = new SyncEngine(remote, local, dir, '', [], ignoreMatch);
+    const plan = await engine.plan();
+    expect(plan.applied).toEqual([{ kind: 'pull', path: 'rules/y.md' }]);
+    expect(plan.applied.some((o) => o.path.startsWith('knowledge-base/'))).toBe(false);
+  });
+});

@@ -22,6 +22,7 @@ import {
   syncErrorMessage,
   httpStatusOf,
 } from '../commands/storage-sync';
+import { loadSyncIgnore } from '../lib/sync-ignore';
 import { API_REQUEST_TIMEOUT_MS } from '../config/constants';
 import { CommandDeps } from './types';
 
@@ -176,7 +177,7 @@ export function registerStorageCommands(deps: CommandDeps): void {
 
   storageCmd
     .command('sync <local-dir>')
-    .description('Sync a storage folder to a local directory (two-way). Synced files are data — they are not run — until sharing is enabled.')
+    .description('Sync a storage folder to a local directory (two-way). Respects a .theoignore file (gitignore-style) at the local dir. Synced files are data — they are not run — until sharing is enabled.')
     .requiredOption('--prefix <prefix>', 'The storage folder to sync, e.g. .claude/')
     .option('--strategy <strategy>', 'Resolve a file changed in both places: pull | push | backup')
     .option('--dry-run', 'Preview what would change without writing anything')
@@ -198,7 +199,11 @@ export function registerStorageCommands(deps: CommandDeps): void {
         return process.exit(1);
       }
       const root = path.resolve(localDir);
-      const engine = new SyncEngine(buildRemotePort(), createFsLocalPort(root), root, prefix, cmdOpts.exclude);
+      // Load .theoignore / .gitignore at the sync root (gitignore-style). Reading
+      // the file is I/O — done here so the engine stays pure over its ports (ADR
+      // D3) and receives only the resulting predicate.
+      const ignoreMatch = await loadSyncIgnore(root);
+      const engine = new SyncEngine(buildRemotePort(), createFsLocalPort(root), root, prefix, cmdOpts.exclude, ignoreMatch);
       try {
         // --dry-run classifies via the side-effect-free plan() and writes nothing.
         const result = await withTimeout(
