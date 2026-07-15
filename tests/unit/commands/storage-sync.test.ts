@@ -240,4 +240,28 @@ describe('storage-sync T2.2 — apply / idempotency / conflict', () => {
     const second = await new SyncEngine(remote2, local2, dir, '').run();
     expect(second.applied).toEqual([]);
   });
+
+  it('maps a --prefix: remote ".claude/settings.json" pulls to local "settings.json"', async () => {
+    const dir = await tmp();
+    const local = createFsLocalPort(dir);
+    const remote = new FakeRemote(
+      new Map([['.claude/settings.json', { buf: Buffer.from('{}'), contentType: 'application/json' }]]),
+    );
+    const engine = new SyncEngine(remote, local, dir, '.claude/');
+    const res = await engine.run();
+    expect(res.applied).toEqual([{ kind: 'pull', path: 'settings.json' }]);
+    expect((await fs.readFile(path.join(dir, 'settings.json'))).toString()).toBe('{}');
+    // A new local file pushes back under the prefix as ".claude/notes.md".
+    await local.write('notes.md', Buffer.from('hi'));
+    await new SyncEngine(remote, createFsLocalPort(dir), dir, '.claude/').run();
+    expect(remote.store.has('.claude/notes.md')).toBe(true);
+  });
+
+  it('a local deletion pushes a remote delete', async () => {
+    const { engine, dir, remote } = await engineFor({ 'x.txt': 'X' }, {});
+    await writeManifestFor(dir, { 'x.txt': hashBytes(Buffer.from('X')) }); // last-synced; local now absent
+    const res = await engine.run();
+    expect(res.applied).toEqual([{ kind: 'pushDelete', path: 'x.txt' }]);
+    expect(remote.store.has('x.txt')).toBe(false);
+  });
 });
