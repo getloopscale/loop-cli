@@ -5,7 +5,8 @@
 // --json stability Rule 5, product language Rule 3). These are pure functions so
 // the whole contract is unit-testable without a live backend.
 
-import { syncExitCode, summarizeSync, SyncResult } from '../../../src/commands/storage-sync';
+import { syncExitCode, summarizeSync, syncErrorMessage, SyncResult } from '../../../src/commands/storage-sync';
+import { normalizePrefix } from '../../../src/register/storage';
 
 const EMPTY: SyncResult = { applied: [], conflicts: [], skipped: [] };
 
@@ -30,6 +31,14 @@ describe('storage-sync T3.1 — CLI output contract', () => {
     expect(syncExitCode({ errorStatus: 401 })).toBe(4);
   });
 
+  it('exit-code mapping mirrors the sibling storage command (F-cli-1)', () => {
+    expect(syncExitCode({ errorStatus: 403 })).toBe(4); // missing scope → auth
+    expect(syncExitCode({ errorStatus: 402 })).toBe(1); // plan limit → usage
+    expect(syncExitCode({ errorStatus: 413 })).toBe(1); // too large → usage
+    expect(syncExitCode({ errorStatus: 404 })).toBe(1); // not found → usage
+    expect(syncExitCode({ errorStatus: 500 })).toBe(5); // server error → partial
+  });
+
   it('--json emits a stable { applied, conflicts, skipped } shape', () => {
     const out = summarizeSync({
       applied: [{ kind: 'pull', path: 'a' }],
@@ -45,6 +54,27 @@ describe('storage-sync T3.1 — CLI output contract', () => {
     const out = summarizeSync({ ...EMPTY, conflicts: [{ path: 'notes.md' }] });
     expect(out.text).toMatch(/notes\.md/);
     expect(out.text).toMatch(/--strategy/);
+  });
+
+  it('normalizePrefix collapses to a single trailing slash; empty stays empty (EC-4)', () => {
+    expect(normalizePrefix('.claude')).toBe('.claude/');
+    expect(normalizePrefix('.claude/')).toBe('.claude/');
+    expect(normalizePrefix('.claude///')).toBe('.claude/');
+    expect(normalizePrefix('./config')).toBe('config/');
+    expect(normalizePrefix('  a/b  ')).toBe('a/b/');
+    expect(normalizePrefix('')).toBe('');
+    expect(normalizePrefix('/')).toBe('');
+  });
+
+  it('syncErrorMessage is actionable per status and uses product language (F-cli-2)', () => {
+    expect(syncErrorMessage(403)).toMatch(/theo login|access/i);
+    expect(syncErrorMessage(402)).toMatch(/plan|upgrade|limit/i);
+    expect(syncErrorMessage(413)).toMatch(/larger|too large|remove/i);
+    expect(syncErrorMessage(404)).toMatch(/--prefix|not found/i);
+    expect(syncErrorMessage(500)).toMatch(/try again/i);
+    for (const s of [401, 402, 403, 404, 413, 500, undefined]) {
+      expect(syncErrorMessage(s)).not.toMatch(/\bS3\b|bucket|MinIO|\bPUT\b|\bGET\b/i);
+    }
   });
 
   it('output uses product language only (no infra terms — Rule 3)', () => {

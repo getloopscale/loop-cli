@@ -53,8 +53,15 @@ export function resolveWithinRoot(root: string, key: string): string | null {
   const rootResolved = path.resolve(root);
   const candidate = path.resolve(rootResolved, key);
   if (candidate === rootResolved) return null; // the root itself is not a file target
+  return isWithinRoot(rootResolved, candidate) ? candidate : null;
+}
+
+/** True if an already-resolved absolute path is the root or strictly under it. */
+function isWithinRoot(root: string, absPath: string): boolean {
+  const rootResolved = path.resolve(root);
+  if (absPath === rootResolved) return true;
   const withSep = rootResolved.endsWith(path.sep) ? rootResolved : rootResolved + path.sep;
-  return candidate.startsWith(withSep) ? candidate : null;
+  return absPath.startsWith(withSep);
 }
 
 /**
@@ -69,6 +76,26 @@ export function createFsLocalPort(root: string): LocalPort {
     return resolved;
   };
 
+  /**
+   * EC-3 write-side hardening (F-sec-1). `resolveWithinRoot` validates the path
+   * STRING, but `fs.writeFile` would still follow a pre-existing symlink at the
+   * target — or through a symlinked directory component — escaping the root. Before
+   * writing, resolve the real parent dir and refuse if it escaped, and refuse if the
+   * final component is an existing symlink. Never follow a link out of the sync root.
+   */
+  async function assertSafeWriteTarget(target: string): Promise<void> {
+    const parent = path.dirname(target);
+    await fs.mkdir(parent, { recursive: true });
+    const realParent = await fs.realpath(parent); // resolves any symlinked ancestor
+    if (!isWithinRoot(root, realParent)) {
+      throw new Error(`unsafe local path: symlinked directory escapes the sync root`);
+    }
+    const existing = await fs.lstat(target).catch(() => null);
+    if (existing && existing.isSymbolicLink()) {
+      throw new Error(`unsafe local path: refusing to write through a symlink`);
+    }
+  }
+
   async function walkDir(relDir: string): Promise<string[]> {
     const full = relDir === '' ? path.resolve(root) : path.join(path.resolve(root), relDir);
     let entries: Dirent[];
@@ -81,6 +108,7 @@ export function createFsLocalPort(root: string): LocalPort {
     for (const e of entries) {
       const rel = relDir === '' ? e.name : `${relDir}/${e.name}`;
       if (rel === THEO_CONTROL_DIR || rel.startsWith(`${THEO_CONTROL_DIR}/`)) continue; // EC-2
+      if (e.name.includes(BACKUP_MARKER)) continue; // F-sec-6 — never push conflict backups to remote
       if (e.isSymbolicLink()) continue; // EC-3 — never traverse or push through a symlink
       if (e.isDirectory()) {
         out.push(...(await walkDir(rel)));
@@ -96,10 +124,11 @@ export function createFsLocalPort(root: string): LocalPort {
     read: (rel) => fs.readFile(abs(rel)),
     write: async (rel, buf) => {
       const target = abs(rel);
-      await fs.mkdir(path.dirname(target), { recursive: true });
+      await assertSafeWriteTarget(target); // F-sec-1: never follow a symlink out of root
       await fs.writeFile(target, buf);
     },
     del: async (rel) => {
+      // fs.rm removes the link itself, not its target — safe against symlink escape.
       await fs.rm(abs(rel), { force: true });
     },
     hash: async (rel) => hashBytes(await fs.readFile(abs(rel))),
@@ -129,6 +158,14 @@ export interface SyncResult {
 }
 
 const UNSAFE_PATH = 'SYNC_UNSAFE_PATH';
+/** Marker embedded in conflict-backup filenames; excluded from sync (F-sec-6). */
+const BACKUP_MARKER = '.theo-backup-';
+
+/** Stable skip reason for an op that failed mid-apply (F-test-1). */
+function opFailureReason(err: unknown): string {
+  const status = (err as { status?: number })?.status;
+  return status ? `SYNC_OP_FAILED_${status}` : 'SYNC_OP_FAILED';
+}
 
 /**
  * Map a sync outcome to the permanent CLI exit-code contract (Rule 4):
@@ -137,9 +174,34 @@ const UNSAFE_PATH = 'SYNC_UNSAFE_PATH';
  */
 export function syncExitCode(opts: { result?: SyncResult; errorStatus?: number; usageError?: boolean }): number {
   if (opts.usageError) return 1;
-  if (opts.errorStatus === 401) return 4;
+  // Mirror the sibling storage command's status→code mapping (storage.ts mapError)
+  // so the SAME backend condition yields the SAME exit code across subcommands (F-cli-1).
+  const s = opts.errorStatus;
+  if (s === 401 || s === 403) return 4; // auth / missing scope
+  if (s === 400 || s === 402 || s === 404 || s === 413) return 1; // usage / plan-limit / not-found / too-large
+  if (s) return 5; // any other backend failure → partial
   if (!opts.result) return 5;
   return opts.result.conflicts.length > 0 || opts.result.skipped.length > 0 ? 5 : 0;
+}
+
+/**
+ * Actionable, product-language error message for a failed sync (Rule 3 + Rule 5 —
+ * error messages suggest a next action). Never echoes the raw HTTP message (F-cli-2).
+ */
+export function syncErrorMessage(status?: number): string {
+  switch (status) {
+    case 401:
+    case 403:
+      return 'Access denied. Run `theo login` and make sure your access has storage read/write.';
+    case 402:
+      return "You've reached your plan's storage limit. Delete files or upgrade, then try again.";
+    case 413:
+      return 'A file is larger than your plan allows. Remove it and try again.';
+    case 404:
+      return 'That storage folder was not found. Check the --prefix and try again.';
+    default:
+      return 'Sync failed. Check your connection and try again.';
+  }
 }
 
 /**
@@ -236,6 +298,7 @@ export class SyncEngine {
     const manifest = await readManifest(this.dir);
     const applied: SyncOp[] = [];
     const conflicts: SyncConflict[] = [];
+    const skipped: SyncSkip[] = [...plan.skipped];
     const conflictPaths = new Set(plan.conflicts.map((c) => c.path));
 
     for (const op of plan.applied) {
@@ -243,8 +306,15 @@ export class SyncEngine {
         conflictPaths.add(op.path); // TOCTOU — do not clobber the drifted remote
         continue;
       }
-      await this.applyOp(op, manifest);
-      applied.push(op);
+      // F-test-1: one op failing (e.g. 413/402/ENOSPC) must not abort the whole
+      // sync — record it as skipped, keep applying the rest; the manifest is only
+      // updated for ops that actually succeeded (applyOp mutates it inline).
+      try {
+        await this.applyOp(op, manifest);
+        applied.push(op);
+      } catch (err) {
+        skipped.push({ path: op.path, reason: opFailureReason(err) });
+      }
     }
 
     for (const path of conflictPaths) {
@@ -252,11 +322,15 @@ export class SyncEngine {
         conflicts.push({ path });
         continue;
       }
-      applied.push(await this.resolveConflict(path, strategy, manifest));
+      try {
+        applied.push(await this.resolveConflict(path, strategy, manifest));
+      } catch (err) {
+        skipped.push({ path, reason: opFailureReason(err) });
+      }
     }
 
     await writeManifest(this.dir, { version: 1, prefix: this.prefix, paths: manifest.paths });
-    return { applied, conflicts, skipped: plan.skipped };
+    return { applied, conflicts, skipped };
   }
 
   /** True if the remote object for `rel` no longer matches the last-synced hash. */
@@ -304,9 +378,14 @@ export class SyncEngine {
       return op;
     }
     // 'backup' saves the local (losing) side, then falls through to a remote-wins pull.
+    // The backup name carries a random suffix so two backups of the same path (even
+    // within the same millisecond) never collide and destroy the earlier copy (F-sec-6).
     if (strategy === 'backup') {
       const local = await this.safeRead(rel);
-      if (local) await this.local.write(`${rel}.theo-backup-${Date.now()}`, local);
+      if (local) {
+        const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        await this.local.write(`${rel}${BACKUP_MARKER}${suffix}`, local);
+      }
     }
     const op: SyncOp = { kind: 'pull', path: rel };
     await this.applyOp(op, manifest);

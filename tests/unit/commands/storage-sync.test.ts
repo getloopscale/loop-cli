@@ -101,6 +101,26 @@ describe('storage-sync T0.2 — ports + path safety', () => {
     expect((await local.read('sub/x.txt')).toString()).toBe('hello');
     expect(await local.hash('sub/x.txt')).toMatch(/^[0-9a-f]{64}$/);
   });
+
+  it('createFsLocalPort.write refuses to follow a pre-existing FILE symlink out of root (F-sec-1)', async () => {
+    const dir = await tmp();
+    const outside = await tmp();
+    const victim = path.join(outside, 'victim.txt');
+    await fs.writeFile(victim, 'ORIGINAL');
+    await fs.symlink(victim, path.join(dir, 'evil-link')); // attacker plants an in-root symlink
+    const local = createFsLocalPort(dir);
+    await expect(local.write('evil-link', Buffer.from('PWNED'))).rejects.toThrow(/unsafe/i);
+    expect((await fs.readFile(victim)).toString()).toBe('ORIGINAL'); // untouched
+  });
+
+  it('createFsLocalPort.write refuses to write through a symlinked DIRECTORY component (F-sec-1)', async () => {
+    const dir = await tmp();
+    const outside = await tmp();
+    await fs.symlink(outside, path.join(dir, 'linkdir')); // in-root dir symlink → outside
+    const local = createFsLocalPort(dir);
+    await expect(local.write('linkdir/x.txt', Buffer.from('PWNED'))).rejects.toThrow(/unsafe/i);
+    await expect(fs.readFile(path.join(outside, 'x.txt'))).rejects.toBeDefined(); // nothing written outside
+  });
 });
 
 // Scenario runner: a real local tmpdir <-> an in-memory FakeRemote (the plan's
@@ -211,6 +231,19 @@ describe('storage-sync T2.2 — apply / idempotency / conflict', () => {
     expect((await fs.readFile(path.join(dir, backup!))).toString()).toBe('B');
   });
 
+  it('a conflict backup is never pushed to remote on the next sync (F-sec-6)', async () => {
+    const { engine, dir, remote } = await engineFor({ 'x.txt': 'C' }, { 'x.txt': 'B' });
+    await writeManifestFor(dir, { 'x.txt': hashBytes(Buffer.from('A')) });
+    await engine.run('backup'); // creates x.txt.theo-backup-<...> locally
+    const local2 = createFsLocalPort(dir);
+    const walked = await local2.walk();
+    expect(walked.some((p) => p.includes('.theo-backup-'))).toBe(false); // excluded from walk
+    // A subsequent sync must not upload the backup to the remote prefix.
+    const remote2 = new FakeRemote(new Map([['x.txt', { buf: Buffer.from('C'), contentType: 'text/plain' }]]));
+    await new SyncEngine(remote2, local2, dir, '').run();
+    expect([...remote2.store.keys()].some((k) => k.includes('.theo-backup-'))).toBe(false);
+  });
+
   it('a remote deletion removes the local file and the manifest key', async () => {
     const { engine, dir } = await engineFor({}, { 'x.txt': 'X' });
     await writeManifestFor(dir, { 'x.txt': hashBytes(Buffer.from('X')) });
@@ -255,6 +288,28 @@ describe('storage-sync T2.2 — apply / idempotency / conflict', () => {
     await local.write('notes.md', Buffer.from('hi'));
     await new SyncEngine(remote, createFsLocalPort(dir), dir, '.claude/').run();
     expect(remote.store.has('.claude/notes.md')).toBe(true);
+  });
+
+  it('a failing op is skipped, other ops still apply, manifest records only applied (F-test-1)', async () => {
+    const dir = await tmp();
+    const local = createFsLocalPort(dir);
+    await local.write('good.txt', Buffer.from('G'));
+    await local.write('bad.txt', Buffer.from('B'));
+    const remote = new FakeRemote();
+    // Make the upload of bad.txt fail (e.g. 413 too-large); good.txt must still push.
+    const origUpload = remote.upload.bind(remote);
+    remote.upload = async (p, buf, ct) => {
+      if (p === 'bad.txt') throw Object.assign(new Error('too large'), { status: 413 });
+      return origUpload(p, buf, ct);
+    };
+    const res = await new SyncEngine(remote, local, dir, '').run();
+    expect(res.applied.map((o) => o.path)).toEqual(['good.txt']);
+    expect(res.skipped.map((s) => s.path)).toContain('bad.txt');
+    expect(remote.store.has('good.txt')).toBe(true);
+    expect(remote.store.has('bad.txt')).toBe(false);
+    // Manifest records only the applied path — a re-run does not re-push good.txt.
+    const second = await new SyncEngine(new FakeRemote(new Map([['good.txt', { buf: Buffer.from('G'), contentType: 'text/plain' }]])), createFsLocalPort(dir), dir, '').run();
+    expect(second.applied.some((o) => o.path === 'good.txt')).toBe(false);
   });
 
   it('a local deletion pushes a remote delete', async () => {

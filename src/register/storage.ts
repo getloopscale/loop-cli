@@ -19,12 +19,13 @@ import {
   createFsLocalPort,
   summarizeSync,
   syncExitCode,
+  syncErrorMessage,
 } from '../commands/storage-sync';
 import { API_REQUEST_TIMEOUT_MS } from '../config/constants';
 import { CommandDeps } from './types';
 
 /** Normalize a --prefix to a single trailing slash (empty stays empty). EC-4. */
-function normalizePrefix(raw: string): string {
+export function normalizePrefix(raw: string): string {
   const trimmed = raw.trim().replace(/^\.\//, '').replace(/\/+$/, '');
   return trimmed === '' ? '' : `${trimmed}/`;
 }
@@ -177,7 +178,8 @@ export function registerStorageCommands(deps: CommandDeps): void {
     .description('Sync a storage folder to a local directory (two-way). Synced files are data — they are not run — until sharing is enabled.')
     .requiredOption('--prefix <prefix>', 'The storage folder to sync, e.g. .claude/')
     .option('--strategy <strategy>', 'Resolve a file changed in both places: pull | push | backup')
-    .action(async (localDir: string, cmdOpts: { prefix: string; strategy?: string }) => {
+    .option('--dry-run', 'Preview what would change without writing anything')
+    .action(async (localDir: string, cmdOpts: { prefix: string; strategy?: string; dryRun?: boolean }) => {
       const strategy = cmdOpts.strategy as SyncStrategy | undefined;
       if (strategy && !['pull', 'push', 'backup'].includes(strategy)) {
         writeError('Use --strategy=pull, push, or backup.');
@@ -191,17 +193,22 @@ export function registerStorageCommands(deps: CommandDeps): void {
       const root = path.resolve(localDir);
       const engine = new SyncEngine(buildRemotePort(), createFsLocalPort(root), root, prefix);
       try {
+        // --dry-run classifies via the side-effect-free plan() and writes nothing.
         const result = await withTimeout(
-          engine.run(strategy),
+          cmdOpts.dryRun ? engine.plan() : engine.run(strategy),
           API_REQUEST_TIMEOUT_MS + 300_000,
           'Sync timed out. Check your connection and try again.',
         );
         const { text, json } = summarizeSync(result);
-        writeTo(getGlobalOpts().json ? JSON.stringify(json) : text);
+        if (getGlobalOpts().json) {
+          writeTo(JSON.stringify(cmdOpts.dryRun ? { ...json, dry_run: true } : json));
+        } else {
+          writeTo(cmdOpts.dryRun ? `(dry run — nothing written)\n${text}` : text);
+        }
         return process.exit(syncExitCode({ result }));
       } catch (err) {
         const status = (err as { status?: number }).status;
-        writeError(status === 401 ? 'Please sign in again — run `theo login`.' : `Sync failed: ${(err as Error).message}`);
+        writeError(syncErrorMessage(status));
         return process.exit(syncExitCode({ errorStatus: status }));
       }
     });
