@@ -180,7 +180,13 @@ export function registerStorageCommands(deps: CommandDeps): void {
     .requiredOption('--prefix <prefix>', 'The storage folder to sync, e.g. .claude/')
     .option('--strategy <strategy>', 'Resolve a file changed in both places: pull | push | backup')
     .option('--dry-run', 'Preview what would change without writing anything')
-    .action(async (localDir: string, cmdOpts: { prefix: string; strategy?: string; dryRun?: boolean }) => {
+    .option(
+      '--exclude <glob>',
+      'Skip paths matching this glob (repeatable), e.g. --exclude "hooks/**" --exclude "settings*.json"',
+      (val: string, acc: string[]) => acc.concat(val),
+      [] as string[],
+    )
+    .action(async (localDir: string, cmdOpts: { prefix: string; strategy?: string; dryRun?: boolean; exclude: string[] }) => {
       const strategy = cmdOpts.strategy as SyncStrategy | undefined;
       if (strategy && !['pull', 'push', 'backup'].includes(strategy)) {
         writeError('Use --strategy=pull, push, or backup.');
@@ -192,7 +198,7 @@ export function registerStorageCommands(deps: CommandDeps): void {
         return process.exit(1);
       }
       const root = path.resolve(localDir);
-      const engine = new SyncEngine(buildRemotePort(), createFsLocalPort(root), root, prefix);
+      const engine = new SyncEngine(buildRemotePort(), createFsLocalPort(root), root, prefix, cmdOpts.exclude);
       try {
         // --dry-run classifies via the side-effect-free plan() and writes nothing.
         const result = await withTimeout(

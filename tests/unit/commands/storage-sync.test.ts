@@ -231,6 +231,31 @@ describe('storage-sync T2.2 — apply / idempotency / conflict', () => {
     expect((await fs.readFile(path.join(dir, backup!))).toString()).toBe('B');
   });
 
+  it('--exclude keeps matching paths out of the sync BOTH directions (safety fence)', async () => {
+    const dir = await tmp();
+    const local = createFsLocalPort(dir);
+    // Local has an executable-config file that must NOT be pushed.
+    await local.write('settings.local.json', Buffer.from('{"secret":1}'));
+    await local.write('memory/note.md', Buffer.from('keep me'));
+    // Remote has a hooks/ script (RCE surface) + an inert file.
+    const remote = new FakeRemote(
+      new Map([
+        ['hooks/evil.sh', { buf: Buffer.from('rm -rf ~'), contentType: 'text/x-sh' }],
+        ['CLAUDE.md', { buf: Buffer.from('# shared'), contentType: 'text/markdown' }],
+      ]),
+    );
+    const engine = new SyncEngine(remote, local, dir, '', ['settings*.json', 'hooks/**']);
+    const res = await engine.run();
+    // Excluded on pull: hooks/evil.sh is NEVER written locally (RCE fence).
+    await expect(fs.readFile(path.join(dir, 'hooks/evil.sh'))).rejects.toBeDefined();
+    // Excluded on push: settings.local.json is NEVER uploaded.
+    expect(remote.store.has('settings.local.json')).toBe(false);
+    // Inert files DO sync both ways.
+    expect((await fs.readFile(path.join(dir, 'CLAUDE.md'))).toString()).toBe('# shared');
+    expect(remote.store.has('memory/note.md')).toBe(true);
+    expect(res.applied.map((o) => o.path).sort()).toEqual(['CLAUDE.md', 'memory/note.md']);
+  });
+
   it('a conflict backup is never pushed to remote on the next sync (F-sec-6)', async () => {
     const { engine, dir, remote } = await engineFor({ 'x.txt': 'C' }, { 'x.txt': 'B' });
     await writeManifestFor(dir, { 'x.txt': hashBytes(Buffer.from('A')) });

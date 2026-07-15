@@ -164,6 +164,20 @@ end-user CLI.)
 | `theo secret` | Manage application secrets |
 | `theo scale` | Scale a service (fixed replicas or autoscaling) |
 | `theo preview` | Manage preview environments |
+| `theo storage` | Store files (`upload`/`download`/`list`/`share`) + `theo storage sync` a folder ↔ local dir |
+
+</details>
+
+<details>
+<summary><b>Claude Code integration</b> — keep a shared <code>.claude/</code> in sync</summary>
+
+`theo storage sync <dir> --prefix <p>` bidirectionally syncs a stored folder to a
+local directory (conflict-safe, `--dry-run`, `--exclude` globs). Wire it to Claude
+Code's `SessionStart`/`SessionEnd` hooks to pull your shared `.claude/` on session
+start and push edits on end — see
+[`integrations/claude-code/`](https://github.com/usetheodev/theo-cli/tree/develop/integrations/claude-code)
+for the example `settings.json` and the safety notes (executable config is fenced
+out of the sync by default).
 
 </details>
 

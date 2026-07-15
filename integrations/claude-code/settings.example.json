@@ -1,0 +1,26 @@
+{
+  "//": "Theo storage sync for Claude Code — pull your shared .claude/ on session start, push edits on session end. Merge these hooks into your project's .claude/settings.json (or ~/.claude/settings.json for all projects). Requires `theo login` + a key with storage:read/write. The --exclude flags are a SAFETY FENCE: hooks/ and settings*.json are executable config; a pull must NEVER overwrite the code the agent runs (see README.md § Safety). Sync ships inert config (skills, memory, CLAUDE.md, docs) — executing synced hooks/skills is gated on the trust model (not yet shipped).",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "theo storage sync \"$CLAUDE_PROJECT_DIR/.claude\" --prefix .claude/ --exclude \"hooks/**\" --exclude \"settings.json\" --exclude \"settings.local.json\" --json"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "theo storage sync \"$CLAUDE_PROJECT_DIR/.claude\" --prefix .claude/ --exclude \"hooks/**\" --exclude \"settings.json\" --exclude \"settings.local.json\""
+          }
+        ]
+      }
+    ]
+  }
+}

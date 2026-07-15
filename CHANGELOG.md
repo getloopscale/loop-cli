@@ -5,6 +5,10 @@ Format: Keep a Changelog + Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+- `theo storage sync --exclude <glob>` (repeatable) — skip paths matching a glob (`**` crosses directories, `*` stays within a segment). Both directions: excluded paths are never pulled nor pushed.
+- Claude Code integration (`integrations/claude-code/`): example `settings.json` wiring `theo storage sync` to `SessionStart` (pull) + `SessionEnd` (push) so a shared `.claude/` stays in sync effortlessly. Ships with a safety fence — `hooks/**` and `settings*.json` are excluded by default so a pull can never overwrite the executable config the agent runs (executing synced config is gated on a future trust model).
+
 ## [0.4.0] - 2026-07-15
 
 ### Added
