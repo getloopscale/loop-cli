@@ -5,9 +5,11 @@ Format: Keep a Changelog + Semantic Versioning.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-07-15
+
 ### Added
 - `theo storage` command group (M7 tenant blob storage): `upload`, `download`, `list`, `stat`, `delete`, `share` against the `/v1/storage/*` API. Authenticated via the existing token/config; product-language output only (no infra terms); permanent exit-code contract (0 success, 1 usage/limit, 4 auth, 5 partial). 9 unit tests.
-- `theo storage sync <local-dir> --prefix <p>` (in progress) — bidirectional, conflict-safe sync of a stored prefix to a local directory. Persists a `.theo/.sync-manifest.json` of the last-synced content hash per path; classifies per-path changes and applies non-conflicting ones both directions; refuses to overwrite a file changed on both sides (surfaces a conflict + `--strategy=pull|push|backup`). Pull-twice is a no-op. `--dry-run` previews without writing. Hardened against pulling through a symlink out of the sync folder; a single failed file does not abort the whole sync (others still sync); exit codes mirror the other storage commands (0 success / 1 usage-or-limit / 4 auth / 5 partial). Product-language output only.
+- `theo storage sync <local-dir> --prefix <p>` — bidirectional, conflict-safe sync of a stored prefix to a local directory. Persists a `.theo/.sync-manifest.json` of the last-synced content hash per path; classifies per-path changes and applies non-conflicting ones both directions; refuses to overwrite a file changed on both sides (surfaces a conflict + `--strategy=pull|push|backup`). Pull-twice is a no-op. `--dry-run` previews without writing. Hardened against pulling through a symlink out of the sync folder; a single failed file does not abort the whole sync (others still sync); exit codes mirror the other storage commands (0 success / 1 usage-or-limit / 4 auth / 5 partial). Product-language output only. LIVE-validated end-to-end against dev-public storage.
 
 ## [0.3.5] - 2026-06-26
 
