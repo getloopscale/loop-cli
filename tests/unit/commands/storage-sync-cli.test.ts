@@ -5,7 +5,7 @@
 // --json stability Rule 5, product language Rule 3). These are pure functions so
 // the whole contract is unit-testable without a live backend.
 
-import { syncExitCode, summarizeSync, syncErrorMessage, SyncResult } from '../../../src/commands/storage-sync';
+import { syncExitCode, summarizeSync, syncErrorMessage, httpStatusOf, SyncResult } from '../../../src/commands/storage-sync';
 import { normalizePrefix } from '../../../src/register/storage';
 
 const EMPTY: SyncResult = { applied: [], conflicts: [], skipped: [] };
@@ -29,6 +29,17 @@ describe('storage-sync T3.1 — CLI output contract', () => {
 
   it('a 401 from the backend is an auth error (exit 4)', () => {
     expect(syncExitCode({ errorStatus: 401 })).toBe(4);
+  });
+
+  it('httpStatusOf reads BOTH error shapes — plain .status AND ApiError .statusCode (LIVE P1)', () => {
+    // LIVE regression: listAll runs first via ApiClient, which throws ApiError with
+    // .statusCode (not .status). The action read only .status → a 401 mapped to exit 5.
+    expect(httpStatusOf({ status: 401 })).toBe(401); // httpBinary shape (download/upload)
+    expect(httpStatusOf({ statusCode: 401 })).toBe(401); // ApiError shape (listAll)
+    expect(httpStatusOf(new Error('boom'))).toBeUndefined();
+    // End-to-end: an ApiError-shaped 401 must map to exit 4, not 5.
+    expect(syncExitCode({ errorStatus: httpStatusOf({ statusCode: 401 }) })).toBe(4);
+    expect(syncExitCode({ errorStatus: httpStatusOf({ statusCode: 402 }) })).toBe(1);
   });
 
   it('exit-code mapping mirrors the sibling storage command (F-cli-1)', () => {

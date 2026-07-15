@@ -20,6 +20,7 @@ import {
   summarizeSync,
   syncExitCode,
   syncErrorMessage,
+  httpStatusOf,
 } from '../commands/storage-sync';
 import { API_REQUEST_TIMEOUT_MS } from '../config/constants';
 import { CommandDeps } from './types';
@@ -207,7 +208,7 @@ export function registerStorageCommands(deps: CommandDeps): void {
         }
         return process.exit(syncExitCode({ result }));
       } catch (err) {
-        const status = (err as { status?: number }).status;
+        const status = httpStatusOf(err); // reads .status (httpBinary) OR .statusCode (ApiError)
         writeError(syncErrorMessage(status));
         return process.exit(syncExitCode({ errorStatus: status }));
       }

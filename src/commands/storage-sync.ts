@@ -161,9 +161,20 @@ const UNSAFE_PATH = 'SYNC_UNSAFE_PATH';
 /** Marker embedded in conflict-backup filenames; excluded from sync (F-sec-6). */
 const BACKUP_MARKER = '.theo-backup-';
 
+/**
+ * Extract the HTTP status from either error shape the storage surfaces throw:
+ * `httpBinary` (download/upload/del) sets `.status`; the `ApiClient` (listAll)
+ * throws `ApiError` with `.statusCode`. Reading only `.status` mapped a real 401
+ * on the listAll path to exit 5 instead of 4 (caught in LIVE dev-public validation).
+ */
+export function httpStatusOf(err: unknown): number | undefined {
+  const e = err as { status?: number; statusCode?: number };
+  return e?.status ?? e?.statusCode;
+}
+
 /** Stable skip reason for an op that failed mid-apply (F-test-1). */
 function opFailureReason(err: unknown): string {
-  const status = (err as { status?: number })?.status;
+  const status = httpStatusOf(err);
   return status ? `SYNC_OP_FAILED_${status}` : 'SYNC_OP_FAILED';
 }
 
