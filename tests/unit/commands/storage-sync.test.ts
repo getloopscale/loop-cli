@@ -312,6 +312,17 @@ describe('storage-sync T2.2 — apply / idempotency / conflict', () => {
     expect(second.applied.some((o) => o.path === 'good.txt')).toBe(false);
   });
 
+  it('an empty file round-trips as content (not mistaken for a delete) and binary is byte-identical (edge cases)', async () => {
+    const dir = await tmp();
+    const local = createFsLocalPort(dir);
+    await local.write('empty.txt', Buffer.alloc(0));
+    const h = await local.hash('empty.txt');
+    expect(h).toMatch(/^[0-9a-f]{64}$/); // empty content has a well-defined hash, not "absent"
+    const bin = Buffer.from([0, 1, 2, 255, 0, 128]);
+    await local.write('deep/nested/b.bin', bin);
+    expect((await local.read('deep/nested/b.bin')).equals(bin)).toBe(true); // binary + nested path intact
+  });
+
   it('a local deletion pushes a remote delete', async () => {
     const { engine, dir, remote } = await engineFor({ 'x.txt': 'X' }, {});
     await writeManifestFor(dir, { 'x.txt': hashBytes(Buffer.from('X')) }); // last-synced; local now absent
