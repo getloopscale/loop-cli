@@ -131,6 +131,35 @@ export interface SyncResult {
 const UNSAFE_PATH = 'SYNC_UNSAFE_PATH';
 
 /**
+ * Map a sync outcome to the permanent CLI exit-code contract (Rule 4):
+ * 0 success · 1 usage · 4 auth · 5 partial (conflicts left unresolved or paths
+ * skipped). Pure so every branch is unit-testable without a live backend.
+ */
+export function syncExitCode(opts: { result?: SyncResult; errorStatus?: number; usageError?: boolean }): number {
+  if (opts.usageError) return 1;
+  if (opts.errorStatus === 401) return 4;
+  if (!opts.result) return 5;
+  return opts.result.conflicts.length > 0 || opts.result.skipped.length > 0 ? 5 : 0;
+}
+
+/**
+ * Render a sync result into a product-language human summary + a stable JSON
+ * shape (Rule 3 + Rule 5). Never mentions the underlying storage internals.
+ */
+export function summarizeSync(result: SyncResult): { text: string; json: SyncResult } {
+  const pulled = result.applied.filter((o) => o.kind === 'pull' || o.kind === 'pullDelete').length;
+  const pushed = result.applied.filter((o) => o.kind === 'push' || o.kind === 'pushDelete').length;
+  const lines = [`Synced: ${pulled} pulled, ${pushed} pushed, ${result.conflicts.length} conflicts, ${result.skipped.length} skipped.`];
+  for (const c of result.conflicts) {
+    lines.push(`Conflict: ${c.path} — changed in both places. Resolve with --strategy=pull|push|backup.`);
+  }
+  for (const s of result.skipped) {
+    lines.push(`Skipped: ${s.path} — unsafe path, not written.`);
+  }
+  return { text: lines.join('\n'), json: result };
+}
+
+/**
  * The sync engine. Composes a RemotePort + LocalPort + the local manifest into a
  * plan of ops (plan()), then applies the non-conflicting ones (run(), T2.2).
  * Pure over the ports — no direct fs/HTTP in its classification logic (ADR D3).
