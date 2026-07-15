@@ -29,13 +29,22 @@ async function writeManifestFor(dir: string, paths: Record<string, string>): Pro
 // In-memory fakes used by later phases (T2.x). Declared here (T0.2) to prove the
 // port interfaces are satisfiable without any real backend (DIP).
 class FakeRemote implements RemotePort {
-  constructor(private store: Map<string, { buf: Buffer; contentType: string }> = new Map()) {}
+  // Simulate a remote mutation that lands AFTER a path is first downloaded
+  // (TOCTOU / Drawback #2): { path -> new content, applied on 2nd download }.
+  drift = new Map<string, string>();
+  private downloaded = new Set<string>();
+  constructor(public store: Map<string, { buf: Buffer; contentType: string }> = new Map()) {}
   async listAll(): Promise<RemoteEntry[]> {
     return [...this.store.entries()].map(([p, v]) => ({ path: p, size: v.buf.length, contentType: v.contentType }));
   }
   async download(p: string): Promise<Buffer> {
+    if (this.downloaded.has(p) && this.drift.has(p)) {
+      this.store.set(p, { buf: Buffer.from(this.drift.get(p)!), contentType: 'text/plain' });
+      this.drift.delete(p);
+    }
     const v = this.store.get(p);
     if (!v) throw Object.assign(new Error('not found'), { status: 404 });
+    this.downloaded.add(p);
     return v.buf;
   }
   async upload(p: string, buf: Buffer, contentType: string): Promise<void> {
@@ -145,5 +154,90 @@ describe('storage-sync T2.1 — plan (no side effects)', () => {
     const p = await engine.plan();
     expect(p.applied).toEqual([]);
     expect(p.skipped.map((s) => s.path)).toContain('../../evil.txt');
+  });
+});
+
+describe('storage-sync T2.2 — apply / idempotency / conflict', () => {
+  it('pull-twice is a no-op (idempotency GOAL metric)', async () => {
+    const { engine, dir } = await engineFor({ 'x.txt': 'X' }, {});
+    const first = await engine.run();
+    expect(first.applied).toEqual([{ kind: 'pull', path: 'x.txt' }]);
+    expect((await fs.readFile(path.join(dir, 'x.txt'))).toString()).toBe('X');
+    // Second engine over the same dir + same remote — the manifest now records
+    // the synced state, so nothing is applied.
+    const local2 = createFsLocalPort(dir);
+    const remote2 = new FakeRemote(new Map([['x.txt', { buf: Buffer.from('X'), contentType: 'text/plain' }]]));
+    const second = await new SyncEngine(remote2, local2, dir, '').run();
+    expect(second.applied).toEqual([]);
+    expect(second.conflicts).toEqual([]);
+  });
+
+  it('a both-changed path is a typed conflict, never clobbered (GOAL metric)', async () => {
+    const { engine, dir, remote } = await engineFor({ 'x.txt': 'C' }, { 'x.txt': 'B' });
+    await writeManifestFor(dir, { 'x.txt': hashBytes(Buffer.from('A')) });
+    const res = await engine.run(); // no strategy
+    expect(res.conflicts.map((c) => c.path)).toEqual(['x.txt']);
+    expect(res.applied).toEqual([]);
+    // Neither side was overwritten.
+    expect((await fs.readFile(path.join(dir, 'x.txt'))).toString()).toBe('B');
+    expect(remote.store.get('x.txt')!.buf.toString()).toBe('C');
+  });
+
+  it('--strategy=pull takes the remote side', async () => {
+    const { engine, dir } = await engineFor({ 'x.txt': 'C' }, { 'x.txt': 'B' });
+    await writeManifestFor(dir, { 'x.txt': hashBytes(Buffer.from('A')) });
+    const res = await engine.run('pull');
+    expect(res.conflicts).toEqual([]);
+    expect((await fs.readFile(path.join(dir, 'x.txt'))).toString()).toBe('C');
+  });
+
+  it('--strategy=push takes the local side', async () => {
+    const { engine, dir, remote } = await engineFor({ 'x.txt': 'C' }, { 'x.txt': 'B' });
+    await writeManifestFor(dir, { 'x.txt': hashBytes(Buffer.from('A')) });
+    const res = await engine.run('push');
+    expect(res.conflicts).toEqual([]);
+    expect(remote.store.get('x.txt')!.buf.toString()).toBe('B');
+  });
+
+  it('--strategy=backup saves the loser then applies the winner (remote)', async () => {
+    const { engine, dir } = await engineFor({ 'x.txt': 'C' }, { 'x.txt': 'B' });
+    await writeManifestFor(dir, { 'x.txt': hashBytes(Buffer.from('A')) });
+    await engine.run('backup');
+    // Winner (remote 'C') is on disk; the local loser 'B' is backed up.
+    expect((await fs.readFile(path.join(dir, 'x.txt'))).toString()).toBe('C');
+    const entries = await fs.readdir(dir);
+    const backup = entries.find((e) => e.startsWith('x.txt.theo-backup-'));
+    expect(backup).toBeDefined();
+    expect((await fs.readFile(path.join(dir, backup!))).toString()).toBe('B');
+  });
+
+  it('a remote deletion removes the local file and the manifest key', async () => {
+    const { engine, dir } = await engineFor({}, { 'x.txt': 'X' });
+    await writeManifestFor(dir, { 'x.txt': hashBytes(Buffer.from('X')) });
+    const res = await engine.run();
+    expect(res.applied).toEqual([{ kind: 'pullDelete', path: 'x.txt' }]);
+    await expect(fs.readFile(path.join(dir, 'x.txt'))).rejects.toBeDefined();
+  });
+
+  it('remote drift between plan and push reclassifies as a conflict (TOCTOU, Drawback #2)', async () => {
+    const { engine, dir, remote } = await engineFor({ 'x.txt': 'A' }, { 'x.txt': 'B' });
+    await writeManifestFor(dir, { 'x.txt': hashBytes(Buffer.from('A')) }); // push scenario (local changed, remote==manifest)
+    remote.drift.set('x.txt', 'C'); // remote mutates to C after plan downloads A
+    const res = await engine.run();
+    expect(res.conflicts.map((c) => c.path)).toEqual(['x.txt']);
+    // Push did NOT overwrite the drifted remote.
+    expect(remote.store.get('x.txt')!.buf.toString()).toBe('C');
+  });
+
+  it('.theo control dir never syncs and stays idempotent (EC-2)', async () => {
+    const { engine, dir } = await engineFor({ 'k.txt': 'K' }, {});
+    await engine.run();
+    // The manifest itself must not have been pushed to the remote.
+    const local2 = createFsLocalPort(dir);
+    const walked = await local2.walk();
+    expect(walked.some((p) => p.startsWith('.theo/'))).toBe(false);
+    const remote2 = new FakeRemote(new Map([['k.txt', { buf: Buffer.from('K'), contentType: 'text/plain' }]]));
+    const second = await new SyncEngine(remote2, local2, dir, '').run();
+    expect(second.applied).toEqual([]);
   });
 });

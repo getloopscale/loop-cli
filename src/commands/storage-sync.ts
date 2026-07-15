@@ -13,6 +13,10 @@ import path from 'path';
 
 import { hashBytes, readManifest, writeManifest, THEO_CONTROL_DIR, Manifest } from '../lib/sync-manifest';
 import { classify, Kind } from '../lib/sync-delta';
+import { guessContentType } from '../lib/content-type';
+
+/** Conflict resolution strategy for `run()`. */
+export type SyncStrategy = 'pull' | 'push' | 'backup';
 
 /** A remote object as seen by `listAll`. `fingerprint` is optional (Q2). */
 export interface RemoteEntry {
@@ -190,5 +194,108 @@ export class SyncEngine {
     }
 
     return { applied, conflicts, skipped };
+  }
+
+  /**
+   * Apply the plan: perform non-conflicting ops both directions, resolve conflicts
+   * per `strategy` (or leave them untouched and report them), persist the manifest.
+   * A push that finds the remote drifted since the plan (TOCTOU, Drawback #2) is
+   * downgraded to a conflict rather than clobbering the drifted remote.
+   */
+  async run(strategy?: SyncStrategy): Promise<SyncResult> {
+    const plan = await this.plan();
+    const manifest = await readManifest(this.dir);
+    const applied: SyncOp[] = [];
+    const conflicts: SyncConflict[] = [];
+    const conflictPaths = new Set(plan.conflicts.map((c) => c.path));
+
+    for (const op of plan.applied) {
+      if (op.kind === 'push' && (await this.remoteDriftedSinceSync(op.path, manifest))) {
+        conflictPaths.add(op.path); // TOCTOU — do not clobber the drifted remote
+        continue;
+      }
+      await this.applyOp(op, manifest);
+      applied.push(op);
+    }
+
+    for (const path of conflictPaths) {
+      if (!strategy) {
+        conflicts.push({ path });
+        continue;
+      }
+      applied.push(await this.resolveConflict(path, strategy, manifest));
+    }
+
+    await writeManifest(this.dir, { version: 1, prefix: this.prefix, paths: manifest.paths });
+    return { applied, conflicts, skipped: plan.skipped };
+  }
+
+  /** True if the remote object for `rel` no longer matches the last-synced hash. */
+  private async remoteDriftedSinceSync(rel: string, manifest: Manifest): Promise<boolean> {
+    const expected = manifest.paths[rel];
+    if (expected === undefined) return false; // never synced → nothing to drift from
+    let buf: Buffer;
+    try {
+      buf = await this.remote.download(this.toRemoteKey(rel));
+    } catch {
+      return false; // remote absent now — a delete, handled by classification, not a drift-clobber
+    }
+    return hashBytes(buf) !== expected;
+  }
+
+  private async applyOp(op: SyncOp, manifest: Manifest): Promise<void> {
+    switch (op.kind) {
+      case 'pull': {
+        const buf = await this.remoteBytes(op.path);
+        await this.local.write(op.path, buf);
+        manifest.paths[op.path] = hashBytes(buf);
+        break;
+      }
+      case 'push': {
+        const buf = await this.local.read(op.path);
+        await this.remote.upload(this.toRemoteKey(op.path), buf, guessContentType(op.path));
+        manifest.paths[op.path] = hashBytes(buf);
+        break;
+      }
+      case 'pullDelete':
+        await this.local.del(op.path);
+        delete manifest.paths[op.path];
+        break;
+      case 'pushDelete':
+        await this.remote.del(this.toRemoteKey(op.path));
+        delete manifest.paths[op.path];
+        break;
+    }
+  }
+
+  private async resolveConflict(rel: string, strategy: SyncStrategy, manifest: Manifest): Promise<SyncOp> {
+    if (strategy === 'push') {
+      const op: SyncOp = { kind: 'push', path: rel };
+      await this.applyOp(op, manifest);
+      return op;
+    }
+    // 'backup' saves the local (losing) side, then falls through to a remote-wins pull.
+    if (strategy === 'backup') {
+      const local = await this.safeRead(rel);
+      if (local) await this.local.write(`${rel}.theo-backup-${Date.now()}`, local);
+    }
+    const op: SyncOp = { kind: 'pull', path: rel };
+    await this.applyOp(op, manifest);
+    return op;
+  }
+
+  private async safeRead(rel: string): Promise<Buffer | null> {
+    try {
+      return await this.local.read(rel);
+    } catch {
+      return null;
+    }
+  }
+
+  /** Remote bytes for `rel`, from the plan-time cache or a fresh download. */
+  private async remoteBytes(rel: string): Promise<Buffer> {
+    const cached = this.remoteCache.get(rel);
+    if (cached) return cached.buf;
+    return this.remote.download(this.toRemoteKey(rel));
   }
 }
