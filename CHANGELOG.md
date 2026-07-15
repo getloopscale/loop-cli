@@ -7,6 +7,7 @@ Format: Keep a Changelog + Semantic Versioning.
 
 ### Added
 - `theo storage` command group (M7 tenant blob storage): `upload`, `download`, `list`, `stat`, `delete`, `share` against the `/v1/storage/*` API. Authenticated via the existing token/config; product-language output only (no infra terms); permanent exit-code contract (0 success, 1 usage/limit, 4 auth, 5 partial). 9 unit tests.
+- `theo storage sync <local-dir> --prefix <p>` (in progress) — bidirectional, conflict-safe sync of a stored prefix to a local directory. Persists a `.theo/.sync-manifest.json` of the last-synced content hash per path; classifies per-path changes and applies non-conflicting ones both directions; refuses to overwrite a file changed on both sides (surfaces a conflict + `--strategy=pull|push|backup`). Pull-twice is a no-op. Product-language output only; exit codes 0/1/4/5.
 
 ## [0.3.5] - 2026-06-26
 
