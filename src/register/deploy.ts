@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2025-2026 The Theo Authors
 
+import { promptConfirm } from '../output/prompt-confirm';
 import { createHash } from 'crypto';
 import { ApiClient } from '../api/client';
 import { SSEClient } from '../api/sse-client';
@@ -455,19 +456,13 @@ export function registerDeployCommands(deps: CommandDeps): void {
             body,
           );
         },
-        confirm: async (message: string) => {
-          const readline = await import('readline');
-          const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-          return new Promise<boolean>((resolve) => {
-            rl.question(message, (answer) => {
-              rl.close();
-              resolve(answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes');
-            });
-          });
-        },
+        // #164 — este era o ULTIMO `readline` inline sem handler de `close`: em EOF a Promise
+        // nunca resolvia e o `withTimeout` abaixo surgia como "timed out. Check your connection".
+        confirm: promptConfirm,
         writeTo,
         writeError,
         isCI,
+        isNonInteractive: !process.stdin.isTTY,
       });
 
       const exitCode = await withTimeout(
@@ -508,20 +503,11 @@ export function registerDeployCommands(deps: CommandDeps): void {
             { from, to },
           );
         },
-        confirm: async (message: string) => {
-          const readline = await import('readline');
-          const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-          return new Promise<boolean>((resolve) => {
-            // Red Team #161 defense-in-depth: treat stdin EOF as "N" instead
-            // of hanging the prompt (which would then be mis-attributed to a
-            // network timeout by the outer withTimeout wrapper).
-            rl.on('close', () => resolve(false));
-            rl.question(message, (answer) => {
-              rl.close();
-              resolve(answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes');
-            });
-          });
-        },
+        // Red Team #161 defense-in-depth (EOF -> "N") continua valendo: e o que
+        // `promptConfirm` faz. Esta era a TERCEIRA copia do mesmo prompt; #164 unificou as
+        // tres no helper, para que a proxima correcao nao precise ser aplicada em tres lugares
+        // — que foi exatamente como `secret delete` e `rollback` ficaram de fora do #161.
+        confirm: promptConfirm,
         writeTo,
         writeError,
         isCI,

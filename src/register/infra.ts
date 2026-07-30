@@ -7,6 +7,7 @@ import { BuildListCommand } from '../commands/build-list';
 import { BuildInspectCommand } from '../commands/build-inspect';
 import { CancelCommand } from '../commands/cancel';
 import { SecretSetCommand, SecretListCommand, SecretDeleteCommand } from '../commands/secret';
+import { promptConfirm } from '../output/prompt-confirm';
 import { BillingCommand } from '../commands/billing';
 import { ConnectCommand, DisconnectCommand, type ConnectionInfo } from '../commands/connect';
 import { API_REQUEST_TIMEOUT_MS } from '../config/constants';
@@ -244,19 +245,15 @@ export function registerInfraCommands(deps: CommandDeps): void {
             `/api/v1/secrets/${encodeURIComponent(secretName)}?project=${encodeURIComponent(project)}&environment=${encodeURIComponent(env)}&app=${encodeURIComponent(app)}`,
           );
         },
-        confirm: async (message: string) => {
-          const readline = await import('readline');
-          const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-          return new Promise<boolean>((resolve) => {
-            rl.question(message, (answer) => {
-              rl.close();
-              resolve(answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes');
-            });
-          });
-        },
+        // #164 — era o `readline` inline SEM handler de `close`: em EOF a Promise nunca
+        // resolvia, e o `withTimeout` de 40 s abaixo surgia como "timed out. Check your
+        // connection". `promptConfirm` (CHG-2026-04-23-AUDIT-9) existe exatamente para
+        // eliminar esse padrão — recusa em stdin sem TTY e trata EOF como "n".
+        confirm: promptConfirm,
         writeTo,
         writeError,
         isCI,
+        isNonInteractive: !process.stdin.isTTY,
       });
 
       process.exitCode = await withTimeout(
