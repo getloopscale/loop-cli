@@ -9,6 +9,7 @@ import * as path from 'path';
 import {
   findServicesJson,
   parseServicesRuntimes,
+  theoYamlFromServicesJson,
   ServicesJsonOverrideError,
 } from '../../../src/adapters/services-json';
 
@@ -178,5 +179,63 @@ describe('findServicesJson — cascade .theo/ → .theokit/ (Sprint 4 #29.B2)', 
     fs.writeFileSync(customPath, '{"version":2,"project":"override","services":[]}');
     const result = findServicesJson(tmpRoot, tmpRoot, customPath);
     expect(result?.path).toBe(customPath);
+  });
+});
+
+// theo#165 — `theo secret` resolvia o projeto SO pelo `theo.yaml` legado e reprovava com
+// "No theo.yaml found. Run: theo init" num projeto que so tem `.theo/services.json` v2 — o
+// formato que o proprio theokit gera. `deploy`/`status`/`logs` ja liam o v2, entao o projeto
+// deployava e nao conseguia gerenciar secrets, sem `--project` para contornar.
+//
+// A conversao vive no ADAPTADOR, nao no comando: os comandos continuam consumindo um unico
+// `TheoYamlResult` (DIP), e a raiz de composicao escolhe a fonte.
+describe('theoYamlFromServicesJson (theo#165)', () => {
+  const tmp = path.join(os.tmpdir(), `theo-165-${String(process.pid)}`);
+
+  beforeEach(() => { fs.mkdirSync(tmp, { recursive: true }); });
+  afterEach(() => { fs.rmSync(tmp, { recursive: true, force: true }); });
+
+  it('converte um services.json v2 real em TheoYamlResult', () => {
+    const file = path.join(tmp, 'services.json');
+    fs.writeFileSync(file, JSON.stringify({
+      version: 2,
+      project: 'theokit-app',
+      services: [
+        { name: 'web', runtime: 'node', type: 'server', port: 8080, start: 'node server.js' },
+        { name: 'worker', runtime: 'node', type: 'worker', port: null },
+      ],
+    }));
+
+    const result = theoYamlFromServicesJson(file);
+
+    expect(result).not.toBeNull();
+    expect(result?.content.project).toBe('theokit-app');
+    expect(Object.keys(result?.content.apps ?? {})).toEqual(['web', 'worker']);
+    expect(result?.content.apps.web.port).toBe(8080);
+    expect(result?.content.apps.web.framework).toBe('node');
+    // `port` e `number | null` no contrato — um worker sem porta nao pode virar 0, que
+    // significaria "porta zero" para quem le.
+    expect(result?.content.apps.worker.port).toBeNull();
+    expect(result?.path).toBe(file);
+  });
+
+  it('devolve null quando o manifesto nao tem `project` — nao inventa nome', () => {
+    const file = path.join(tmp, 'services.json');
+    fs.writeFileSync(file, JSON.stringify({ version: 2, services: [{ name: 'web' }] }));
+
+    // Sem `project` nao ha o que resolver. Devolver um resultado com string vazia faria o
+    // comando chamar a API com `project=`, e o erro apareceria uma camada adiante, como 404.
+    expect(theoYamlFromServicesJson(file)).toBeNull();
+  });
+
+  it('devolve null em JSON invalido em vez de lancar', () => {
+    const file = path.join(tmp, 'services.json');
+    fs.writeFileSync(file, '{ nao e json');
+
+    expect(theoYamlFromServicesJson(file)).toBeNull();
+  });
+
+  it('devolve null quando o arquivo nao existe', () => {
+    expect(theoYamlFromServicesJson(path.join(tmp, 'ausente.json'))).toBeNull();
   });
 });
