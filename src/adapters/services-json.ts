@@ -11,6 +11,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import type { TheoYamlApp, TheoYamlResult } from './theo-yaml';
 
 const SERVICES_JSON_RELATIVE = path.join('.theo', 'services.json');
 
@@ -126,4 +127,54 @@ export function parseServicesStarts(jsonContent: string): Record<string, string>
     // malformed JSON → empty map
   }
   return out;
+}
+
+/**
+ * theoYamlFromServicesJson — converte um `.theo/services.json` v2 no `TheoYamlResult` que os
+ * comandos consomem.
+ *
+ * POR QUE EXISTE (theo#165). `theo secret` (set/list/delete) resolvia o projeto SO pelo
+ * `theo.yaml` legado e reprovava com "No theo.yaml found. Run: theo init" num projeto que tem
+ * apenas o manifesto moderno — o formato que o proprio theokit gera. Como `deploy`, `status` e
+ * `logs` ja liam o v2, um projeto v2-puro conseguia DEPLOYAR e nao conseguia gerenciar secrets,
+ * e nao havia `--project` para contornar.
+ *
+ * A conversao vive no adaptador de proposito. Os comandos continuam dependendo de UM
+ * `TheoYamlResult` (DIP) e a raiz de composicao escolhe a fonte; ensinar cada comando a ler dois
+ * formatos multiplicaria a mesma decisao por comando — que foi como `secret` ficou para tras.
+ *
+ * Devolve `null` — nunca um resultado meio-vazio — quando o arquivo nao existe, nao e JSON, ou
+ * nao declara `project`. Um `project: ''` chegaria a API como `project=` e o erro apareceria uma
+ * camada adiante, como 404 sem relacao aparente com o manifesto.
+ */
+export function theoYamlFromServicesJson(servicesJsonPath: string): TheoYamlResult | null {
+  let parsed: {
+    project?: string;
+    services?: Array<{ name?: string; runtime?: string; type?: string; port?: number | null }>;
+  };
+  try {
+    parsed = JSON.parse(fs.readFileSync(servicesJsonPath, 'utf8')) as typeof parsed;
+  } catch {
+    return null;
+  }
+  if (!parsed.project) {
+    return null;
+  }
+
+  const apps: Record<string, TheoYamlApp> = {};
+  for (const service of parsed.services ?? []) {
+    if (!service.name) continue;
+    apps[service.name] = {
+      // O manifesto v2 nao declara um `path` por servico; o nome e o identificador que a API
+      // usa, e e o unico dos dois campos que `secret` de fato consome.
+      path: service.name,
+      framework: service.runtime ?? 'unknown',
+      type: service.type,
+      // `?? null` e nao `?? 0`: o contrato admite `null` ("sem porta"), e 0 significaria porta
+      // zero para quem le — um worker nao expoe porta.
+      port: service.port ?? null,
+    };
+  }
+
+  return { path: servicesJsonPath, content: { project: parsed.project, apps } };
 }

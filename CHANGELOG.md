@@ -19,6 +19,7 @@ Format: Keep a Changelog + Semantic Versioning.
 ## [0.3.5] - 2026-06-26
 
 ### Fixed
+- **`theo secret` (set/list/delete) funciona em projeto que só tem `.theo/services.json` v2.** Antes resolvia o projeto apenas pelo `theo.yaml` legado e reprovava com *"No theo.yaml found. Run: theo init"* — num projeto gerado pelo theokit, que `deploy`/`status`/`logs` já deployavam sem problema. `theo connect`/`disconnect` tinham a mesma lacuna e foram corrigidos junto. A escolha da fonte fica na raiz de composição; os comandos seguem consumindo um único manifesto (#165)
 - **Teste F-04 de duração de deploy sai do vermelho.** `should use server duration when server reports nonzero duration_seconds` assertava o formato anterior a `41fbae1` (fecho de theo-cloud#84), que passou a exibir pós-build + build (`2m 22s (build 45s)`) em vez de só o pós-build. O intento do teste — o número vem do servidor, não do relógio de parede — foi preservado e reforçado; só a forma foi atualizada
 - **`theo secret delete` e `theo rollback` não travam mais em stdin não-interativo.** Sem `--yes`, num pipe ou redirect, os dois caíam no prompt `[y/N]`, ficavam presos até o timeout de 40 s e a mensagem culpava a rede — *"timed out. Check your connection"* — quando o que faltava era um `y`. Agora reprovam de imediato com `Confirmation required. Pass --yes in non-interactive contexts`. O fix de #161 tinha coberto só `theo promote`; os três prompts foram unificados no helper `promptConfirm`, para que a próxima correção não precise ser aplicada em três lugares (#164)
 
