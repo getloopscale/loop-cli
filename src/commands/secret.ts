@@ -28,6 +28,12 @@ export interface SecretDeps {
   writeTo: (msg: string) => void;
   writeError: (msg: string) => void;
   isCI?: boolean;
+  /**
+   * stdin sem TTY — pipe, redirect, harness de teste. Distinto de `isCI`: um pipe numa
+   * sessão local não define a variável `CI`, e era exatamente por essa fresta que
+   * `secret delete` caía no prompt e travava (#164, mesma classe do #161 em `promote`).
+   */
+  isNonInteractive?: boolean;
 }
 
 export interface SecretSetOptions {
@@ -233,8 +239,13 @@ export class SecretDeleteCommand {
 
     // Confirmation required (unless --yes)
     if (!opts.yes) {
-      if (this.deps.isCI || opts.json) {
-        return this.exitWithError(opts, 'Confirmation required. Use --yes to skip confirmation. Example: theo secret delete KEY --yes --json', 1, 'CONFIRMATION_REQUIRED');
+      // #164 — fail-fast em QUALQUER contexto não-interativo, igual ao #161 em `promote`:
+      // CI, `--json`, ou stdin sem TTY (pipe, redirect, harness). Antes a guarda parava em
+      // `isCI || opts.json`, então um pipe numa sessão local (sem a variável CI) chegava ao
+      // prompt, travava até o `withTimeout` de 40 s e a mensagem culpava a REDE —
+      // "Secret delete timed out. Check your connection" — enquanto o que faltava era um `y`.
+      if (this.deps.isCI || this.deps.isNonInteractive || opts.json) {
+        return this.exitWithError(opts, 'Confirmation required. Pass --yes in non-interactive contexts (CI, pipes, redirected stdin). Example: theo secret delete KEY --yes', 1, 'CONFIRMATION_REQUIRED');
       }
       if (this.deps.confirm) {
         const confirmed = await this.deps.confirm(

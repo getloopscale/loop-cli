@@ -1560,7 +1560,19 @@ describe('DeployCommand', () => {
 
       expect(exitCode).toBe(0);
       const output = (deps.writeTo as jest.Mock).mock.calls.map((c: string[]) => c[0]).join('\n');
-      expect(output).toContain('97s');
+      // O intento deste teste (F-04) continua: o numero exibido tem de vir do SERVIDOR, nao do
+      // relogio de parede. O que mudou foi a FORMA, em `41fbae1` (fecho do theo-cloud#84): o total
+      // passou a ser pos-build + build, com o build repetido entre parenteses, porque
+      // `duration_seconds` mede so a fase pos-build e sozinho subestimava o custo em ate 7x.
+      //
+      // Aqui: 97s (pos-build, do servidor) + 45s (build) = 142s = "2m 22s (build 45s)".
+      // A assercao anterior era `toContain('97s')`, presa ao formato pre-41fbae1 — o teste ficou
+      // VERMELHO no baseline desde entao, sem caminho para o verde.
+      expect(output).toContain('2m 22s');
+      expect(output).toContain('build 45s');
+      // A parte que prova o intento: 142 e 97+45, e nao os 3000ms de relogio que o teste irmao
+      // usa. Se o codigo caisse para wall-clock, este numero mudaria.
+      expect(output).not.toMatch(/Deploy completed in 3s/);
     });
 
     it('should use wall-clock time in JSON output when server reports duration_seconds 0', async () => {
