@@ -16,10 +16,10 @@
   "homepage": "https://usetheo.dev",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/usetheodev/theo-cli.git"
+    "url": "git+https://github.com/usetheoai/theo-cli.git"
   },
   "bugs": {
-    "url": "https://github.com/usetheodev/theo-cli/issues"
+    "url": "https://github.com/usetheoai/theo-cli/issues"
   },
   "main": "dist/index.js",
   "bin": {
