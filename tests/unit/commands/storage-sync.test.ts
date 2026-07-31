@@ -257,7 +257,10 @@ describe('storage-sync T2.2 — apply / idempotency / conflict', () => {
   });
 
   it('a conflict backup is never pushed to remote on the next sync (F-sec-6)', async () => {
-    const { engine, dir, remote } = await engineFor({ 'x.txt': 'C' }, { 'x.txt': 'B' });
+    // `remote` nao e' desestruturado de proposito: este teste exercita o SEGUNDO
+    // sync, contra o `remote2` criado abaixo. O binding sobrava da
+    // desestruturacao — o lint o acusava, e nao era assercao faltando.
+    const { engine, dir } = await engineFor({ 'x.txt': 'C' }, { 'x.txt': 'B' });
     await writeManifestFor(dir, { 'x.txt': hashBytes(Buffer.from('A')) });
     await engine.run('backup'); // creates x.txt.theo-backup-<...> locally
     const local2 = createFsLocalPort(dir);
