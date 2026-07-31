@@ -7,7 +7,7 @@ only what a contributor needs hands-on.
 ## Setup
 
 ```bash
-git clone https://github.com/usetheodev/theo-cli.git
+git clone https://github.com/usetheoai/theo-cli.git
 cd theo-cli
 npm ci          # Node >= 20
 npm run build   # tsc
