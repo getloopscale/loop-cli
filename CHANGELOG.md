@@ -10,6 +10,10 @@ Format: Keep a Changelog + Semantic Versioning.
 - `theo storage sync --exclude <glob>` (repeatable) — skip paths matching a glob (`**` crosses directories, `*` stays within a segment). Both directions: excluded paths are never pulled nor pushed. (For a persistent, declarative ignore set, prefer `.theoignore`.)
 - Claude Code integration (`integrations/claude-code/`): example `settings.json` wiring `theo storage sync` to `SessionStart` (pull) + `SessionEnd` (push) so a shared `.claude/` stays in sync effortlessly. Ships with a safety fence — `hooks/**` and `settings*.json` are excluded by default so a pull can never overwrite the executable config the agent runs (executing synced config is gated on a future trust model).
 
+### Changed
+- Hook de validação de comandos ficou mais rápido: ~6 processos por chamada de ferramenta em vez de ~50, sem mudança de comportamento
+
+
 ## [0.4.0] - 2026-07-15
 
 ### Added
