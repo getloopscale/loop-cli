@@ -46,6 +46,19 @@ export interface SpawnTheoResult {
 }
 
 /**
+ * The caller's environment minus the variables that would move the CLI's
+ * config dir out of tmpHome. ConfigStore.default() prefers XDG_CONFIG_HOME
+ * over HOME, and GitHub-hosted runners export it, so inheriting it points
+ * the spawned CLI at the runner's real config. A test that wants XDG mode
+ * passes XDG_CONFIG_HOME through `opts.env`.
+ */
+function isolatedParentEnv(): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = { ...process.env };
+  delete env.XDG_CONFIG_HOME;
+  return env;
+}
+
+/**
  * Run `node bin/theo <args>` with isolated env + cwd. Returns exit code,
  * stdout, stderr.
  *
@@ -66,7 +79,7 @@ export interface SpawnTheoResult {
 export function spawnTheo(opts: SpawnTheoOptions): Promise<SpawnTheoResult> {
   const tmpHome = opts.cwd ?? mkTmpHome();
   const baseEnv: NodeJS.ProcessEnv = {
-    ...process.env,
+    ...isolatedParentEnv(),
     HOME: tmpHome,
     NO_COLOR: '1',
     // Default to unreachable. Tests using mock-api-server.ts override this.
@@ -141,7 +154,7 @@ export function spawnTheo(opts: SpawnTheoOptions): Promise<SpawnTheoResult> {
 export function spawnTheoSync(opts: SpawnTheoOptions): SpawnTheoResult {
   const tmpHome = opts.cwd ?? mkTmpHome();
   const baseEnv: NodeJS.ProcessEnv = {
-    ...process.env,
+    ...isolatedParentEnv(),
     HOME: tmpHome,
     NO_COLOR: '1',
     THEO_URL: 'http://127.0.0.1:1',
