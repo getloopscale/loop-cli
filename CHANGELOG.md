@@ -5,6 +5,8 @@ Format: Keep a Changelog + Semantic Versioning.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-06
+
 ### Added
 - **Este projeto passou a ter a sua própria lista de pendências.** Um achado sobre o CLI vivia na lista de outro repositório — órfão por construção: quem mantém aquele repositório nunca o selecionaria, e quem trabalha aqui não sabia que existia. Foi trazido com a evidência original e ganhou número local. (B-145 do repo theo)
 - **`theo storage sync` respects a `.theoignore` file (gitignore-style).** A `.theoignore` (or `.gitignore`) at the local dir declares which paths to keep out of the sync — the same familiar model as `.dockerignore`/`.npmignore`, with full git semantics (directory `foo/`, glob `*.local.json`, anchored `/foo`, negation `!keep`). Excluded paths are never walked, hashed, pushed, downloaded, nor pulled (the fence protects both directions). Reuses the `ignore` package (no new dependency). This makes it practical to sync a real `.claude/` whose audit trail (`knowledge-base/`) dwarfs the config: `echo "knowledge-base/" > .claude/.theoignore` and the 1.7 GB audit tree is skipped. The matcher is loaded at the composition root and injected as a predicate, so the sync engine stays pure over its ports (ADR D3). 4 loader tests + 2 engine tests.
