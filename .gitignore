@@ -37,3 +37,4 @@ npm-debug.log*
 # Personal maintenance registry, not a project artifact (moved to theo/BACKLOG.md on 2026-10-05).
 BACKLOG.md
 .BACKLOG.md.lock
+.claude/
