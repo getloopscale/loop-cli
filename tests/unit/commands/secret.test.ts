@@ -141,6 +141,52 @@ describe('SecretDeleteCommand', () => {
 
     expect(await cmd.execute({ name: 'KEY' })).toBe(4);
   });
+
+  // #164 — paridade com o fix do #161 (`theo promote`). Sem --yes e com stdin nao-interativo
+  // (pipe, redirect, harness), a guarda anterior so cobria `isCI || opts.json`: um pipe sem a
+  // variavel CI caia no prompt, travava ate o withTimeout de 40s e a mensagem culpava a REDE
+  // ("Secret delete timed out. Check your connection"). O operador perdia o secret de vista
+  // achando que era conectividade.
+  it('secret delete sem --yes com stdin nao-interativo reprova rapido, sem prompt', async () => {
+    const confirm = jest.fn();
+    const deps = createMockDeps({ isNonInteractive: true, confirm });
+    const cmd = new SecretDeleteCommand(deps);
+
+    const exitCode = await cmd.execute({ name: 'KEY' });
+
+    expect(exitCode).toBe(1);
+    // A parte que importa: o prompt NAO chega a ser feito. Um teste que so olhasse o exit code
+    // passaria mesmo com o hang, porque o hang acontece DENTRO do confirm.
+    expect(confirm).not.toHaveBeenCalled();
+    expect(deps.deleteSecret).not.toHaveBeenCalled();
+    const out = [
+      ...(deps.writeTo as jest.Mock).mock.calls.map((c: string[]) => c[0]),
+      ...(deps.writeError as jest.Mock).mock.calls.map((c: string[]) => c[0]),
+    ].join('\n');
+    // Em modo texto o codigo `CONFIRMATION_REQUIRED` nao vai para a saida (so em --json); o que
+    // o operador ve e a frase. O que precisa valer nos dois modos e o SENTIDO dela: apontar para
+    // o remedio, e nunca para a rede.
+    expect(out).toMatch(/Confirmation required/i);
+    expect(out).toMatch(/--yes/);
+    expect(out).not.toMatch(/connection|timed out/i);
+  });
+
+  it('secret delete com --yes procede mesmo com stdin nao-interativo', async () => {
+    const deps = createMockDeps({ isNonInteractive: true });
+    const cmd = new SecretDeleteCommand(deps);
+
+    expect(await cmd.execute({ name: 'KEY', yes: true })).toBe(0);
+    expect(deps.deleteSecret).toHaveBeenCalled();
+  });
+
+  it('secret delete em TTY interativo continua perguntando', async () => {
+    const confirm = jest.fn().mockResolvedValue(true);
+    const deps = createMockDeps({ isNonInteractive: false, confirm });
+    const cmd = new SecretDeleteCommand(deps);
+
+    expect(await cmd.execute({ name: 'KEY' })).toBe(0);
+    expect(confirm).toHaveBeenCalled();
+  });
 });
 
 describe('no internal terms', () => {

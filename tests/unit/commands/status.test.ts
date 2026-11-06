@@ -76,8 +76,36 @@ describe('StatusCommand', () => {
       expect(exitCode).toBe(0);
       const output = (deps.writeTo as jest.Mock).mock.calls.map((c: string[]) => c[0]).join('\n');
       expect(output).toContain('production');
-      expect(output).toContain('No deploys yet');
-      expect(output).toContain('theo deploy');
+      // release-blockers-2026-06-25-set v1.1 #62: when no --env passed AND
+      // no deploy in default env, hint at alternate envs (not just
+      // "deploy something"). The Red Team scenario: user has a 'preview'
+      // deploy ACTIVE but `theo status` (default production) shows vazio
+      // with no pista to try `--env preview`.
+      expect(output).toContain("No deploy in 'production'");
+      expect(output).toContain('--env preview');
+      expect(output).toContain('theo env list');
+    });
+
+    // release-blockers-2026-06-25-set v1.1 #62 — when --env IS explicit
+    // (e.g., user passed --env preview and got no deploy), DON'T hint at
+    // other envs — the user already scoped. Keep the message terse.
+    it('#62: explicit --env without deploy does NOT spam the alternate-env hint', async () => {
+      const deps = createMockDeps({
+        getStatus: jest.fn().mockResolvedValue({
+          environment: 'preview',
+        }),
+      });
+      const cmd = new StatusCommand(deps);
+
+      const exitCode = await cmd.execute({ env: 'preview' });
+
+      expect(exitCode).toBe(0);
+      const output = (deps.writeTo as jest.Mock).mock.calls.map((c: string[]) => c[0]).join('\n');
+      expect(output).toContain("No deploy in 'preview'");
+      expect(output).toContain('theo deploy --env preview');
+      // Anti-regression: explicit --env MUST NOT echo the alternate-env hint.
+      expect(output).not.toContain('theo status --env');
+      expect(output).not.toContain('theo env list');
     });
   });
 

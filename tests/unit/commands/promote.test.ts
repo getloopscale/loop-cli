@@ -222,6 +222,40 @@ describe('PromoteCommand', () => {
       expect(deps.promote).not.toHaveBeenCalled();
     });
 
+    // Red Team theo-cloud#161 — non-TTY stdin (pipes/redirects/harnesses)
+    // must fail-fast with the same CONFIRMATION_REQUIRED contract used in CI
+    // mode. Pre-fix: the prompt hung on stdin EOF and the outer withTimeout
+    // wrapper eventually mis-blamed "Promotion timed out. Check your
+    // connection" — misleading operators into blaming the network.
+    it('should require --yes when stdin is non-interactive (Red Team #161)', async () => {
+      const deps = createMockDeps({ isNonInteractive: true });
+      const cmd = new PromoteCommand(deps);
+
+      const exitCode = await cmd.execute({});
+
+      expect(exitCode).toBe(1);
+      expect(deps.promote).not.toHaveBeenCalled();
+      const output = (deps.writeTo as jest.Mock).mock.calls.map((c: string[]) => c[0]).join('\n')
+        + (deps.writeError as jest.Mock).mock.calls.map((c: string[]) => c[0]).join('\n');
+      expect(output).toContain('Confirmation required');
+      expect(output).toContain('non-interactive');
+      // Anti-regression: must NOT surface the misleading network-timeout
+      // message that the pre-fix withTimeout wrapper emitted.
+      expect(output).not.toContain('Check your connection');
+      expect(output).not.toContain('timed out');
+    });
+
+    // Red Team #161 — --yes bypasses the non-TTY check (canonical CI/pipe usage).
+    it('should proceed with --yes even when stdin is non-interactive (Red Team #161)', async () => {
+      const deps = createMockDeps({ isNonInteractive: true });
+      const cmd = new PromoteCommand(deps);
+
+      const exitCode = await cmd.execute({ yes: true });
+
+      expect(exitCode).toBe(0);
+      expect(deps.promote).toHaveBeenCalled();
+    });
+
     it('should skip confirmation with --yes', async () => {
       const deps = createMockDeps();
       const cmd = new PromoteCommand(deps);

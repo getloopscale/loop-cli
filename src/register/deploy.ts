@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2025-2026 The Theo Authors
 
+import { promptConfirm } from '../output/prompt-confirm';
 import { createHash } from 'crypto';
 import { ApiClient } from '../api/client';
 import { SSEClient } from '../api/sse-client';
@@ -328,7 +329,20 @@ export function registerDeployCommands(deps: CommandDeps): void {
           const path = `/api/v1/builds/${encodeURIComponent(buildID)}/logs${query ? `?${query}` : ''}`;
           return apiClient.get(path);
         },
-        // F-03: infer last build ID from project status when --build not provided
+        // Red Team theo-cloud#160: PRIMARY build inference source — same
+        // endpoint `theo build list` uses. Fixes "No builds found" silent lie
+        // when builds exist but no active release binds them yet.
+        listBuilds: async (project: string, env?: string, limit?: number) => {
+          const params = new URLSearchParams();
+          if (env) params.set('env', env);
+          if (limit !== undefined) params.set('limit', String(limit));
+          const query = params.toString();
+          const path = `/api/v1/projects/${encodeURIComponent(project)}/builds${query ? `?${query}` : ''}`;
+          return apiClient.get(path);
+        },
+        // F-03: back-compat fallback for build inference (release-bound view).
+        // Prefer listBuilds when available — #160 exposed that last_build here
+        // reflects the ACTIVE release's build, not the most recent build in env.
         getProjectStatus: async (project: string, env: string) => {
           return apiClient.get<{ last_build?: { id: string } }>(
             `/api/v1/projects/${encodeURIComponent(project)}/status?environment=${encodeURIComponent(env)}`
@@ -442,19 +456,13 @@ export function registerDeployCommands(deps: CommandDeps): void {
             body,
           );
         },
-        confirm: async (message: string) => {
-          const readline = await import('readline');
-          const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-          return new Promise<boolean>((resolve) => {
-            rl.question(message, (answer) => {
-              rl.close();
-              resolve(answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes');
-            });
-          });
-        },
+        // #164 — este era o ULTIMO `readline` inline sem handler de `close`: em EOF a Promise
+        // nunca resolvia e o `withTimeout` abaixo surgia como "timed out. Check your connection".
+        confirm: promptConfirm,
         writeTo,
         writeError,
         isCI,
+        isNonInteractive: !process.stdin.isTTY,
       });
 
       const exitCode = await withTimeout(
@@ -495,19 +503,17 @@ export function registerDeployCommands(deps: CommandDeps): void {
             { from, to },
           );
         },
-        confirm: async (message: string) => {
-          const readline = await import('readline');
-          const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-          return new Promise<boolean>((resolve) => {
-            rl.question(message, (answer) => {
-              rl.close();
-              resolve(answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes');
-            });
-          });
-        },
+        // Red Team #161 defense-in-depth (EOF -> "N") continua valendo: e o que
+        // `promptConfirm` faz. Esta era a TERCEIRA copia do mesmo prompt; #164 unificou as
+        // tres no helper, para que a proxima correcao nao precise ser aplicada em tres lugares
+        // — que foi exatamente como `secret delete` e `rollback` ficaram de fora do #161.
+        confirm: promptConfirm,
         writeTo,
         writeError,
         isCI,
+        // Red Team #161: non-TTY stdin (pipes, redirects, harnesses) triggers
+        // the same CONFIRMATION_REQUIRED fail-fast path as CI env.
+        isNonInteractive: !process.stdin.isTTY,
       });
 
       const exitCode = await withTimeout(

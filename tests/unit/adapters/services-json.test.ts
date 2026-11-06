@@ -9,6 +9,7 @@ import * as path from 'path';
 import {
   findServicesJson,
   parseServicesRuntimes,
+  theoYamlFromServicesJson,
   ServicesJsonOverrideError,
 } from '../../../src/adapters/services-json';
 
@@ -110,5 +111,131 @@ describe('findServicesJson — --services-json override (EC-4)', () => {
     expect(() => findServicesJson(tmpRoot, tmpRoot, missing)).toThrow(
       ServicesJsonOverrideError,
     );
+  });
+});
+
+// Sprint 4 plan qa-sprint4-cleanup-2026-06-25 T1.1 — cascade .theo/ → .theokit/
+// closes theo-cloud#29.B2: theokit v0.5.0+ writes manifests to .theokit/services.json by default
+// while theo-cli previously only searched .theo/services.json. The walk-up loop now also checks
+// .theokit/services.json at the same dir level as a fallback (after .theo/services.json), so users
+// with only a theokit-default build can deploy without `--services-json` override.
+//
+// EC-1 absorbed: test placed at tests/unit/adapters/ to match jest.config.js roots: ['<rootDir>/tests'].
+function writeTheokitServicesJson(dir: string, content = '{}'): string {
+  const theokitDir = path.join(dir, '.theokit');
+  fs.mkdirSync(theokitDir, { recursive: true });
+  const filePath = path.join(theokitDir, 'services.json');
+  fs.writeFileSync(filePath, content);
+  return filePath;
+}
+
+describe('findServicesJson — cascade .theo/ → .theokit/ (Sprint 4 #29.B2)', () => {
+  let tmpRoot: string;
+
+  beforeEach(() => {
+    tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'svcjson-cascade-'));
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpRoot, { recursive: true, force: true });
+  });
+
+  it('finds .theokit/services.json when only .theokit/ exists (closes #29.B2)', () => {
+    const expected = writeTheokitServicesJson(tmpRoot, '{"version":2,"project":"probe","services":[]}');
+    const result = findServicesJson(tmpRoot, tmpRoot);
+    expect(result).not.toBeNull();
+    expect(result?.path).toBe(expected);
+  });
+
+  it('prefers .theo/services.json over .theokit/services.json when both exist (backward compat)', () => {
+    const preferred = writeServicesJson(tmpRoot, '{"version":2,"project":"theo-pref","services":[]}');
+    writeTheokitServicesJson(tmpRoot, '{"version":2,"project":"theokit-pref","services":[]}');
+    const result = findServicesJson(tmpRoot, tmpRoot);
+    expect(result?.path).toBe(preferred);
+  });
+
+  it('finds .theokit/services.json in ancestor before gitRoot (walk-up applies to cascade too)', () => {
+    const expected = writeTheokitServicesJson(tmpRoot);
+    const deep = path.join(tmpRoot, 'apps', 'api', 'src');
+    fs.mkdirSync(deep, { recursive: true });
+    const result = findServicesJson(deep, tmpRoot);
+    expect(result?.path).toBe(expected);
+  });
+
+  it('stops at gitRoot — returns null when neither .theo/ nor .theokit/ exists within scope', () => {
+    const cwd = path.join(tmpRoot, 'src');
+    fs.mkdirSync(cwd);
+    const result = findServicesJson(cwd, tmpRoot);
+    expect(result).toBeNull();
+  });
+
+  it('--services-json override still short-circuits the cascade (EC-10 from edge-case-plan)', () => {
+    // Override pointing at a custom path bypasses both .theo/ and .theokit/ checks entirely.
+    writeServicesJson(tmpRoot, '{"version":2,"project":"theo-pref","services":[]}');
+    writeTheokitServicesJson(tmpRoot, '{"version":2,"project":"theokit-pref","services":[]}');
+    const outDir = path.join(tmpRoot, 'out');
+    fs.mkdirSync(outDir);
+    const customPath = path.join(outDir, 'services.json');
+    fs.writeFileSync(customPath, '{"version":2,"project":"override","services":[]}');
+    const result = findServicesJson(tmpRoot, tmpRoot, customPath);
+    expect(result?.path).toBe(customPath);
+  });
+});
+
+// theo#165 — `theo secret` resolvia o projeto SO pelo `theo.yaml` legado e reprovava com
+// "No theo.yaml found. Run: theo init" num projeto que so tem `.theo/services.json` v2 — o
+// formato que o proprio theokit gera. `deploy`/`status`/`logs` ja liam o v2, entao o projeto
+// deployava e nao conseguia gerenciar secrets, sem `--project` para contornar.
+//
+// A conversao vive no ADAPTADOR, nao no comando: os comandos continuam consumindo um unico
+// `TheoYamlResult` (DIP), e a raiz de composicao escolhe a fonte.
+describe('theoYamlFromServicesJson (theo#165)', () => {
+  const tmp = path.join(os.tmpdir(), `theo-165-${String(process.pid)}`);
+
+  beforeEach(() => { fs.mkdirSync(tmp, { recursive: true }); });
+  afterEach(() => { fs.rmSync(tmp, { recursive: true, force: true }); });
+
+  it('converte um services.json v2 real em TheoYamlResult', () => {
+    const file = path.join(tmp, 'services.json');
+    fs.writeFileSync(file, JSON.stringify({
+      version: 2,
+      project: 'theokit-app',
+      services: [
+        { name: 'web', runtime: 'node', type: 'server', port: 8080, start: 'node server.js' },
+        { name: 'worker', runtime: 'node', type: 'worker', port: null },
+      ],
+    }));
+
+    const result = theoYamlFromServicesJson(file);
+
+    expect(result).not.toBeNull();
+    expect(result?.content.project).toBe('theokit-app');
+    expect(Object.keys(result?.content.apps ?? {})).toEqual(['web', 'worker']);
+    expect(result?.content.apps.web.port).toBe(8080);
+    expect(result?.content.apps.web.framework).toBe('node');
+    // `port` e `number | null` no contrato — um worker sem porta nao pode virar 0, que
+    // significaria "porta zero" para quem le.
+    expect(result?.content.apps.worker.port).toBeNull();
+    expect(result?.path).toBe(file);
+  });
+
+  it('devolve null quando o manifesto nao tem `project` — nao inventa nome', () => {
+    const file = path.join(tmp, 'services.json');
+    fs.writeFileSync(file, JSON.stringify({ version: 2, services: [{ name: 'web' }] }));
+
+    // Sem `project` nao ha o que resolver. Devolver um resultado com string vazia faria o
+    // comando chamar a API com `project=`, e o erro apareceria uma camada adiante, como 404.
+    expect(theoYamlFromServicesJson(file)).toBeNull();
+  });
+
+  it('devolve null em JSON invalido em vez de lancar', () => {
+    const file = path.join(tmp, 'services.json');
+    fs.writeFileSync(file, '{ nao e json');
+
+    expect(theoYamlFromServicesJson(file)).toBeNull();
+  });
+
+  it('devolve null quando o arquivo nao existe', () => {
+    expect(theoYamlFromServicesJson(path.join(tmp, 'ausente.json'))).toBeNull();
   });
 });

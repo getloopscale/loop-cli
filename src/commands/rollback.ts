@@ -18,6 +18,11 @@ export interface RollbackDeps {
   writeTo: (msg: string) => void;
   writeError: (msg: string) => void;
   isCI?: boolean;
+  /**
+   * stdin sem TTY — pipe, redirect, harness. Mesma fresta do #164/#161: um pipe local nao
+   * define `CI`, entao a guarda de `isCI` sozinha deixava o prompt travar ate o timeout.
+   */
+  isNonInteractive?: boolean;
 }
 
 export interface RollbackOptions {
@@ -64,8 +69,9 @@ export class RollbackCommand {
 
     // 3b. Confirmation required (unless --yes)
     if (!opts.yes) {
-      if (this.deps.isCI) {
-        return this.exitWithError(opts, 'Confirmation required. Use --yes in CI mode.', 1, 'CONFIRMATION_REQUIRED');
+      // #164 (mesma classe do #161): fail-fast em QUALQUER contexto nao-interativo, nao so `CI`.
+      if (this.deps.isCI || this.deps.isNonInteractive) {
+        return this.exitWithError(opts, 'Confirmation required. Pass --yes in non-interactive contexts (CI, pipes, redirected stdin).', 1, 'CONFIRMATION_REQUIRED');
       }
       if (this.deps.confirm) {
         const confirmed = await this.deps.confirm(

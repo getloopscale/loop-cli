@@ -433,6 +433,7 @@ describe('LogsCommand', () => {
 
     it('should return NO_BUILDS when project has no builds', async () => {
       const deps = createMockDeps({
+        listBuilds: jest.fn().mockResolvedValue({ builds: [] }),
         getProjectStatus: jest.fn().mockResolvedValue({ last_build: null }),
       });
       const cmd = new LogsCommand(deps);
@@ -442,6 +443,65 @@ describe('LogsCommand', () => {
       expect(exitCode).toBe(1);
       const output = (deps.writeTo as jest.Mock).mock.calls.map((c: string[]) => c[0]).join('');
       expect(output).toContain('NO_BUILDS');
+    });
+
+    // Red Team theo-cloud#160 — infer via listBuilds (same source as
+    // `theo build list`) NOT via getProjectStatus.last_build. Pre-fix scenario:
+    // preview env with 2 recent builds (CANCELLED + SUCCEEDED) shown by
+    // `theo build list`, but /status.last_build null because no active release
+    // binds them yet → CLI said "No builds found" and exited despite builds
+    // existing. Post-fix: CLI hits /builds endpoint and picks the most recent.
+    it('should infer via listBuilds when getProjectStatus.last_build is null (Red Team #160)', async () => {
+      const deps = createMockDeps({
+        listBuilds: jest.fn().mockResolvedValue({
+          builds: [{ build_id: 'build-listbuilds-160', environment: 'preview', status: 'SUCCEEDED' }],
+        }),
+        // Release-bound view is empty (regression scenario)
+        getProjectStatus: jest.fn().mockResolvedValue({ last_build: null }),
+      });
+      const cmd = new LogsCommand(deps);
+
+      const exitCode = await cmd.execute({ env: 'preview' });
+
+      expect(exitCode).toBe(0);
+      expect(deps.listBuilds).toHaveBeenCalledWith('my-app', 'preview', 1);
+      expect(deps.getLogs).toHaveBeenCalledWith('build-listbuilds-160', expect.any(Object));
+    });
+
+    // Red Team theo-cloud#160 negative case — when listBuilds itself confirms
+    // zero builds AND getProjectStatus.last_build is null, still surface
+    // NO_BUILDS honestly (never silently succeed with rc 0).
+    it('should return rc 1 with NO_BUILDS when listBuilds is empty (Red Team #160)', async () => {
+      const deps = createMockDeps({
+        listBuilds: jest.fn().mockResolvedValue({ builds: [] }),
+        getProjectStatus: jest.fn().mockResolvedValue({ last_build: null }),
+      });
+      const cmd = new LogsCommand(deps);
+
+      const exitCode = await cmd.execute({ env: 'preview', json: true });
+
+      expect(exitCode).toBe(1);
+      const output = (deps.writeTo as jest.Mock).mock.calls.map((c: string[]) => c[0]).join('');
+      expect(output).toContain('NO_BUILDS');
+    });
+
+    // Red Team #160 preference invariant — listBuilds is the SoT. Even if
+    // getProjectStatus.last_build offers a different id, CLI must use the
+    // listBuilds one (which matches `theo build list`).
+    it('should prefer listBuilds over getProjectStatus (Red Team #160)', async () => {
+      const deps = createMockDeps({
+        listBuilds: jest.fn().mockResolvedValue({
+          builds: [{ build_id: 'build-canonical-160', environment: 'preview', status: 'SUCCEEDED' }],
+        }),
+        getProjectStatus: jest.fn().mockResolvedValue({ last_build: { id: 'build-stale-status' } }),
+      });
+      const cmd = new LogsCommand(deps);
+
+      const exitCode = await cmd.execute({ env: 'preview' });
+
+      expect(exitCode).toBe(0);
+      expect(deps.getLogs).toHaveBeenCalledWith('build-canonical-160', expect.any(Object));
+      expect(deps.getProjectStatus).not.toHaveBeenCalled();
     });
 
     it('should return MISSING_CONFIG when no theo.yaml and no --build', async () => {

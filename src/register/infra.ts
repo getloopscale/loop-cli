@@ -7,13 +7,33 @@ import { BuildListCommand } from '../commands/build-list';
 import { BuildInspectCommand } from '../commands/build-inspect';
 import { CancelCommand } from '../commands/cancel';
 import { SecretSetCommand, SecretListCommand, SecretDeleteCommand } from '../commands/secret';
+import { promptConfirm } from '../output/prompt-confirm';
 import { BillingCommand } from '../commands/billing';
 import { ConnectCommand, DisconnectCommand, type ConnectionInfo } from '../commands/connect';
 import { API_REQUEST_TIMEOUT_MS } from '../config/constants';
 import { getGitRoot } from '../adapters/git';
-import { findTheoYaml } from '../adapters/theo-yaml';
+import { findTheoYaml, type TheoYamlResult } from '../adapters/theo-yaml';
+import { findServicesJson, theoYamlFromServicesJson } from '../adapters/services-json';
 import { openBrowser } from '../auth/open-browser';
 import { CommandDeps } from './types';
+
+/**
+ * theo#165 — resolve o manifesto do projeto por AMBOS os formatos: o `theo.yaml` legado (preferido,
+ * por compatibilidade) e, na ausencia dele, o `.theo/services.json` v2 que o theokit gera.
+ *
+ * `deploy`, `status` e `logs` ja liam o v2; `secret` nao, entao um projeto v2-puro deployava e nao
+ * conseguia gerenciar secrets. A escolha da fonte fica AQUI, na raiz de composicao — os comandos
+ * seguem consumindo um unico `TheoYamlResult`.
+ */
+function findProjectManifest(): TheoYamlResult | null {
+  const gitRoot = getGitRoot() ?? process.cwd();
+  const legacy = findTheoYaml(process.cwd(), gitRoot);
+  if (legacy) {
+    return legacy;
+  }
+  const servicesJson = findServicesJson(process.cwd(), gitRoot);
+  return servicesJson ? theoYamlFromServicesJson(servicesJson.path) : null;
+}
 
 export function registerInfraCommands(deps: CommandDeps): void {
   const { program, configStore, isCI, writeTo, writeError, getGlobalOpts, apiUrl, cloudUrl, handleUnauthorized, withTimeout } = deps;
@@ -35,10 +55,7 @@ export function registerInfraCommands(deps: CommandDeps): void {
 
       const buildListCmd = new BuildListCommand({
         getToken: () => configStore.getToken(),
-        findTheoYaml: () => {
-          const gitRoot = getGitRoot() ?? process.cwd();
-          return findTheoYaml(process.cwd(), gitRoot);
-        },
+        findTheoYaml: findProjectManifest,
         listBuilds: async (project: string, env?: string, limit?: number) => {
           const params = new URLSearchParams();
           if (env) params.set('env', env);
@@ -151,10 +168,7 @@ export function registerInfraCommands(deps: CommandDeps): void {
 
       const cmd = new SecretSetCommand({
         getToken: () => configStore.getToken(),
-        findTheoYaml: () => {
-          const gitRoot = getGitRoot() ?? process.cwd();
-          return findTheoYaml(process.cwd(), gitRoot);
-        },
+        findTheoYaml: findProjectManifest,
         setSecret: async (project: string, name: string, value: string, env: string, app: string) => {
           return apiClient.post<{ name: string; environment: string; app: string; created: boolean }>(`/api/v1/secrets?project=${encodeURIComponent(project)}`, {
             name, value, environment: env, app,
@@ -190,10 +204,7 @@ export function registerInfraCommands(deps: CommandDeps): void {
 
       const cmd = new SecretListCommand({
         getToken: () => configStore.getToken(),
-        findTheoYaml: () => {
-          const gitRoot = getGitRoot() ?? process.cwd();
-          return findTheoYaml(process.cwd(), gitRoot);
-        },
+        findTheoYaml: findProjectManifest,
         setSecret: async () => ({ name: '', environment: '', app: '', created: false }),
         listSecrets: async (project: string, env: string) => {
           return apiClient.get<{ secrets: Array<{ name: string; environment: string; app: string }> }>(`/api/v1/secrets?project=${encodeURIComponent(project)}&env=${encodeURIComponent(env)}`);
@@ -227,10 +238,7 @@ export function registerInfraCommands(deps: CommandDeps): void {
       const globalOpts = getGlobalOpts();
       const apiClient = new ApiClient({ baseURL: apiUrl, token: configStore.getToken() ?? undefined, onUnauthorized: handleUnauthorized });
 
-      const yamlResult = (() => {
-        const gitRoot = getGitRoot() ?? process.cwd();
-        return findTheoYaml(process.cwd(), gitRoot);
-      })();
+      const yamlResult = findProjectManifest();
 
       const project = yamlResult?.content?.project ?? '';
 
@@ -244,19 +252,15 @@ export function registerInfraCommands(deps: CommandDeps): void {
             `/api/v1/secrets/${encodeURIComponent(secretName)}?project=${encodeURIComponent(project)}&environment=${encodeURIComponent(env)}&app=${encodeURIComponent(app)}`,
           );
         },
-        confirm: async (message: string) => {
-          const readline = await import('readline');
-          const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-          return new Promise<boolean>((resolve) => {
-            rl.question(message, (answer) => {
-              rl.close();
-              resolve(answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes');
-            });
-          });
-        },
+        // #164 — era o `readline` inline SEM handler de `close`: em EOF a Promise nunca
+        // resolvia, e o `withTimeout` de 40 s abaixo surgia como "timed out. Check your
+        // connection". `promptConfirm` (CHG-2026-04-23-AUDIT-9) existe exatamente para
+        // eliminar esse padrão — recusa em stdin sem TTY e trata EOF como "n".
+        confirm: promptConfirm,
         writeTo,
         writeError,
         isCI,
+        isNonInteractive: !process.stdin.isTTY,
       });
 
       process.exitCode = await withTimeout(
@@ -290,10 +294,9 @@ export function registerInfraCommands(deps: CommandDeps): void {
             return childProcess.execSync('git remote get-url origin', { encoding: 'utf-8' }).trim();
           } catch { return null; }
         },
-        getProjectName: () => {
-          const yamlResult = findTheoYaml(process.cwd(), process.cwd());
-          return yamlResult?.content?.project ?? null;
-        },
+        // theo#165 — mesma lacuna do `secret`: `connect`/`disconnect` liam so o `theo.yaml`
+        // legado, entao num projeto v2-puro nao havia nome de projeto para resolver.
+        getProjectName: () => findProjectManifest()?.content?.project ?? null,
         connectRepo: async (project, body) => apiClient.post(`/api/v1/projects/${encodeURIComponent(project)}/connect`, body),
         disconnectRepo: async (project) => apiClient.del(`/api/v1/projects/${encodeURIComponent(project)}/connect`),
         getConnection: async (project) => apiClient.get<ConnectionInfo>(`/api/v1/projects/${encodeURIComponent(project)}/connect`).catch(() => null),
@@ -318,10 +321,9 @@ export function registerInfraCommands(deps: CommandDeps): void {
       const cmd = new DisconnectCommand({
         getToken: () => configStore.getToken(),
         getGitRemote: () => null,
-        getProjectName: () => {
-          const yamlResult = findTheoYaml(process.cwd(), process.cwd());
-          return yamlResult?.content?.project ?? null;
-        },
+        // theo#165 — mesma lacuna do `secret`: `connect`/`disconnect` liam so o `theo.yaml`
+        // legado, entao num projeto v2-puro nao havia nome de projeto para resolver.
+        getProjectName: () => findProjectManifest()?.content?.project ?? null,
         connectRepo: async () => { throw new Error('not used'); },
         disconnectRepo: async (project) => apiClient.del(`/api/v1/projects/${encodeURIComponent(project)}/connect`),
         getConnection: async () => null,

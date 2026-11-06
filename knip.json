@@ -9,5 +9,6 @@
     "tests/**"
   ],
   "ignoreDependencies": ["@types/*"],
+  "ignoreBinaries": ["prettier"],
   "ignoreExportsUsedInFile": true
 }

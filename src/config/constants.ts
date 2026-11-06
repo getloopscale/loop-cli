@@ -25,9 +25,14 @@ function envInt(name: string, defaultValue: number): number {
  *
  * Priority: THEO_URL > THEO_API_URL (deprecated) > fallback.
  * Local dev: port 8080 matches the Traefik-less direct API server.
- * Development cluster: set THEO_URL=https://api-dev.usetheo.dev
- * (note hyphen — canonical dev-public DNS pattern per the
- * `dev-public-domain-canonicalization` plan 2026-06-04).
+ * Dev-public cluster: set THEO_URL=https://app-dev.usetheo.dev/engine
+ * (engine REST is proxied under /engine/* on the dashboard host;
+ * canonical per the QA test-scenarios doc 2026-06-21 LIVE close).
+ * Standalone-multi local: set THEO_URL=http://localhost:13001 or
+ * whatever canonical local port the helmfile overlay exposes.
+ *
+ * Stale value `https://api-dev.usetheo.dev` does NOT resolve in DNS
+ * — issue #130 lock 2026-06-21.
  */
 export const DEFAULT_API_URL_FALLBACK = 'http://localhost:8080';
 
@@ -109,8 +114,19 @@ export const SSE_MAX_RETRIES = 15;
 
 // --- Deploy ---
 
-/** Total deploy timeout (ms). Override: THEO_DEPLOY_TIMEOUT */
-export const DEPLOY_TIMEOUT_MS = envInt('THEO_DEPLOY_TIMEOUT', 10 * 60 * 1000);
+/** Total deploy timeout (ms). Override: THEO_DEPLOY_TIMEOUT.
+ *
+ * Sprint 8 plan qa-sprint8-cleanup-2026-06-25 T3.1 (closes theo-cloud#38):
+ * bumped from 10min → 30min. The canonical theokit-example build observed
+ * by the QA Red Team took 615s (10min 15s) — 15s above the previous 10min
+ * default — making a SUCCEEDED deploy report DEPLOY_TIMEOUT. Cold-start
+ * cosign signing + ArgoCD sync + workload pull can push canonical builds
+ * past 10min. 30min covers >99% of canonical builds while still bounding
+ * runaway waits. Operators override via THEO_DEPLOY_TIMEOUT env. The
+ * activity-based per-event timeout (deploy.ts:557-572) still resets on
+ * every SSE event, so the 30min hard ceiling only fires when the build
+ * itself stalls without progress events — the intended semantic. */
+export const DEPLOY_TIMEOUT_MS = envInt('THEO_DEPLOY_TIMEOUT', 30 * 60 * 1000);
 
 /** Maximum environment name length (RFC 1123 label). */
 export const MAX_ENVIRONMENT_NAME_LENGTH = 63;

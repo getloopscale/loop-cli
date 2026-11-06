@@ -105,7 +105,19 @@ describe('CLI config/constants', () => {
     it('should return default for empty env var', () => {
       delete process.env.THEO_DEPLOY_TIMEOUT;
       const constants = loadConstants();
-      expect(constants.DEPLOY_TIMEOUT_MS).toBe(10 * 60 * 1000);
+      // Sprint 8 plan qa-sprint8-cleanup-2026-06-25 T3.1 (closes
+      // theo-cloud#38): bumped default 10min → 30min so canonical builds
+      // (theokit-example took 615s) don't false-report DEPLOY_TIMEOUT.
+      expect(constants.DEPLOY_TIMEOUT_MS).toBe(30 * 60 * 1000);
+    });
+
+    it('Sprint 8 T3.1 #38 — default MUST cover canonical 615s build', () => {
+      delete process.env.THEO_DEPLOY_TIMEOUT;
+      const constants = loadConstants();
+      // Red Team #38 evidence: build took 615s; default 600s caused
+      // false DEPLOY_TIMEOUT. Sprint 8 default MUST cover that case
+      // with margin for cold-start cosign + ArgoCD sync.
+      expect(constants.DEPLOY_TIMEOUT_MS).toBeGreaterThanOrEqual(615 * 1000);
     });
 
     it('should parse valid integer override', () => {

@@ -118,6 +118,94 @@ describe('Device Code Flow', () => {
       expect(allOutput).not.toContain(term);
     }
   });
+
+  // Regression: THEO_URL=https://app-dev.usetheo.dev/engine is the canonical
+  // dev-public value (per src/config/constants.ts) so engine REST calls
+  // (everything under /api/v1) hit the cloud /engine/* proxy. But the device
+  // flow endpoints live at the CLOUD root (/v1/auth/device/*), not inside the
+  // /engine proxy. Without stripping the suffix, the CLI hits
+  // /engine/v1/auth/device/authorize and dev-public returns 401 because the
+  // path falls through the auth-required middleware to the cloud catchall.
+  // Per MEET-040 design (constants.ts:22): Caddy routes /v1/auth/* → cloud
+  // service; the CLI must call against the host root for those paths.
+  it('strips /engine suffix from baseURL when calling device endpoints', async () => {
+    const calledURLs: string[] = [];
+    const fetchFn = jest.fn().mockImplementation(async (url: string) => {
+      calledURLs.push(url);
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          device_code: 'dc-strip',
+          user_code: 'STRIP',
+          verification_uri: 'https://auth-dev.usetheo.dev/oauth2/device/verify',
+          expires_in: 600,
+          interval: 5,
+        }),
+      } as Response;
+    });
+
+    const deps = createMockDeps({
+      fetchFn,
+      baseURL: 'https://app-dev.usetheo.dev/engine',
+      sleep: jest.fn().mockImplementation(async () => {
+        throw new Error('stop polling — assertion target reached');
+      }),
+    });
+
+    await executeDeviceCodeFlow(deps).catch(() => {});
+
+    expect(calledURLs.length).toBeGreaterThanOrEqual(1);
+    const authorizeURL = new URL(calledURLs[0]);
+    expect(authorizeURL.pathname).toBe('/v1/auth/device/authorize');
+    expect(authorizeURL.host).toBe('app-dev.usetheo.dev');
+    expect(calledURLs[0]).not.toContain('/engine/v1/auth');
+  });
+
+  it('strips /engine suffix from baseURL when polling device token', async () => {
+    const calledURLs: string[] = [];
+    let callCount = 0;
+    const fetchFn = jest.fn().mockImplementation(async (url: string) => {
+      calledURLs.push(url);
+      callCount++;
+      if (callCount === 1) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            device_code: 'dc-poll-strip',
+            user_code: 'POLLSTRIP',
+            verification_uri: 'https://auth-dev.usetheo.dev/oauth2/device/verify',
+            expires_in: 600,
+            interval: 5,
+          }),
+        } as Response;
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          access_token: 'at',
+          refresh_token: 'rt',
+          token_type: 'bearer',
+          expires_in: 3600,
+        }),
+      } as Response;
+    });
+
+    const deps = createMockDeps({
+      fetchFn,
+      baseURL: 'https://app-dev.usetheo.dev/engine',
+    });
+
+    await executeDeviceCodeFlow(deps);
+
+    const pollCall = calledURLs.find((u) => u.includes('/auth/device/token'));
+    expect(pollCall).toBeDefined();
+    const pollURL = new URL(pollCall as string);
+    expect(pollURL.pathname).toBe('/v1/auth/device/token');
+    expect(pollCall).not.toContain('/engine/v1/auth');
+  });
 });
 
 describe('refreshAccessToken', () => {
@@ -182,4 +270,5 @@ describe('refreshAccessToken', () => {
       }
     }
   });
+
 });

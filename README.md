@@ -81,7 +81,7 @@ npm you can run it from source.
 
 ```bash
 # From source
-git clone https://github.com/usetheodev/theo-cli.git
+git clone https://github.com/usetheoai/theo-cli.git
 cd theo-cli
 npm ci
 npm run build
@@ -164,6 +164,20 @@ end-user CLI.)
 | `theo secret` | Manage application secrets |
 | `theo scale` | Scale a service (fixed replicas or autoscaling) |
 | `theo preview` | Manage preview environments |
+| `theo storage` | Store files (`upload`/`download`/`list`/`share`) + `theo storage sync` a folder ↔ local dir |
+
+</details>
+
+<details>
+<summary><b>Claude Code integration</b> — keep a shared <code>.claude/</code> in sync</summary>
+
+`theo storage sync <dir> --prefix <p>` bidirectionally syncs a stored folder to a
+local directory (conflict-safe, `--dry-run`, `--exclude` globs). Wire it to Claude
+Code's `SessionStart`/`SessionEnd` hooks to pull your shared `.claude/` on session
+start and push edits on end — see
+[`integrations/claude-code/`](https://github.com/usetheoai/theo-cli/tree/develop/integrations/claude-code)
+for the example `settings.json` and the safety notes (executable config is fenced
+out of the sync by default).
 
 </details>
 
@@ -345,7 +359,7 @@ the platform decomposition and now ships as a standalone repo.
 ## Contributing
 
 ```bash
-git clone https://github.com/usetheodev/theo-cli.git
+git clone https://github.com/usetheoai/theo-cli.git
 cd theo-cli
 npm ci
 npm test
@@ -361,7 +375,7 @@ never import engine code).
 
 <div align="center">
 
-**If Theo CLI is useful to you, [give it a ⭐](https://github.com/usetheodev/theo-cli) — it's the signal that keeps the project moving.**
+**If Theo CLI is useful to you, [give it a ⭐](https://github.com/usetheoai/theo-cli) — it's the signal that keeps the project moving.**
 
 [![Discord](https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white)](https://discord.usetheo.dev/)
 [![X](https://img.shields.io/badge/X-@usetheodev-000000?style=flat-square&logo=x&logoColor=white)](https://x.com/usetheodev)

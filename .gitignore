@@ -15,7 +15,9 @@ code-review-output/
 
 # Local agent / cycle tooling (skills, hooks, knowledge-base, run state) —
 # developer-local in this standalone repo (never tracked here).
-.claude/
+# .claude/ is now VERSIONED — the Squad ecosystem ships with the repo.
+# The fine-grained exclusions below still apply: caches and per-machine
+# artefacts stay out, because they conflict on every machine.
 
 # Logs
 *.log
@@ -31,3 +33,8 @@ npm-debug.log*
 .env
 .env.*
 !.env.example
+
+# Personal maintenance registry, not a project artifact (moved to theo/BACKLOG.md on 2026-10-05).
+BACKLOG.md
+.BACKLOG.md.lock
+.claude/

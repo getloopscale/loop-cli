@@ -25,6 +25,7 @@ import { registerAuthCommands } from './register/auth';
 // import { registerInitCommand } from './register/init';
 import { registerDeployCommands } from './register/deploy';
 import { registerProjectCommands } from './register/project';
+import { registerStorageCommands } from './register/storage';
 import { registerTeamCommands } from './register/team';
 import { registerEnvCommands } from './register/env';
 import { registerDomainCommands } from './register/domain';
@@ -163,6 +164,7 @@ export function createProgram(): Command {
   // Plan B v3.1 T-B.2 — `theo init` removed (TheoKit-only cutover).
   registerDeployCommands(deps);
   registerProjectCommands(deps);
+  registerStorageCommands(deps);
   registerTeamCommands(deps);
   registerEnvCommands(deps);
   registerDomainCommands(deps);

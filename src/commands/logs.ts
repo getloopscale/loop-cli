@@ -52,10 +52,45 @@ export type StreamRuntimeLogsFn = (
   onClose: () => void,
 ) => { close: () => void };
 
+/**
+ * BuildListResponse — canonical shape returned by /api/v1/projects/{name}/builds
+ * (same as build-list.ts). Kept structurally compatible so LogsCommand can call
+ * the SAME source of truth `theo build list` uses when inferring the last build.
+ * Red Team theo-cloud#160: previously the CLI only had getProjectStatus (whose
+ * last_build reflects the release-active build, not the "most recent build in
+ * env"), which returned null in valid scenarios (e.g., preview env with recent
+ * CANCELLED + SUCCEEDED builds) → "No builds found" silent lie.
+ */
+interface BuildListBuild {
+  build_id: string;
+  environment?: string;
+  status?: string;
+  created_at?: string;
+}
+interface BuildListResp {
+  builds: BuildListBuild[];
+  total?: number;
+}
+
 export interface LogsDeps {
   getToken: () => string | null;
   findTheoYaml: () => TheoYamlResult | null;
   getLogs: (buildID: string, opts: { tail?: number; step?: string; since?: string }) => Promise<LogsApiResponse>;
+  /**
+   * Red Team #160: PRIMARY inference source — the SAME endpoint `theo build list`
+   * uses. When wired, LogsCommand prefers this over getProjectStatus for finding
+   * the last build in the target env. Optional so legacy call sites (tests) still
+   * compile; production wiring in register/deploy.ts provides it.
+   */
+  listBuilds?: (project: string, env?: string, limit?: number) => Promise<BuildListResp>;
+  /**
+   * Back-compat fallback — kept so existing tests + call sites without
+   * listBuilds still work. Red Team #160 exposed that last_build here reflects
+   * the ACTIVE release's build (release-bound view), NOT the most recent build
+   * in env (build-history view). The two diverge whenever a build lands but
+   * the release binding hasn't caught up (or the release was cancelled). Prefer
+   * listBuilds when both are wired.
+   */
   getProjectStatus?: (project: string, env: string) => Promise<StatusResponse>;
   /** SSE streaming function for --follow mode. Optional: if absent, --follow is unsupported. */
   streamLogs?: StreamLogsFn;
@@ -133,19 +168,44 @@ export class LogsCommand {
         }
         projectName = yaml.content.project;
       }
-      if (!this.deps.getProjectStatus) {
+      // Red Team theo-cloud#160: prefer listBuilds (same SoT as `theo build list`)
+      // over getProjectStatus.last_build. The latter reflects the ACTIVE release's
+      // build (release-bound view), NOT the most recent build in env (build-history
+      // view). The two diverge in real scenarios (e.g., preview env with a recent
+      // CANCELLED + SUCCEEDED build but no active release yet) → CLI reported "No
+      // builds found" while `theo build list` showed 2 builds. Canonical fix: hit
+      // the same endpoint `theo build list` does.
+      if (!this.deps.listBuilds && !this.deps.getProjectStatus) {
         return this.exitWithError(opts, 'Build ID is required. Usage: theo logs --build <id>', 1, 'MISSING_BUILD_ID');
       }
-      try {
-        const env = opts.env ?? 'production';
-        const status = await this.deps.getProjectStatus(projectName, env);
-        if (!status?.last_build?.id) {
-          return this.exitWithError(opts, `No builds found for project "${projectName}" in ${env}.`, 1, 'NO_BUILDS');
+      const env = opts.env ?? 'production';
+      let inferred: string | undefined;
+      // Primary: listBuilds (canonical — same as `theo build list`)
+      if (this.deps.listBuilds) {
+        try {
+          const resp = await this.deps.listBuilds(projectName, env, 1);
+          if (resp?.builds && resp.builds.length > 0 && resp.builds[0]?.build_id) {
+            inferred = resp.builds[0].build_id;
+          }
+        } catch {
+          // Non-fatal — fall through to getProjectStatus fallback
         }
-        opts.build = status.last_build.id;
-      } catch {
-        return this.exitWithError(opts, 'Could not resolve last build. Specify --build <id> explicitly.', 1, 'BUILD_RESOLVE_FAILED');
       }
+      // Fallback: getProjectStatus.last_build (back-compat)
+      if (!inferred && this.deps.getProjectStatus) {
+        try {
+          const status = await this.deps.getProjectStatus(projectName, env);
+          if (status?.last_build?.id) {
+            inferred = status.last_build.id;
+          }
+        } catch {
+          return this.exitWithError(opts, 'Could not resolve last build. Specify --build <id> explicitly.', 1, 'BUILD_RESOLVE_FAILED');
+        }
+      }
+      if (!inferred) {
+        return this.exitWithError(opts, `No builds found for project "${projectName}" in ${env}.`, 1, 'NO_BUILDS');
+      }
+      opts.build = inferred;
     }
 
     // 4. Follow mode: stream logs via SSE
