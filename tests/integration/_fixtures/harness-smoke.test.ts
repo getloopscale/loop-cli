@@ -120,3 +120,41 @@ describe('harness: parseLastJsonLine', () => {
     expect(parseLastJsonLine('')).toBeNull();
   });
 });
+
+// GitHub-hosted runners export XDG_CONFIG_HOME, and ConfigStore.default()
+// prefers it over HOME. Inherited as-is, it sends the spawned CLI to the
+// runner's real config dir instead of the tmpHome the test wrote into, and
+// every authenticated test sees `{"authenticated":false}` (exit 4).
+describe('harness: tmpHome isolation from the caller environment', () => {
+  const saved = process.env.XDG_CONFIG_HOME;
+  afterEach(() => {
+    if (saved === undefined) delete process.env.XDG_CONFIG_HOME;
+    else process.env.XDG_CONFIG_HOME = saved;
+  });
+
+  it('an inherited XDG_CONFIG_HOME does not hide the config written to tmpHome', async () => {
+    const outside = mkTmpHome();
+    tmpHomes.push(outside);
+    process.env.XDG_CONFIG_HOME = outside;
+
+    const server = await startMockApi();
+    servers.push(server);
+    server.on({
+      method: 'GET',
+      path: '/api/v1/auth/whoami',
+      response: { status: 200, body: { email: 'paulo@example.com', team: 'tn-test' } },
+    });
+    const tmp = mkTmpHome();
+    tmpHomes.push(tmp);
+    writeFakeAuthConfig(tmp, { theoUrl: server.url });
+
+    const r = await spawnTheo({
+      args: ['whoami', '--json'],
+      cwd: tmp,
+      env: { THEO_URL: server.url },
+      timeoutMs: 25_000,
+    });
+
+    expect({ exit: r.exitCode, stdout: r.stdout }).toMatchObject({ exit: 0 });
+  });
+});
