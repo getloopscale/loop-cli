@@ -58,7 +58,7 @@ export interface MockApiServer {
  *   const server = await startMockApi();
  *   server.on({method:'GET', path:'/api/v1/users/me',
  *              response:{status:200, body:{user_id:'u1'}}});
- *   const result = spawnTheo({args:[...], env:{THEO_URL: server.url}});
+ *   const result = spawnTheo({args:[...], env:{LOOPSCALE_URL: server.url}});
  *   // assertions on result + server.requests
  *   await server.close();
  */

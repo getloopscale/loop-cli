@@ -48,12 +48,12 @@ export class EnvInspectCommand {
   async execute(name: string, opts: EnvInspectOptions = {}): Promise<number> {
     // 1. Auth check
     if (!this.deps.getToken()) {
-      return this.exitWithError(opts, 'Not authenticated. Run: theo login', 4, 'AUTH_REQUIRED');
+      return this.exitWithError(opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
     // 2. Name required
     if (!name || name.trim() === '') {
-      return this.exitWithError(opts, 'Environment name is required. Usage: theo env inspect <name>', 1, 'MISSING_ARGUMENT');
+      return this.exitWithError(opts, 'Environment name is required. Usage: loopscale env inspect <name>', 1, 'MISSING_ARGUMENT');
     }
 
     // 3. Call API
@@ -106,7 +106,7 @@ export class EnvInspectCommand {
   private handleError(opts: EnvInspectOptions, err: unknown, name: string): number {
     if (err instanceof ApiError) {
       if (err.exitCode === 4 || err.statusCode === 401) {
-        return this.exitWithError(opts, 'Authentication failed. Run: theo login', 4, 'AUTH_REQUIRED');
+        return this.exitWithError(opts, 'Authentication failed. Run: loopscale login', 4, 'AUTH_REQUIRED');
       }
       if (err.statusCode === 404) {
         return this.exitWithError(opts, `Environment "${name}" not found.`, 1, 'ENV_NOT_FOUND');

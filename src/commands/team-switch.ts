@@ -42,10 +42,10 @@ export class TeamSwitchCommand {
 
   async execute(name: string, opts: TeamSwitchOptions = {}): Promise<number> {
     if (!this.deps.getToken()) {
-      return this.exitWithError(opts, 'Not authenticated. Run: theo login', EXIT_CODES.AUTH_ERROR, 'AUTH_REQUIRED');
+      return this.exitWithError(opts, 'Not authenticated. Run: loopscale login', EXIT_CODES.AUTH_ERROR, 'AUTH_REQUIRED');
     }
     if (!name || name.trim() === '') {
-      return this.exitWithError(opts, 'Team name is required. Usage: theo team switch <name>', EXIT_CODES.USAGE, 'MISSING_FIELD');
+      return this.exitWithError(opts, 'Team name is required. Usage: loopscale team switch <name>', EXIT_CODES.USAGE, 'MISSING_FIELD');
     }
 
     try {
@@ -64,7 +64,7 @@ export class TeamSwitchCommand {
         }
         // 401 → auth
         if (err.statusCode === 401 || err.exitCode === EXIT_CODES.AUTH_ERROR) {
-          return this.exitWithError(opts, 'Authentication failed. Run: theo login', EXIT_CODES.AUTH_ERROR, 'AUTH_REQUIRED');
+          return this.exitWithError(opts, 'Authentication failed. Run: loopscale login', EXIT_CODES.AUTH_ERROR, 'AUTH_REQUIRED');
         }
         // 501 → not configured server-side
         if (err.statusCode === 501) {

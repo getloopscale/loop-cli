@@ -47,7 +47,7 @@ describe('CancelCommand', () => {
       const exitCode = await cmd.execute('bld-abc12345');
 
       expect(exitCode).toBe(4);
-      expect(deps.writeError).toHaveBeenCalledWith('Not authenticated. Run: theo login');
+      expect(deps.writeError).toHaveBeenCalledWith('Not authenticated. Run: loopscale login');
       expect(deps.cancelBuild).not.toHaveBeenCalled();
     });
 

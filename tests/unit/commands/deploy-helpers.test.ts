@@ -22,7 +22,7 @@ describe('mapSyncFailureReason (Beta Logs Gate Criterion 4)', () => {
       // Sanity: not the fallback "Deploy failed: <lowercased>"
       expect(result).not.toMatch(/^Deploy failed: [a-z]/);
       // Always ends with the run-logs hint
-      expect(result).toContain(`theo logs --build ${buildId}`);
+      expect(result).toContain(`loopscale logs --build ${buildId}`);
     });
   });
 
@@ -37,7 +37,7 @@ describe('mapSyncFailureReason (Beta Logs Gate Criterion 4)', () => {
     ])('build pipeline — %s', (reason) => {
       const result = mapSyncFailureReason(reason, buildId);
       expect(result).not.toMatch(/^Deploy failed: [a-z]/);
-      expect(result).toContain(`theo logs --build ${buildId}`);
+      expect(result).toContain(`loopscale logs --build ${buildId}`);
     });
 
     it.each([
@@ -80,8 +80,8 @@ describe('mapSyncFailureReason (Beta Logs Gate Criterion 4)', () => {
       'PLAN_QUOTA_EXCEEDED', 'SECRET_SYNC_FAILED',
     ];
 
-    // Forbidden internal terms (CLAUDE.md Rule 3). Excludes `theo logs` /
-    // `theo status` / etc. because those are intentional CLI invocations.
+    // Forbidden internal terms (CLAUDE.md Rule 3). Excludes `loopscale logs` /
+    // `loopscale status` / etc. because those are intentional CLI invocations.
     const forbiddenTerms = [
       /ArgoCD/i,
       /\bargocd\b/i,
@@ -106,18 +106,18 @@ describe('mapSyncFailureReason (Beta Logs Gate Criterion 4)', () => {
 
     it.each(knownReasons)('%s — has actionable next step (links to a CLI command, docs, or support)', (reason) => {
       const result = mapSyncFailureReason(reason, 'b-1');
-      // Every message must end with the "Run: theo logs ..." hint
+      // Every message must end with the "Run: loopscale logs ..." hint
       // (added by mapSyncFailureReason itself), so the actionable
       // floor is built-in. We assert the catalogued message ALSO
       // contains a concrete next step BEFORE that hint:
-      //   - explicit CLI command (`theo status`, `theo rollback`, `theo secrets list`, `theo domains list`)
+      //   - explicit CLI command (`loopscale status`, `loopscale rollback`, `loopscale secrets list`, `loopscale domains list`)
       //   - explicit file path (`theo.yaml`, `lockfile`)
       //   - retry directive ("retry the deploy", "retry")
       //   - support handoff ("contact support")
       //   - external system reference ("Let's Encrypt", "registry", "cosign")
       //   - explicit measurable threshold ("5min", "30s")
       const actionableMarkers = [
-        /\btheo\s+\w+/, // theo command
+        /\bloopscale\s+\w+/, // loopscale command
         /theo\.yaml/i,
         /lockfile/i,
         /retry/i,
@@ -142,14 +142,14 @@ describe('mapSyncFailureReason (Beta Logs Gate Criterion 4)', () => {
       // when a new failure mode hasn't been catalogued yet. The hint
       // is the universal escape hatch.
       expect(result).toContain('something uncategorized');
-      expect(result).toContain('theo logs --build b-1');
+      expect(result).toContain('loopscale logs --build b-1');
     });
   });
 
   describe('build ID interpolation', () => {
     it('includes the exact build ID in the hint', () => {
       const result = mapSyncFailureReason('CRASH_LOOP', 'unique-build-id-9999');
-      expect(result).toContain('theo logs --build unique-build-id-9999');
+      expect(result).toContain('loopscale logs --build unique-build-id-9999');
     });
   });
 });

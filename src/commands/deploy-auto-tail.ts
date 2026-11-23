@@ -5,7 +5,7 @@
 //
 // When a deploy fails (build.failed / deploy.sync_failed /
 // deploy.delivery_failed SSE event), the CLI traditionally exits
-// with an error message + the `theo logs --build <id>` hint. The
+// with an error message + the `loopscale logs --build <id>` hint. The
 // operator then types that command and sees the logs.
 //
 // This module provides a best-effort short-circuit: if the deploy

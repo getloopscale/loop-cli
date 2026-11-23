@@ -44,13 +44,13 @@ export class RollbackCommand {
 
     // 1. Auth check
     if (!this.deps.getToken()) {
-      return this.exitWithError(opts, 'Not authenticated. Run: theo login', 4, 'AUTH_REQUIRED');
+      return this.exitWithError(opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
     // 2. Find theo.yaml
     const yamlResult = this.deps.findTheoYaml();
     if (!yamlResult) {
-      return this.exitWithError(opts, 'No theo.yaml found. Run: theo init', 1, 'MISSING_CONFIG');
+      return this.exitWithError(opts, 'No theo.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
     }
 
     if (yamlResult.parseError) {
@@ -141,7 +141,7 @@ export class RollbackCommand {
   private handleError(opts: RollbackOptions, err: unknown): number {
     if (err instanceof ApiError) {
       if (err.exitCode === 4) {
-        return this.exitWithError(opts, 'Authentication failed. Run: theo login', 4, 'AUTH_REQUIRED');
+        return this.exitWithError(opts, 'Authentication failed. Run: loopscale login', 4, 'AUTH_REQUIRED');
       }
       if (err.statusCode === 409 && err.code === 'CONCURRENT_ACTIVATION') {
         // T5.1 CV-M-1 of plan 2026-06-01-p3-infra-observability-test-debt:

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2025-2026 The Theo Authors
 //
-// T1.11 — `theo doctor` end-user health check.
+// T1.11 — `loopscale doctor` end-user health check.
 // Per MEET-2026-05-12 plan: validates the operator's local env before they
-// try `theo deploy` and fail with an opaque error. Suggests next action per
+// try `loopscale deploy` and fail with an opaque error. Suggests next action per
 // failed check. Rule 3 clean — uses product language only.
 
 export interface DoctorCheck {
@@ -73,7 +73,7 @@ export class DoctorCommand {
         description: 'Authentication',
         status: 'fail',
         detail: 'Not logged in',
-        suggested_action: 'Run `theo login` to authenticate',
+        suggested_action: 'Run `loopscale login` to authenticate',
       });
     } else {
       try {
@@ -91,7 +91,7 @@ export class DoctorCommand {
             description: 'Authentication',
             status: 'fail',
             detail: 'Token expired or invalid',
-            suggested_action: 'Run `theo login` to refresh authentication',
+            suggested_action: 'Run `loopscale login` to refresh authentication',
           });
         }
       } catch {
@@ -100,7 +100,7 @@ export class DoctorCommand {
           description: 'Authentication',
           status: 'warn',
           detail: 'Could not validate token (network unavailable)',
-          suggested_action: 'Check internet connection; retry `theo doctor` when online',
+          suggested_action: 'Check internet connection; retry `loopscale doctor` when online',
         });
       }
     }
@@ -121,7 +121,7 @@ export class DoctorCommand {
           description: 'API reachability',
           status: 'fail',
           detail: ping.error || 'API not reachable',
-          suggested_action: 'Check internet connection and firewall; verify https://api.usetheo.dev is accessible',
+          suggested_action: 'Check internet connection and firewall; verify the API URL (LOOPSCALE_URL) is reachable',
         });
       }
     } catch (err) {
@@ -141,8 +141,8 @@ export class DoctorCommand {
         name: 'project_config',
         description: 'Project configuration (theo.yaml)',
         status: 'warn',
-        detail: 'Not in a Theo project directory',
-        suggested_action: 'cd into a project, or run `theo init` to create a new project',
+        detail: 'Not in a LoopScale project directory',
+        suggested_action: 'cd into a project, or run `loopscale init` to create a new project',
       });
     } else if (!projectConfig.valid) {
       result.checks.push({
@@ -150,7 +150,7 @@ export class DoctorCommand {
         description: 'Project configuration (theo.yaml)',
         status: 'fail',
         detail: projectConfig.error || 'theo.yaml has invalid syntax or fields',
-        suggested_action: 'Fix theo.yaml syntax; run `theo deploy --dry-run` to validate',
+        suggested_action: 'Fix theo.yaml syntax; run `loopscale deploy --dry-run` to validate',
       });
     } else {
       result.checks.push({
@@ -179,7 +179,7 @@ export class DoctorCommand {
 
   private renderHuman(result: DoctorResult): void {
     const { writeTo } = this.deps;
-    writeTo('Theo CLI health check');
+    writeTo('LoopScale CLI health check');
     writeTo('');
 
     for (const check of result.checks) {
@@ -195,11 +195,11 @@ export class DoctorCommand {
     writeTo('');
 
     if (result.overall === 'ok') {
-      writeTo('All checks pass. Ready to deploy with `theo deploy`.');
+      writeTo('All checks pass. Ready to deploy with `loopscale deploy`.');
     } else if (result.overall === 'warn') {
       writeTo('Warnings detected. CLI is usable but some features may be limited.');
     } else {
-      writeTo('Failures detected. Fix the issues above and re-run `theo doctor`.');
+      writeTo('Failures detected. Fix the issues above and re-run `loopscale doctor`.');
     }
   }
 }

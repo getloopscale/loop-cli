@@ -1,9 +1,25 @@
 # Changelog
 
-All notable changes to `@usetheo/cli` are documented here.
+All notable changes to `@getloopscale/cli` (published as `@usetheo/cli` up to 0.5.0) are documented here.
 Format: Keep a Changelog + Semantic Versioning.
 
 ## [Unreleased]
+
+## [0.6.0] - 2026-11-23
+
+### Changed
+- Breaking: the package is now `@getloopscale/cli` and the command is `loopscale` instead of `theo`; uninstall `@usetheo/cli` and install `@getloopscale/cli` (#17)
+- Breaking: help text, errors and hints name the product LoopScale and suggest `loopscale <command>` instead of `theo <command>` (#17)
+- The login is now stored in `~/.loopscale/config.json` (or `$XDG_CONFIG_HOME/loopscale/config.json`); a login in the old `.theo` location keeps working until the next `loopscale login` (#17)
+- Environment variables are now named `LOOPSCALE_*` (`LOOPSCALE_URL`, `LOOPSCALE_TOKEN`, `LOOPSCALE_DASHBOARD_URL`, `LOOPSCALE_CLOUD_URL`, `LOOPSCALE_DEBUG`, `LOOPSCALE_API_TIMEOUT`, `LOOPSCALE_UPLOAD_TIMEOUT`, `LOOPSCALE_DEPLOY_TIMEOUT`, `LOOPSCALE_TRACING_ENABLED`, `LOOPSCALE_OTEL_ENDPOINT`, `LOOPSCALE_ENV`) (#17)
+- The sign-up and sign-in hint now points at `https://app.getloopscale.com` instead of `https://app-dev.usetheo.dev` (#17)
+- The secrets hint links to `https://docs.getloopscale.com/secrets` (#17)
+- HTTP requests send `User-Agent: loopscale-cli/<version>` instead of `theo-cli/<version>` (#17)
+- Opt-in tracing reports the service as `loopscale-cli` and uses `loopscale.cli.*` span attributes instead of `theo-cli` and `theo.cli.*` (#17)
+
+### Deprecated
+- The `THEO_*` environment variables, including the older `THEO_API_URL`, are still read when the `LOOPSCALE_*` name is unset, with a one-line notice on stderr; they will be removed in a future major release (#17)
+- Reading the login from `~/.theo/config.json` (or `$XDG_CONFIG_HOME/theo/config.json`) prints a one-line notice on stderr; `loopscale logout` removes both files (#17)
 
 ## [0.5.0] - 2026-11-06
 

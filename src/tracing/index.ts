@@ -2,9 +2,9 @@
 // Copyright 2025-2026 The Theo Authors
 
 /**
- * OpenTelemetry tracing for Theo CLI.
+ * OpenTelemetry tracing for the LoopScale CLI.
  *
- * Disabled by default (opt-in via THEO_TRACING_ENABLED=true).
+ * Disabled by default (opt-in via LOOPSCALE_TRACING_ENABLED=true).
  * When enabled, exports spans to the OTel Collector via OTLP/HTTP.
  * Graceful degradation: if collector is unreachable, spans are silently dropped.
  */
@@ -15,6 +15,7 @@ import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { Resource } from '@opentelemetry/resources';
 import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions';
 import { trace, SpanStatusCode } from '@opentelemetry/api';
+import { readEnv } from '../config/env';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { version: CLI_VERSION } = require('../../package.json');
@@ -22,27 +23,27 @@ const { version: CLI_VERSION } = require('../../package.json');
 let provider: NodeTracerProvider | null = null;
 
 /**
- * Returns true if tracing is enabled via THEO_TRACING_ENABLED=true.
+ * Returns true if tracing is enabled via LOOPSCALE_TRACING_ENABLED=true.
  * Default: false (opt-in to avoid impacting CLI DX/startup time).
  */
 function isEnabled(): boolean {
-  const v = process.env.THEO_TRACING_ENABLED;
+  const v = readEnv('LOOPSCALE_TRACING_ENABLED', 'THEO_TRACING_ENABLED');
   return v === 'true' || v === '1';
 }
 
 /**
  * Initialize OpenTelemetry tracing. Call once at CLI startup.
- * No-op if THEO_TRACING_ENABLED is not set to true.
+ * No-op if LOOPSCALE_TRACING_ENABLED is not set to true.
  */
 export function initTracing(): void {
   if (!isEnabled()) return;
 
-  const endpoint = process.env.THEO_OTEL_ENDPOINT || 'http://localhost:4318/v1/traces';
+  const endpoint = readEnv('LOOPSCALE_OTEL_ENDPOINT', 'THEO_OTEL_ENDPOINT') || 'http://localhost:4318/v1/traces';
 
   const resource = new Resource({
-    [ATTR_SERVICE_NAME]: 'theo-cli',
+    [ATTR_SERVICE_NAME]: 'loopscale-cli',
     [ATTR_SERVICE_VERSION]: CLI_VERSION,
-    'deployment.environment': process.env.THEO_ENV || 'development',
+    'deployment.environment': readEnv('LOOPSCALE_ENV', 'THEO_ENV') || 'development',
   });
 
   const exporter = new OTLPTraceExporter({
@@ -73,7 +74,7 @@ export async function shutdownTracing(): Promise<void> {
  * Get the CLI tracer instance.
  */
 export function getTracer() {
-  return trace.getTracer('theo-cli', CLI_VERSION);
+  return trace.getTracer('loopscale-cli', CLI_VERSION);
 }
 
 export { trace, SpanStatusCode };

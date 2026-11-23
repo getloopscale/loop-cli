@@ -66,18 +66,18 @@ export class SecretSetCommand {
   async execute(opts: SecretSetOptions = {}): Promise<number> {
     // 1. Auth check
     if (!this.deps.getToken()) {
-      return this.exitWithError(opts, 'Not authenticated. Run: theo login', 4, 'AUTH_REQUIRED');
+      return this.exitWithError(opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
     // 2. Find theo.yaml
     const yamlResult = this.deps.findTheoYaml();
     if (!yamlResult) {
-      return this.exitWithError(opts, 'No theo.yaml found. Run: theo init', 1, 'MISSING_CONFIG');
+      return this.exitWithError(opts, 'No theo.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
     }
 
     // 3. Parse name=value
     if (!opts.nameValue || !opts.nameValue.includes('=')) {
-      return this.exitWithError(opts, 'Usage: theo secret set NAME=value', 1, 'INVALID_FORMAT');
+      return this.exitWithError(opts, 'Usage: loopscale secret set NAME=value', 1, 'INVALID_FORMAT');
     }
 
     const eqIdx = opts.nameValue.indexOf('=');
@@ -152,12 +152,12 @@ export class SecretListCommand {
 
   async execute(opts: SecretListOptions = {}): Promise<number> {
     if (!this.deps.getToken()) {
-      return this.exitWithError(opts, 'Not authenticated. Run: theo login', 4, 'AUTH_REQUIRED');
+      return this.exitWithError(opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
     const yamlResult = this.deps.findTheoYaml();
     if (!yamlResult) {
-      return this.exitWithError(opts, 'No theo.yaml found. Run: theo init', 1, 'MISSING_CONFIG');
+      return this.exitWithError(opts, 'No theo.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
     }
 
     const env = opts.env ?? 'production';
@@ -221,12 +221,12 @@ export class SecretDeleteCommand {
 
   async execute(opts: SecretDeleteOptions = {}): Promise<number> {
     if (!this.deps.getToken()) {
-      return this.exitWithError(opts, 'Not authenticated. Run: theo login', 4, 'AUTH_REQUIRED');
+      return this.exitWithError(opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
     const yamlResult = this.deps.findTheoYaml();
     if (!yamlResult) {
-      return this.exitWithError(opts, 'No theo.yaml found. Run: theo init', 1, 'MISSING_CONFIG');
+      return this.exitWithError(opts, 'No theo.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
     }
 
     if (!opts.name) {
@@ -245,7 +245,7 @@ export class SecretDeleteCommand {
       // prompt, travava até o `withTimeout` de 40 s e a mensagem culpava a REDE —
       // "Secret delete timed out. Check your connection" — enquanto o que faltava era um `y`.
       if (this.deps.isCI || this.deps.isNonInteractive || opts.json) {
-        return this.exitWithError(opts, 'Confirmation required. Pass --yes in non-interactive contexts (CI, pipes, redirected stdin). Example: theo secret delete KEY --yes', 1, 'CONFIRMATION_REQUIRED');
+        return this.exitWithError(opts, 'Confirmation required. Pass --yes in non-interactive contexts (CI, pipes, redirected stdin). Example: loopscale secret delete KEY --yes', 1, 'CONFIRMATION_REQUIRED');
       }
       if (this.deps.confirm) {
         const confirmed = await this.deps.confirm(

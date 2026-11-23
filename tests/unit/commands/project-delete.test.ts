@@ -186,7 +186,7 @@ describe('ProjectDeleteCommand', () => {
       const cmd = new ProjectDeleteCommand(makeDeps({ getToken: () => null }));
       await cmd.execute('my-app', { yes: true });
       expect(errors[0]).toContain('Not authenticated');
-      expect(errors[0]).toContain('theo login');
+      expect(errors[0]).toContain('loopscale login');
     });
   });
 

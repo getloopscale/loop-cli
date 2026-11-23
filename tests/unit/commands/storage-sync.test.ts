@@ -19,7 +19,7 @@ import {
 import { hashBytes, writeManifest } from '../../../src/lib/sync-manifest';
 
 async function tmp(): Promise<string> {
-  return fs.mkdtemp(path.join(os.tmpdir(), 'theo-sync-engine-'));
+  return fs.mkdtemp(path.join(os.tmpdir(), 'loopscale-sync-engine-'));
 }
 
 async function writeManifestFor(dir: string, paths: Record<string, string>): Promise<void> {

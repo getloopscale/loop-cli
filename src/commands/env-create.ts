@@ -56,12 +56,12 @@ export class EnvCreateCommand {
   async execute(name: string, opts: EnvCreateOptions = {}): Promise<number> {
     // 1. Auth check
     if (!this.deps.getToken()) {
-      return this.exitWithError(opts, 'Not authenticated. Run: theo login', 4, 'AUTH_REQUIRED');
+      return this.exitWithError(opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
     // 2. Name required
     if (!name || name.trim() === '') {
-      return this.exitWithError(opts, 'Environment name is required. Usage: theo env create <name>', 1, 'MISSING_ARGUMENT');
+      return this.exitWithError(opts, 'Environment name is required. Usage: loopscale env create <name>', 1, 'MISSING_ARGUMENT');
     }
 
     // 3. Name format validation
@@ -89,7 +89,7 @@ export class EnvCreateCommand {
     if (!project) {
       return this.exitWithError(
         opts,
-        'Project is required. Usage: theo env create <name> --project <project-name>',
+        'Project is required. Usage: loopscale env create <name> --project <project-name>',
         1,
         'MISSING_FIELD',
       );
@@ -126,7 +126,7 @@ export class EnvCreateCommand {
   private handleError(opts: EnvCreateOptions, err: unknown, name: string): number {
     if (err instanceof ApiError) {
       if (err.exitCode === 4 || err.statusCode === 401) {
-        return this.exitWithError(opts, 'Authentication failed. Run: theo login', 4, 'AUTH_REQUIRED');
+        return this.exitWithError(opts, 'Authentication failed. Run: loopscale login', 4, 'AUTH_REQUIRED');
       }
       // 409 = already exists — idempotent success
       if (err.statusCode === 409) {

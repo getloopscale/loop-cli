@@ -22,7 +22,7 @@ afterEach(async () => {
   while (servers.length) await servers.pop()!.close();
 });
 
-describe('theo domain --help', () => {
+describe('loopscale domain --help', () => {
   it('exit 0 + lists subcommands', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
@@ -35,7 +35,7 @@ describe('theo domain --help', () => {
   });
 });
 
-describe('theo domain list', () => {
+describe('loopscale domain list', () => {
   it('exit 4 without auth', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
@@ -63,7 +63,7 @@ describe('theo domain list', () => {
     const r = await spawnTheo({
       args: ['domain', 'list', '--json'],
       cwd: tmp,
-      env: { THEO_URL: server.url },
+      env: { LOOPSCALE_URL: server.url },
       timeoutMs: 15_000,
     });
     expect(r.exitCode).not.toBe(143);
@@ -71,7 +71,7 @@ describe('theo domain list', () => {
   });
 });
 
-describe('theo domain add', () => {
+describe('loopscale domain add', () => {
   it('exit non-zero on bad domain format (usage)', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);

@@ -5,7 +5,7 @@ import { debugError } from '../../../src/lib/debug';
 
 describe('debugError', () => {
   let writeSpy: jest.SpyInstance;
-  const original = process.env.THEO_DEBUG;
+  const original = process.env.LOOPSCALE_DEBUG;
 
   beforeEach(() => {
     writeSpy = jest.spyOn(process.stderr, 'write').mockReturnValue(true);
@@ -14,20 +14,20 @@ describe('debugError', () => {
   afterEach(() => {
     writeSpy.mockRestore();
     if (original === undefined) {
-      delete process.env.THEO_DEBUG;
+      delete process.env.LOOPSCALE_DEBUG;
     } else {
-      process.env.THEO_DEBUG = original;
+      process.env.LOOPSCALE_DEBUG = original;
     }
   });
 
-  it('is silent when THEO_DEBUG is unset', () => {
-    delete process.env.THEO_DEBUG;
+  it('is silent when LOOPSCALE_DEBUG is unset', () => {
+    delete process.env.LOOPSCALE_DEBUG;
     debugError('scope', new Error('boom'));
     expect(writeSpy).not.toHaveBeenCalled();
   });
 
-  it('writes the scope and error message to stderr when THEO_DEBUG is set', () => {
-    process.env.THEO_DEBUG = '1';
+  it('writes the scope and error message to stderr when LOOPSCALE_DEBUG is set', () => {
+    process.env.LOOPSCALE_DEBUG = '1';
     debugError('auth:login', new Error('connection refused'));
     const output = writeSpy.mock.calls.map((c) => String(c[0])).join('');
     expect(output).toContain('auth:login');
@@ -35,7 +35,7 @@ describe('debugError', () => {
   });
 
   it('surfaces the underlying cause when present', () => {
-    process.env.THEO_DEBUG = '1';
+    process.env.LOOPSCALE_DEBUG = '1';
     const err = new Error('refresh failed', { cause: new Error('ECONNRESET') });
     debugError('auth:refresh', err);
     const output = writeSpy.mock.calls.map((c) => String(c[0])).join('');
@@ -43,7 +43,7 @@ describe('debugError', () => {
   });
 
   it('handles non-Error values', () => {
-    process.env.THEO_DEBUG = '1';
+    process.env.LOOPSCALE_DEBUG = '1';
     debugError('scope', 'plain string failure');
     const output = writeSpy.mock.calls.map((c) => String(c[0])).join('');
     expect(output).toContain('plain string failure');

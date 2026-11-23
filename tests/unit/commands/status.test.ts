@@ -79,11 +79,11 @@ describe('StatusCommand', () => {
       // release-blockers-2026-06-25-set v1.1 #62: when no --env passed AND
       // no deploy in default env, hint at alternate envs (not just
       // "deploy something"). The Red Team scenario: user has a 'preview'
-      // deploy ACTIVE but `theo status` (default production) shows vazio
+      // deploy ACTIVE but `loopscale status` (default production) shows vazio
       // with no pista to try `--env preview`.
       expect(output).toContain("No deploy in 'production'");
       expect(output).toContain('--env preview');
-      expect(output).toContain('theo env list');
+      expect(output).toContain('loopscale env list');
     });
 
     // release-blockers-2026-06-25-set v1.1 #62 — when --env IS explicit
@@ -102,10 +102,10 @@ describe('StatusCommand', () => {
       expect(exitCode).toBe(0);
       const output = (deps.writeTo as jest.Mock).mock.calls.map((c: string[]) => c[0]).join('\n');
       expect(output).toContain("No deploy in 'preview'");
-      expect(output).toContain('theo deploy --env preview');
+      expect(output).toContain('loopscale deploy --env preview');
       // Anti-regression: explicit --env MUST NOT echo the alternate-env hint.
-      expect(output).not.toContain('theo status --env');
-      expect(output).not.toContain('theo env list');
+      expect(output).not.toContain('loopscale status --env');
+      expect(output).not.toContain('loopscale env list');
     });
   });
 
@@ -223,7 +223,7 @@ describe('StatusCommand', () => {
       expect(exitCode).toBe(4);
       const errOutput = (deps.writeError as jest.Mock).mock.calls.map((c: string[]) => c[0]).join(' ');
       expect(errOutput).toContain('Not authenticated');
-      expect(errOutput).toContain('theo login');
+      expect(errOutput).toContain('loopscale login');
     });
 
     it('should return exit code 4 with JSON when not authenticated', async () => {
@@ -255,7 +255,7 @@ describe('StatusCommand', () => {
       expect(exitCode).toBe(1);
       const errOutput = (deps.writeError as jest.Mock).mock.calls.map((c: string[]) => c[0]).join(' ');
       expect(errOutput).toContain('theo.yaml');
-      expect(errOutput).toContain('theo init');
+      expect(errOutput).toContain('loopscale init');
     });
 
     it('should return exit code 1 when theo.yaml has parse error', async () => {
@@ -308,7 +308,7 @@ describe('StatusCommand', () => {
     it('should return exit 4 on 401 API error', async () => {
       const deps = createMockDeps({
         getStatus: jest.fn().mockRejectedValue(
-          new ApiError('Not authenticated. Run: theo login', 4, 401, 'AUTH_REQUIRED'),
+          new ApiError('Not authenticated. Run: loopscale login', 4, 401, 'AUTH_REQUIRED'),
         ),
       });
       const cmd = new StatusCommand(deps);
@@ -344,10 +344,10 @@ describe('StatusCommand', () => {
   });
 
   // CHG-2026-04-23-AUDIT-24: network errors now carry code=API_UNREACHABLE
-  // with "Cannot reach API: ... Check THEO_URL." so operators spot config
+  // with "Cannot reach API: ... Check LOOPSCALE_URL." so operators spot config
   // errors instead of retrying blindly. Exit code stays 3 (contract).
   describe('API unreachable (AUDIT-24)', () => {
-    it('network error produces API_UNREACHABLE code + Check THEO_URL hint', async () => {
+    it('network error produces API_UNREACHABLE code + Check LOOPSCALE_URL hint', async () => {
       const deps = createMockDeps({
         getStatus: jest.fn().mockRejectedValue(new Error('fetch failed')),
       });
@@ -357,7 +357,7 @@ describe('StatusCommand', () => {
       const parsed = JSON.parse((deps.writeTo as jest.Mock).mock.calls[0][0]);
       expect(parsed.code).toBe('API_UNREACHABLE');
       expect(parsed.error).toContain('Cannot reach API');
-      expect(parsed.error).toContain('Check THEO_URL');
+      expect(parsed.error).toContain('Check LOOPSCALE_URL');
     });
 
     it('non-network Error keeps UNEXPECTED_ERROR code', async () => {

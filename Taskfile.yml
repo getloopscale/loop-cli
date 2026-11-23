@@ -1,4 +1,4 @@
-# Taskfile.yml — theo-cli repo
+# Taskfile.yml for the LoopScale CLI repo
 #
 # T2.1 of plan canonical-tests-rewrite-v2 v1.0 per ADR-2026-06-17-T3.
 # Closes F-001 BLOCKER from audit 2026-06-17-canonical-tests-deep-review:
@@ -31,8 +31,8 @@ tasks:
       CLI compiles + at least one command exits 0 cleanly. Target: < 30s.
     cmds:
       - npm run build
-      - node bin/theo --version
-      - node bin/theo --help > /dev/null
+      - node bin/loopscale --version
+      - node bin/loopscale --help > /dev/null
 
   test:contract:
     desc: |

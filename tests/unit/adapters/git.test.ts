@@ -18,7 +18,7 @@ describe('createGitBundle', () => {
   const origCwd = process.cwd();
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'theo-git-test-'));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'loopscale-git-test-'));
     process.chdir(tmpDir);
     execSync('git init', { stdio: 'pipe' });
     execSync('git config user.email "test@test.com"', { stdio: 'pipe' });
@@ -54,7 +54,7 @@ describe('createGitBundle', () => {
     expect(verifyOutput).not.toContain('requires');
 
     // Verify: bundle can be cloned into an empty repo (simulates fresh Gitea repo)
-    const cloneDir = fs.mkdtempSync(path.join(os.tmpdir(), 'theo-clone-test-'));
+    const cloneDir = fs.mkdtempSync(path.join(os.tmpdir(), 'loopscale-clone-test-'));
     try {
       execSync(`git clone ${bundlePath} ${cloneDir}/repo`, { stdio: 'pipe' });
       const log = execSync('git log --oneline', {
@@ -80,7 +80,7 @@ describe('createGitBundle', () => {
     const bundlePath = await createGitBundle();
 
     // Assert: can be cloned from scratch
-    const cloneDir = fs.mkdtempSync(path.join(os.tmpdir(), 'theo-clone-test-'));
+    const cloneDir = fs.mkdtempSync(path.join(os.tmpdir(), 'loopscale-clone-test-'));
     try {
       execSync(`git clone ${bundlePath} ${cloneDir}/repo`, { stdio: 'pipe' });
       const content = fs.readFileSync(path.join(cloneDir, 'repo', 'file.txt'), 'utf-8');
@@ -97,7 +97,7 @@ describe('computeContentHash', () => {
   let tmpDir: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'theo-hash-test-'));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'loopscale-hash-test-'));
   });
 
   afterEach(() => {
@@ -180,7 +180,7 @@ describe('createTarBundle', () => {
   const origCwd = process.cwd();
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'theo-tar-test-'));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'loopscale-tar-test-'));
     process.chdir(tmpDir);
   });
 
@@ -217,7 +217,7 @@ describe('createTarBundle', () => {
     expect(fs.existsSync(tarPath)).toBe(true);
 
     // Extract to verify contents
-    const extractDir = fs.mkdtempSync(path.join(os.tmpdir(), 'theo-tar-extract-'));
+    const extractDir = fs.mkdtempSync(path.join(os.tmpdir(), 'loopscale-tar-extract-'));
     execSync(`tar xzf ${tarPath} -C ${extractDir}`, { stdio: 'pipe' });
 
     expect(fs.existsSync(path.join(extractDir, 'app.js'))).toBe(true);
@@ -239,7 +239,7 @@ describe('getSourceIdentifier', () => {
   const origCwd = process.cwd();
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'theo-srcid-test-'));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'loopscale-srcid-test-'));
   });
 
   afterEach(() => {
@@ -283,7 +283,7 @@ describe('checkSensitiveFilesOnDisk', () => {
   let tmpDir: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'theo-sensitive-test-'));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'loopscale-sensitive-test-'));
   });
 
   afterEach(() => {

@@ -5,12 +5,12 @@ import { execSync } from 'child_process';
 import * as path from 'path';
 import { program, createProgram } from '../../src/index';
 
-describe('bin/theo entrypoint', () => {
-  const binPath = path.resolve(__dirname, '../../bin/theo');
+describe('bin/loopscale entrypoint', () => {
+  const binPath = path.resolve(__dirname, '../../bin/loopscale');
 
   it('should produce help output when invoked with --help', () => {
     const output = execSync(`node ${binPath} --help`, { encoding: 'utf-8' });
-    expect(output).toContain('theo');
+    expect(output).toContain('loopscale');
     expect(output).toContain('Commands:');
     expect(output).toContain('login');
     expect(output).toContain('deploy');
@@ -23,8 +23,8 @@ describe('bin/theo entrypoint', () => {
 });
 
 describe('CLI entrypoint', () => {
-  it('should export a Commander program named "theo"', () => {
-    expect(program.name()).toBe('theo');
+  it('should export a Commander program named "loopscale"', () => {
+    expect(program.name()).toBe('loopscale');
   });
 
   it('should have a semver version string', () => {
@@ -93,17 +93,17 @@ describe('CLI entrypoint', () => {
       const p1 = createProgram();
       const p2 = createProgram();
       expect(p1).not.toBe(p2);
-      expect(p1.name()).toBe('theo');
-      expect(p2.name()).toBe('theo');
+      expect(p1.name()).toBe('loopscale');
+      expect(p2.name()).toBe('loopscale');
     });
   });
 });
 
-describe('theo --json with no command', () => {
-  const binPath = path.resolve(__dirname, '../../bin/theo');
+describe('loopscale --json with no command', () => {
+  const binPath = path.resolve(__dirname, '../../bin/loopscale');
 
-  // Plan v1.1 T4.1 + EC-12 — BREAKING change (intentional): `theo --json`
-  // (without a positional subcommand) now delegates to `theo deploy --json`
+  // Plan v1.1 T4.1 + EC-12 — BREAKING change (intentional): `loopscale --json`
+  // (without a positional subcommand) now delegates to `loopscale deploy --json`
   // per Vercel-parity zero-config. The pre-v1.1 "No command specified"
   // envelope was replaced. New behavior is exercised by tests in
   // cli-zero-config.test.ts; here we just confirm the legacy "No command
@@ -140,7 +140,7 @@ describe('theo --json with no command', () => {
 
     expect(exitCode).toBe(1);
     expect(output).toContain('Unknown command: nonexistent-command');
-    expect(output).toContain('theo --help');
+    expect(output).toContain('loopscale --help');
   });
 
   it('should return exit code 1 and structured JSON for unknown command with --json', () => {
@@ -184,12 +184,12 @@ describe('theo --json with no command', () => {
     expect(parsed).toHaveProperty('exit_code', 1);
   });
 
-  // Plan v1.1 T4.1 + EC-12 — BREAKING change (intentional): `theo` (no args)
-  // now delegates to `theo deploy` per Vercel-parity zero-config. Operators
-  // discover commands via `theo --help` (still works, see EC-8 tests in
+  // Plan v1.1 T4.1 + EC-12 — BREAKING change (intentional): `loopscale` (no args)
+  // now delegates to `loopscale deploy` per Vercel-parity zero-config. Operators
+  // discover commands via `loopscale --help` (still works, see EC-8 tests in
   // cli-zero-config.test.ts). Here we just confirm the legacy auto-help is
-  // GONE — `theo` without args attempts deploy, which exits non-zero in CI.
-  it('`theo` (no args) no longer auto-shows help — delegates to deploy (EC-12)', () => {
+  // GONE — `loopscale` without args attempts deploy, which exits non-zero in CI.
+  it('`loopscale` (no args) no longer auto-shows help — delegates to deploy (EC-12)', () => {
     let stdout = '';
     let stderr = '';
     let exitCode = 0;
@@ -204,6 +204,6 @@ describe('theo --json with no command', () => {
     expect(exitCode).not.toBe(0);
     // Should NOT have printed the full `Usage:` block — deploy ran instead.
     const combined = stdout + stderr;
-    expect(combined).not.toContain('Usage: theo');
+    expect(combined).not.toContain('Usage: loopscale');
   });
 });

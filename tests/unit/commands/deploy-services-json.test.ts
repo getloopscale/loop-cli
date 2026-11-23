@@ -175,7 +175,7 @@ describe('T3.1a — deploy carries services.json runtime into the build payload'
   }
 
   beforeEach(() => {
-    tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'theo-rw-'));
+    tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'loopscale-rw-'));
   });
   afterEach(() => {
     fs.rmSync(tmpRoot, { recursive: true, force: true });

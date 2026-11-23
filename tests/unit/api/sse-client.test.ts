@@ -391,7 +391,7 @@ describe('SSEClient', () => {
       expect(errors.some((e) => /failed after 3 retries/.test(e.message))).toBe(
         true
       );
-      expect(errors.some((e) => /theo status/.test(e.message))).toBe(true);
+      expect(errors.some((e) => /loopscale status/.test(e.message))).toBe(true);
       expect(onClose).toHaveBeenCalled();
 
       jest.useRealTimers();
@@ -583,7 +583,7 @@ describe('SSEClient', () => {
       // 3 individual errors + 1 final "max retries" error
       expect(errors).toHaveLength(4);
       expect(errors[3].message).toContain('failed after 3 retries');
-      expect(errors[3].message).toContain('theo status');
+      expect(errors[3].message).toContain('loopscale status');
     });
 
     it('should reset retry counter on successful connection', async () => {

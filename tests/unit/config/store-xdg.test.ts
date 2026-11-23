@@ -13,53 +13,53 @@ describe('ConfigStore.default() — XDG_CONFIG_HOME support', () => {
     process.env = { ...originalEnv };
   });
 
-  it('should use $XDG_CONFIG_HOME/theo/ when XDG_CONFIG_HOME is set', () => {
+  it('should use $XDG_CONFIG_HOME/loopscale/ when XDG_CONFIG_HOME is set', () => {
     const xdgDir = '/tmp/test-xdg-config';
     process.env.XDG_CONFIG_HOME = xdgDir;
 
     const store = ConfigStore.default();
 
     // Verify the config path uses XDG directory without dot prefix
-    expect(store.configDir).toBe(path.join(xdgDir, 'theo'));
+    expect(store.configDir).toBe(path.join(xdgDir, 'loopscale'));
   });
 
-  it('should use $HOME/.theo/ when XDG_CONFIG_HOME is NOT set', () => {
+  it('should use $HOME/.loopscale/ when XDG_CONFIG_HOME is NOT set', () => {
     delete process.env.XDG_CONFIG_HOME;
     const home = os.homedir();
 
     const store = ConfigStore.default();
 
-    expect(store.configDir).toBe(path.join(home, '.theo'));
+    expect(store.configDir).toBe(path.join(home, '.loopscale'));
   });
 
-  it('should use $HOME/.theo/ when XDG_CONFIG_HOME is empty string', () => {
+  it('should use $HOME/.loopscale/ when XDG_CONFIG_HOME is empty string', () => {
     process.env.XDG_CONFIG_HOME = '';
     const home = os.homedir();
 
     const store = ConfigStore.default();
 
-    expect(store.configDir).toBe(path.join(home, '.theo'));
+    expect(store.configDir).toBe(path.join(home, '.loopscale'));
   });
 
   describe('XDG mode stores and retrieves config correctly', () => {
     let tmpDir: string;
 
     beforeEach(() => {
-      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'theo-xdg-test-'));
+      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'loopscale-xdg-test-'));
     });
 
     afterEach(() => {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     });
 
-    it('should use theo/ (no dot) under XDG_CONFIG_HOME', () => {
+    it('should use loopscale/ (no dot) under XDG_CONFIG_HOME', () => {
       process.env.XDG_CONFIG_HOME = tmpDir;
 
       const store = ConfigStore.default();
       store.saveToken('ghp_xdg', 'xdg@test.com', 'xdg-team');
 
-      // Config should be at $XDG_CONFIG_HOME/theo/config.json (no dot prefix)
-      const configPath = path.join(tmpDir, 'theo', 'config.json');
+      // Config should be at $XDG_CONFIG_HOME/loopscale/config.json (no dot prefix)
+      const configPath = path.join(tmpDir, 'loopscale', 'config.json');
       expect(fs.existsSync(configPath)).toBe(true);
 
       expect(store.getToken()).toBe('ghp_xdg');
@@ -67,13 +67,13 @@ describe('ConfigStore.default() — XDG_CONFIG_HOME support', () => {
       expect(store.getTeam()).toBe('xdg-team');
     });
 
-    it('should use .theo/ under HOME (fallback)', () => {
+    it('should use .loopscale/ under HOME (fallback)', () => {
       delete process.env.XDG_CONFIG_HOME;
       // We can't test with real homedir, so test the constructor directly
       const store = new ConfigStore(tmpDir);
       store.saveToken('ghp_home', 'home@test.com', 'home-team');
 
-      const configPath = path.join(tmpDir, '.theo', 'config.json');
+      const configPath = path.join(tmpDir, '.loopscale', 'config.json');
       expect(fs.existsSync(configPath)).toBe(true);
     });
   });

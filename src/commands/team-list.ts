@@ -42,7 +42,7 @@ export class TeamListCommand {
   async execute(opts: TeamListOptions = {}): Promise<number> {
     // 1. Auth check
     if (!this.deps.getToken()) {
-      return this.exitWithError(opts, 'Not authenticated. Run: theo login', 4, 'AUTH_REQUIRED');
+      return this.exitWithError(opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
     // 2. Call API
@@ -92,13 +92,13 @@ export class TeamListCommand {
   private handleError(opts: TeamListOptions, err: unknown): number {
     if (err instanceof ApiError) {
       if (err.exitCode === 4 || err.statusCode === 401) {
-        return this.exitWithError(opts, 'Authentication failed. Run: theo login', 4, 'AUTH_REQUIRED');
+        return this.exitWithError(opts, 'Authentication failed. Run: loopscale login', 4, 'AUTH_REQUIRED');
       }
       return this.exitWithError(opts, formatErrorMessage('Failed to list team members', err.message, 'Try again'), 1, err.code);
     }
     // CHG-2026-04-23-AUDIT-24: differentiate API unreachable from unexpected
     // so scripts can match on code=API_UNREACHABLE and users see the
-    // "Check THEO_URL" hint instead of the generic "Try again".
+    // "Check LOOPSCALE_URL" hint instead of the generic "Try again".
     const net = classifyNetworkError(err);
     if (net.isNetwork) {
       return this.exitWithError(opts, net.message, 1, 'API_UNREACHABLE');

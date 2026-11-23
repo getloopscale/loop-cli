@@ -18,7 +18,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       # Run only hermetic suites (unit + contract). Integration tests in
-      # tests/integration/ require a live theo backend (real auth + real
+      # tests/integration/ require a live LoopScale backend (real auth + real
       # /api/v1 surface) which the publish runner does not have — they pass
       # locally against a live engine but fail on CI with exit-code 4 (auth).
       # Sprint 4 split (per READY_TO_READ_TEAM mandate 2026-06-25): unit +

@@ -25,7 +25,7 @@ function makeDeps(overrides: Partial<DomainDeps> = {}): DomainDeps {
       app: 'web',
       environment: 'production',
       status: 'pending_verification',
-      verification: { txt_name: '_theo-verify.api.mycompany.com', txt_value: 'theo-verify=abc123' },
+      verification: { txt_name: '_loopscale-verify.api.mycompany.com', txt_value: 'loopscale-verify=abc123' },
       cname_target: 'cname.dev.usetheo.dev',
     }),
     verifyDomain: jest.fn().mockResolvedValue({
@@ -118,7 +118,7 @@ describe('DomainAddCommand', () => {
     const json = JSON.parse(getOutput(deps)[0]);
     expect(json.domain).toBe('api.mycompany.com');
     expect(json.status).toBe('pending_verification');
-    expect(json.verification.txt_name).toBe('_theo-verify.api.mycompany.com');
+    expect(json.verification.txt_name).toBe('_loopscale-verify.api.mycompany.com');
     expect(json.cname_target).toBe('cname.dev.usetheo.dev');
   });
 

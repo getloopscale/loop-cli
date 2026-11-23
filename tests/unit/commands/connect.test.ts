@@ -90,7 +90,7 @@ describe('ConnectCommand', () => {
   });
 
   // CHG-2026-04-23-AUDIT-25: network errors carry code=API_UNREACHABLE.
-  it('network error produces API_UNREACHABLE with Check THEO_URL hint', async () => {
+  it('network error produces API_UNREACHABLE with Check LOOPSCALE_URL hint', async () => {
     const deps = createMockDeps({
       connectRepo: jest.fn().mockRejectedValue(new Error('fetch failed')),
     });
@@ -99,7 +99,7 @@ describe('ConnectCommand', () => {
     expect(exit).toBe(3);
     const parsed = JSON.parse(deps.writeTo.mock.calls[0][0]);
     expect(parsed.code).toBe('API_UNREACHABLE');
-    expect(parsed.error).toContain('Check THEO_URL');
+    expect(parsed.error).toContain('Check LOOPSCALE_URL');
   });
 });
 
@@ -128,7 +128,7 @@ describe('DisconnectCommand', () => {
   });
 
   // CHG-2026-04-23-AUDIT-25: network errors carry code=API_UNREACHABLE.
-  it('network error produces API_UNREACHABLE with Check THEO_URL hint', async () => {
+  it('network error produces API_UNREACHABLE with Check LOOPSCALE_URL hint', async () => {
     const deps = createMockDeps({
       disconnectRepo: jest.fn().mockRejectedValue(new Error('ECONNREFUSED 127.0.0.1:8080')),
     });
@@ -137,6 +137,6 @@ describe('DisconnectCommand', () => {
     expect(exit).toBe(3);
     const parsed = JSON.parse(deps.writeTo.mock.calls[0][0]);
     expect(parsed.code).toBe('API_UNREACHABLE');
-    expect(parsed.error).toContain('Check THEO_URL');
+    expect(parsed.error).toContain('Check LOOPSCALE_URL');
   });
 });

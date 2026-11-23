@@ -27,7 +27,7 @@ export class LogoutCommand {
     // F-06 (CHG-2026-04-29-DOGFOOD T1.2) — quando não há sessão, emitir
     // "Already logged out." em vez de "Logout cancelled." (que implicaria
     // que houve um prompt e o usuário disse não — confunde quem nunca
-    // executou `theo login`). Não pula o clearToken para manter
+    // executou `loopscale login`). Não pula o clearToken para manter
     // idempotência (limpa qualquer config residual).
     const alreadyLoggedOut = this.deps.hasToken !== undefined && !this.deps.hasToken();
     if (alreadyLoggedOut) {

@@ -77,7 +77,7 @@ export function registerStorageCommands(deps: CommandDeps): void {
         size: body.length,
       })),
     download: (path) => httpBinary('GET', `${apiUrl}/v1/storage/objects/${objectPath(path)}`, token()),
-    // MEDIUM-3: follow next_cursor to completion so `theo storage list` shows ALL
+    // MEDIUM-3: follow next_cursor to completion so `loopscale storage list` shows ALL
     // files, not just the first server page.
     list: async (prefix) => {
       const c = api();

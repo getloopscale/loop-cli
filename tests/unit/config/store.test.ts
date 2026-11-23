@@ -11,7 +11,7 @@ describe('ConfigStore', () => {
   let store: ConfigStore;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'theo-test-'));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'loopscale-test-'));
     store = new ConfigStore(tmpDir);
   });
 
@@ -21,7 +21,7 @@ describe('ConfigStore', () => {
 
   describe('saveToken', () => {
     it('should create config directory if it does not exist', () => {
-      const nestedDir = path.join(tmpDir, 'nested', '.theo');
+      const nestedDir = path.join(tmpDir, 'nested', '.loopscale');
       const nestedStore = new ConfigStore(path.join(tmpDir, 'nested'));
       nestedStore.saveToken('ghp_test123', 'user@example.com', 'acme');
 
@@ -31,7 +31,7 @@ describe('ConfigStore', () => {
     it('should write config file with 0600 permissions', () => {
       store.saveToken('ghp_test123', 'user@example.com', 'acme');
 
-      const configPath = path.join(tmpDir, '.theo', 'config.json');
+      const configPath = path.join(tmpDir, '.loopscale', 'config.json');
       const stats = fs.statSync(configPath);
       // 0600 = owner read/write only (0o600 = 384 decimal, mode & 0o777)
       expect(stats.mode & 0o777).toBe(0o600);
@@ -58,46 +58,46 @@ describe('ConfigStore', () => {
       expect(store.getToken()).toBe('ghp_abc');
     });
 
-    it('should prefer THEO_TOKEN env var over config file', () => {
+    it('should prefer LOOPSCALE_TOKEN env var over config file', () => {
       store.saveToken('ghp_from_file', 'user@test.com', 'team1');
-      const original = process.env.THEO_TOKEN;
+      const original = process.env.LOOPSCALE_TOKEN;
       try {
-        process.env.THEO_TOKEN = 'ghp_from_env';
+        process.env.LOOPSCALE_TOKEN = 'ghp_from_env';
         expect(store.getToken()).toBe('ghp_from_env');
       } finally {
         if (original === undefined) {
-          delete process.env.THEO_TOKEN;
+          delete process.env.LOOPSCALE_TOKEN;
         } else {
-          process.env.THEO_TOKEN = original;
+          process.env.LOOPSCALE_TOKEN = original;
         }
       }
     });
 
-    it('should return THEO_TOKEN when no config file exists', () => {
-      const original = process.env.THEO_TOKEN;
+    it('should return LOOPSCALE_TOKEN when no config file exists', () => {
+      const original = process.env.LOOPSCALE_TOKEN;
       try {
-        process.env.THEO_TOKEN = 'ghp_env_only';
+        process.env.LOOPSCALE_TOKEN = 'ghp_env_only';
         expect(store.getToken()).toBe('ghp_env_only');
       } finally {
         if (original === undefined) {
-          delete process.env.THEO_TOKEN;
+          delete process.env.LOOPSCALE_TOKEN;
         } else {
-          process.env.THEO_TOKEN = original;
+          process.env.LOOPSCALE_TOKEN = original;
         }
       }
     });
 
-    it('should ignore empty THEO_TOKEN and fall back to config file', () => {
+    it('should ignore empty LOOPSCALE_TOKEN and fall back to config file', () => {
       store.saveToken('ghp_from_file', 'user@test.com', 'team1');
-      const original = process.env.THEO_TOKEN;
+      const original = process.env.LOOPSCALE_TOKEN;
       try {
-        process.env.THEO_TOKEN = '';
+        process.env.LOOPSCALE_TOKEN = '';
         expect(store.getToken()).toBe('ghp_from_file');
       } finally {
         if (original === undefined) {
-          delete process.env.THEO_TOKEN;
+          delete process.env.LOOPSCALE_TOKEN;
         } else {
-          process.env.THEO_TOKEN = original;
+          process.env.LOOPSCALE_TOKEN = original;
         }
       }
     });

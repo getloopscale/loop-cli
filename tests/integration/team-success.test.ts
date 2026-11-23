@@ -21,7 +21,7 @@ afterEach(async () => {
   while (servers.length) await servers.pop()!.close();
 });
 
-describe('theo team --help', () => {
+describe('loopscale team --help', () => {
   it('exit 0 + lists subcommands', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
@@ -34,7 +34,7 @@ describe('theo team --help', () => {
   });
 });
 
-describe('theo team list', () => {
+describe('loopscale team list', () => {
   it('exit 4 without auth', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
@@ -65,7 +65,7 @@ describe('theo team list', () => {
     const r = await spawnTheo({
       args: ['team', 'list', '--json'],
       cwd: tmp,
-      env: { THEO_URL: server.url },
+      env: { LOOPSCALE_URL: server.url },
       timeoutMs: 15_000,
     });
     // Acceptable: exit 0 (success). If endpoint path differs, harness

@@ -1,17 +1,23 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2025-2026 The Theo Authors
 
+import { readEnv } from './env';
+
 /**
- * Centralized constants for the Theo CLI.
+ * Centralized constants for the LoopScale CLI.
  * All magic numbers and configurable defaults live here.
  *
  * Environment variable overrides are noted where applicable.
  * In CI mode (CI=true), behavior may differ — see individual constant docs.
  */
 
-/** Parse an integer from an environment variable, falling back to defaultValue on missing or invalid input. */
-function envInt(name: string, defaultValue: number): number {
-  const raw = process.env[name];
+/**
+ * Parse an integer from an environment variable (current name first, then the
+ * deprecated `THEO_*` names), falling back to defaultValue on missing or
+ * invalid input.
+ */
+function envInt(name: string, legacyName: string, defaultValue: number): number {
+  const raw = readEnv(name, legacyName);
   if (!raw) return defaultValue;
   const parsed = parseInt(raw, 10);
   return isNaN(parsed) ? defaultValue : parsed;
@@ -23,12 +29,13 @@ function envInt(name: string, defaultValue: number): number {
  * MEET-040: Single URL for all CLI operations.
  * Traefik routes /v1/auth/* → cloud service, /* → engine API.
  *
- * Priority: THEO_URL > THEO_API_URL (deprecated) > fallback.
+ * Priority: LOOPSCALE_URL > THEO_URL (deprecated) > THEO_API_URL
+ * (deprecated) > fallback.
  * Local dev: port 8080 matches the Traefik-less direct API server.
- * Dev-public cluster: set THEO_URL=https://app-dev.usetheo.dev/engine
+ * Dev-public cluster: set LOOPSCALE_URL=https://app-dev.usetheo.dev/engine
  * (engine REST is proxied under /engine/* on the dashboard host;
  * canonical per the QA test-scenarios doc 2026-06-21 LIVE close).
- * Standalone-multi local: set THEO_URL=http://localhost:13001 or
+ * Standalone-multi local: set LOOPSCALE_URL=http://localhost:13001 or
  * whatever canonical local port the helmfile overlay exposes.
  *
  * Stale value `https://api-dev.usetheo.dev` does NOT resolve in DNS
@@ -36,47 +43,44 @@ function envInt(name: string, defaultValue: number): number {
  */
 export const DEFAULT_API_URL_FALLBACK = 'http://localhost:8080';
 
-/** Returns the unified API URL. Checks THEO_URL first, then legacy THEO_API_URL. */
+/** Returns the unified API URL. Checks LOOPSCALE_URL first, then the legacy THEO_URL and THEO_API_URL. */
 export function getDefaultApiUrl(): string {
-  const url = process.env.THEO_URL || process.env.THEO_API_URL || DEFAULT_API_URL_FALLBACK;
-  if (process.env.THEO_API_URL && !process.env.THEO_URL) {
-    // Legacy env var — accepted but deprecated
-  }
+  const url = readEnv('LOOPSCALE_URL', 'THEO_URL', 'THEO_API_URL') || DEFAULT_API_URL_FALLBACK;
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
-    throw new Error(`Invalid THEO_URL: must start with http:// or https://. Got: ${url}`);
+    throw new Error(`Invalid LOOPSCALE_URL: must start with http:// or https://. Got: ${url}`);
   }
   return url;
 }
 
-/** HTTP request timeout for API calls (ms). Override: THEO_API_TIMEOUT */
-export const API_REQUEST_TIMEOUT_MS = envInt('THEO_API_TIMEOUT', 30000);
+/** HTTP request timeout for API calls (ms). Override: LOOPSCALE_API_TIMEOUT */
+export const API_REQUEST_TIMEOUT_MS = envInt('LOOPSCALE_API_TIMEOUT', 'THEO_API_TIMEOUT', 30000);
 
-/** HTTP timeout for source bundle upload (ms). Override: THEO_UPLOAD_TIMEOUT */
-export const UPLOAD_TIMEOUT_MS = envInt('THEO_UPLOAD_TIMEOUT', 120000);
+/** HTTP timeout for source bundle upload (ms). Override: LOOPSCALE_UPLOAD_TIMEOUT */
+export const UPLOAD_TIMEOUT_MS = envInt('LOOPSCALE_UPLOAD_TIMEOUT', 'THEO_UPLOAD_TIMEOUT', 120000);
 
 // --- Dashboard URL (T2.1 of plan 2026-06-11-code-review-remediation) ---
 
 /**
- * Default URL of the Theo dashboard (browser-facing) shown in CLI error
- * messages that prompt the user to sign up or sign in. Canonical
- * `dev-public-domain-canonicalization` pattern is `app-dev.usetheo.dev`
- * (note hyphen, NOT `app.dev` — that mistyped pattern lived in the
- * AUTH_FAILED error message before T2.1).
+ * Default URL of the LoopScale dashboard (browser-facing) shown in CLI error
+ * messages that prompt the user to sign up or sign in. Production hosts are
+ * `app|auth|cloud.getloopscale.com`; staging inserts `staging.` before the
+ * apex (`app.staging.getloopscale.com`).
  *
  * Sponsor mandate 2026-06-11 "PROIBINDO CONFIGURAÇÃO HARDCODED" required
  * deriving this from env so operators in custom environments
  * (self-hosted, on-prem, alt cloud cell) can override without forking.
  *
- * Override: THEO_DASHBOARD_URL=https://my-dashboard.example.com
+ * Override: LOOPSCALE_DASHBOARD_URL=https://my-dashboard.example.com
+ * (the deprecated THEO_DASHBOARD_URL is still read).
  */
-export const DEFAULT_DASHBOARD_URL_FALLBACK = 'https://app-dev.usetheo.dev';
+export const DEFAULT_DASHBOARD_URL_FALLBACK = 'https://app.getloopscale.com';
 
 /** Returns the user-facing dashboard URL with env override + validation. */
 export function getDashboardUrl(): string {
-  const url = process.env.THEO_DASHBOARD_URL || DEFAULT_DASHBOARD_URL_FALLBACK;
+  const url = readEnv('LOOPSCALE_DASHBOARD_URL', 'THEO_DASHBOARD_URL') || DEFAULT_DASHBOARD_URL_FALLBACK;
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
     throw new Error(
-      `Invalid THEO_DASHBOARD_URL: must start with http:// or https://. Got: ${url}`,
+      `Invalid LOOPSCALE_DASHBOARD_URL: must start with http:// or https://. Got: ${url}`,
     );
   }
   return url;
@@ -87,13 +91,13 @@ export function getDashboardUrl(): string {
 /**
  * MEET-040: getCloudUrl returns the same base URL as getDefaultApiUrl.
  * Traefik routes /v1/auth/* to cloud service. No separate URL needed.
- * Legacy THEO_CLOUD_URL accepted for backward compatibility.
+ * LOOPSCALE_CLOUD_URL (or the deprecated THEO_CLOUD_URL) overrides it.
  */
 export function getCloudUrl(): string {
-  if (process.env.THEO_CLOUD_URL) {
-    const url = process.env.THEO_CLOUD_URL;
+  const url = readEnv('LOOPSCALE_CLOUD_URL', 'THEO_CLOUD_URL');
+  if (url) {
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      throw new Error(`Invalid THEO_CLOUD_URL: must start with http:// or https://. Got: ${url}`);
+      throw new Error(`Invalid LOOPSCALE_CLOUD_URL: must start with http:// or https://. Got: ${url}`);
     }
     return url;
   }
@@ -114,7 +118,7 @@ export const SSE_MAX_RETRIES = 15;
 
 // --- Deploy ---
 
-/** Total deploy timeout (ms). Override: THEO_DEPLOY_TIMEOUT.
+/** Total deploy timeout (ms). Override: LOOPSCALE_DEPLOY_TIMEOUT.
  *
  * Sprint 8 plan qa-sprint8-cleanup-2026-06-25 T3.1 (closes theo-cloud#38):
  * bumped from 10min → 30min. The canonical theokit-example build observed
@@ -122,11 +126,11 @@ export const SSE_MAX_RETRIES = 15;
  * default — making a SUCCEEDED deploy report DEPLOY_TIMEOUT. Cold-start
  * cosign signing + ArgoCD sync + workload pull can push canonical builds
  * past 10min. 30min covers >99% of canonical builds while still bounding
- * runaway waits. Operators override via THEO_DEPLOY_TIMEOUT env. The
+ * runaway waits. Operators override via LOOPSCALE_DEPLOY_TIMEOUT env. The
  * activity-based per-event timeout (deploy.ts:557-572) still resets on
  * every SSE event, so the 30min hard ceiling only fires when the build
  * itself stalls without progress events — the intended semantic. */
-export const DEPLOY_TIMEOUT_MS = envInt('THEO_DEPLOY_TIMEOUT', 30 * 60 * 1000);
+export const DEPLOY_TIMEOUT_MS = envInt('LOOPSCALE_DEPLOY_TIMEOUT', 'THEO_DEPLOY_TIMEOUT', 30 * 60 * 1000);
 
 /** Maximum environment name length (RFC 1123 label). */
 export const MAX_ENVIRONMENT_NAME_LENGTH = 63;

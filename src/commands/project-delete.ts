@@ -35,12 +35,12 @@ export class ProjectDeleteCommand {
     // Auth check
     const token = this.deps.getToken();
     if (!token) {
-      return this.exitWithError(opts, 'Not authenticated. Run: theo login', 4, 'AUTH_REQUIRED');
+      return this.exitWithError(opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
     // Name validation
     if (!name || name.trim() === '') {
-      return this.exitWithError(opts, 'Project name is required. Usage: theo project delete <name>', 1, 'MISSING_ARGUMENT');
+      return this.exitWithError(opts, 'Project name is required. Usage: loopscale project delete <name>', 1, 'MISSING_ARGUMENT');
     }
 
     // Confirmation required (unless --yes)

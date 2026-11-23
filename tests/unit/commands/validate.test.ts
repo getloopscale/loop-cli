@@ -7,7 +7,7 @@ import * as path from 'path';
 import * as os from 'os';
 
 function tmpDir(): string {
-  return fs.mkdtempSync(path.join(os.tmpdir(), 'theo-validate-'));
+  return fs.mkdtempSync(path.join(os.tmpdir(), 'loopscale-validate-'));
 }
 
 function createDeps(yamlResult: ReturnType<ValidateDeps['findTheoYaml']>): ValidateDeps & { output: string[]; errors: string[] } {
@@ -52,7 +52,7 @@ describe('ValidateCommand', () => {
     const cmd = new ValidateCommand(deps);
     const code = await cmd.execute({});
     expect(code).toBe(1);
-    expect(deps.errors.some(e => e.includes('theo init'))).toBe(true);
+    expect(deps.errors.some(e => e.includes('loopscale init'))).toBe(true);
   });
 
   it('should return 1 for invalid config', async () => {

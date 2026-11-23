@@ -2,7 +2,7 @@
 // Copyright 2025-2026 The Theo Authors
 //
 // Phase 4 T4.2 — `auth` register integration test.
-// Covers: theo whoami, theo logout.
+// Covers: loopscale whoami, loopscale logout.
 // Closes: T0.3 audit gap "auth register has 2 unit tests but no
 // integration coverage for whoami/logout".
 
@@ -26,7 +26,7 @@ afterEach(async () => {
 
 // Endpoint per cli/src/register/auth.ts:140 — GET /api/v1/auth/whoami
 // returns {email, username?, team}.
-describe('theo whoami', () => {
+describe('loopscale whoami', () => {
   it('exit 0 + JSON shape on success', async () => {
     const server = await startMockApi();
     servers.push(server);
@@ -46,7 +46,7 @@ describe('theo whoami', () => {
     const r = await spawnTheo({
       args: ['whoami', '--json'],
       cwd: tmp,
-      env: { THEO_URL: server.url },
+      env: { LOOPSCALE_URL: server.url },
       timeoutMs: 25_000,
     });
 
@@ -80,7 +80,7 @@ describe('theo whoami', () => {
   });
 });
 
-describe('theo logout', () => {
+describe('loopscale logout', () => {
   it('exit 0 when logged in (clears config)', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);

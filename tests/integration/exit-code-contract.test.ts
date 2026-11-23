@@ -12,13 +12,13 @@
 // diretamente?** Porque o gap original do F-02 não estava no objeto
 // Command — estava no plumbing entre `Command.execute()` (que retorna
 // number) e `program.parseAsync(...).then(...).catch(...)` no
-// `cli/bin/theo`. Esse gap só é exercitado pela invocação real do
+// `cli/bin/loopscale`. Esse gap só é exercitado pela invocação real do
 // processo. Tests unitários que chamam `cmd.execute()` diretamente
 // passariam mesmo com o bug presente.
 //
 // **Matrix design:**
 // Cada entry é `{ args, expected_min_exit, expected_codes }`. O test
-// roda `node bin/theo <args> --json` com `THEO_URL=http://localhost:1`
+// roda `node bin/loopscale <args> --json` com `LOOPSCALE_URL=http://localhost:1`
 // (port 1 é reserved/unreachable — provoca AUTH/SERVICE_UNAVAILABLE
 // rapidamente sem precisar de cluster k3d up).
 
@@ -27,7 +27,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
 
-const BIN_PATH = path.resolve(__dirname, '../../bin/theo');
+const BIN_PATH = path.resolve(__dirname, '../../bin/loopscale');
 
 interface ContractCase {
   name: string;
@@ -39,7 +39,7 @@ interface ContractCase {
 
 // Configurations:
 // - sem ~/.theo/config.json válido
-// - THEO_URL apontando para port unreachable
+// - LOOPSCALE_URL apontando para port unreachable
 // - cwd = tmp dir SEM theo.yaml (provoca MISSING_CONFIG em alguns) ou COM
 //   theo.yaml (puro auth gate)
 //
@@ -73,8 +73,8 @@ describe('CLI exit code contract (T1.2 / F-02)', () => {
   let tmpHome: string;
 
   beforeAll(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'theo-contract-'));
-    tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), 'theo-home-'));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'loopscale-contract-'));
+    tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), 'loopscale-home-'));
   });
 
   afterAll(() => {
@@ -88,10 +88,10 @@ describe('CLI exit code contract (T1.2 / F-02)', () => {
         cwd: tmpDir,
         env: {
           ...process.env,
-          THEO_URL: 'http://127.0.0.1:1', // unreachable
+          LOOPSCALE_URL: 'http://127.0.0.1:1', // unreachable
           HOME: tmpHome,                   // no ~/.theo/config.json
           XDG_CONFIG_HOME: tmpHome,
-          THEO_TOKEN: '',                  // explicit clear
+          LOOPSCALE_TOKEN: '',                  // explicit clear
         },
         encoding: 'utf-8',
         timeout: 30_000,
@@ -144,7 +144,7 @@ describe('CLI exit code contract (T1.2 / F-02)', () => {
         timeout: 5_000,
       });
       expect(result.status).toBe(0);
-      expect(result.stdout).toContain('Usage: theo');
+      expect(result.stdout).toContain('Usage: loopscale');
     });
 
     it('--version → exit 0', () => {
@@ -164,7 +164,7 @@ describe('CLI exit code contract (T1.2 / F-02)', () => {
         timeout: 5_000,
       });
       expect(result.status).toBe(0);
-      expect(result.stdout).toContain('Usage: theo deploy');
+      expect(result.stdout).toContain('Usage: loopscale deploy');
     });
   });
 });

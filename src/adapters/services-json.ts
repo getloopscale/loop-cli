@@ -133,8 +133,8 @@ export function parseServicesStarts(jsonContent: string): Record<string, string>
  * theoYamlFromServicesJson — converte um `.theo/services.json` v2 no `TheoYamlResult` que os
  * comandos consomem.
  *
- * POR QUE EXISTE (theo#165). `theo secret` (set/list/delete) resolvia o projeto SO pelo
- * `theo.yaml` legado e reprovava com "No theo.yaml found. Run: theo init" num projeto que tem
+ * POR QUE EXISTE (theo#165). `loopscale secret` (set/list/delete) resolvia o projeto SO pelo
+ * `theo.yaml` legado e reprovava com "No theo.yaml found. Run: loopscale init" num projeto que tem
  * apenas o manifesto moderno — o formato que o proprio theokit gera. Como `deploy`, `status` e
  * `logs` ja liam o v2, um projeto v2-puro conseguia DEPLOYAR e nao conseguia gerenciar secrets,
  * e nao havia `--project` para contornar.

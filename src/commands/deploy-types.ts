@@ -119,7 +119,7 @@ export interface DeployDeps {
    * last ~20 log lines when a deploy fails. The CLI invokes this in
    * the build.failed / deploy.sync_failed / deploy.delivery_failed
    * SSE branches BEFORE exiting, so the operator sees recent context
-   * inline instead of having to run `theo logs --build <id>` as a
+   * inline instead of having to run `loopscale logs --build <id>` as a
    * second step.
    *
    * Implementation MUST swallow errors and return null on failure —

@@ -3,8 +3,8 @@
 //
 // CHG-2026-04-30-INFRA-NORMALIZE / Phase 4 T4.1 — spawn helper for
 // integration tests. Wraps `child_process.spawnSync` against the real
-// `cli/bin/theo` binary so tests exercise the full plumbing
-// (Commander → execute → bin/theo exit-code wiring) instead of mocked
+// `cli/bin/loopscale` binary so tests exercise the full plumbing
+// (Commander → execute → bin/loopscale exit-code wiring) instead of mocked
 // objects in isolation.
 //
 // Pattern matches existing tests/integration/exit-code-contract.test.ts.
@@ -18,7 +18,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
 
-export const BIN_PATH = path.resolve(__dirname, '../../../bin/theo');
+export const BIN_PATH = path.resolve(__dirname, '../../../bin/loopscale');
 
 export interface SpawnTheoOptions {
   /** Subcommand args, e.g. ['status', '--json']. */
@@ -46,7 +46,20 @@ export interface SpawnTheoResult {
 }
 
 /**
- * Run `node bin/theo <args>` with isolated env + cwd. Returns exit code,
+ * The caller's environment minus the variables that would move the CLI's
+ * config dir out of tmpHome. ConfigStore.default() prefers XDG_CONFIG_HOME
+ * over HOME, and GitHub-hosted runners export it, so inheriting it points
+ * the spawned CLI at the runner's real config. A test that wants XDG mode
+ * passes XDG_CONFIG_HOME through `opts.env`.
+ */
+function isolatedParentEnv(): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = { ...process.env };
+  delete env.XDG_CONFIG_HOME;
+  return env;
+}
+
+/**
+ * Run `node bin/loopscale <args>` with isolated env + cwd. Returns exit code,
  * stdout, stderr.
  *
  * **Async, NOT sync.** Critical for tests using `mock-api-server.ts`:
@@ -59,18 +72,18 @@ export interface SpawnTheoResult {
  * Defaults that prevent flake:
  *   - HOME = fresh tmpHome (config + cache scoped to test)
  *   - NO_COLOR = "1" (defeat ansi)
- *   - THEO_URL = http://127.0.0.1:1 unless caller overrides
+ *   - LOOPSCALE_URL = http://127.0.0.1:1 unless caller overrides
  *   - THEO_TELEMETRY_DISABLED = "1"
  *   - CI = "true"
  */
 export function spawnTheo(opts: SpawnTheoOptions): Promise<SpawnTheoResult> {
   const tmpHome = opts.cwd ?? mkTmpHome();
   const baseEnv: NodeJS.ProcessEnv = {
-    ...process.env,
+    ...isolatedParentEnv(),
     HOME: tmpHome,
     NO_COLOR: '1',
     // Default to unreachable. Tests using mock-api-server.ts override this.
-    THEO_URL: 'http://127.0.0.1:1',
+    LOOPSCALE_URL: 'http://127.0.0.1:1',
     THEO_TELEMETRY_DISABLED: '1',
     CI: 'true',
     ...opts.env,
@@ -141,10 +154,10 @@ export function spawnTheo(opts: SpawnTheoOptions): Promise<SpawnTheoResult> {
 export function spawnTheoSync(opts: SpawnTheoOptions): SpawnTheoResult {
   const tmpHome = opts.cwd ?? mkTmpHome();
   const baseEnv: NodeJS.ProcessEnv = {
-    ...process.env,
+    ...isolatedParentEnv(),
     HOME: tmpHome,
     NO_COLOR: '1',
-    THEO_URL: 'http://127.0.0.1:1',
+    LOOPSCALE_URL: 'http://127.0.0.1:1',
     THEO_TELEMETRY_DISABLED: '1',
     CI: 'true',
     ...opts.env,

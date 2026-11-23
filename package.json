@@ -1,29 +1,28 @@
 {
-  "name": "@usetheo/cli",
-  "version": "0.5.0",
-  "description": "CLI-first deploys for TheoCloud — one command from monorepo to running service.",
+  "name": "@getloopscale/cli",
+  "version": "0.6.0",
+  "description": "CLI-first deploys for LoopScale: one command from monorepo to running service.",
   "keywords": [
     "cli",
     "deploy",
     "deployment",
     "kubernetes",
     "monorepo",
-    "theo",
-    "theocloud",
     "paas",
-    "devops"
+    "devops",
+    "loopscale"
   ],
-  "homepage": "https://usetheo.dev",
+  "homepage": "https://getloopscale.com",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/usetheoai/theo-cli.git"
+    "url": "git+https://github.com/getloopscale/cli.git"
   },
   "bugs": {
-    "url": "https://github.com/usetheoai/theo-cli/issues"
+    "url": "https://github.com/getloopscale/cli/issues"
   },
   "main": "dist/index.js",
   "bin": {
-    "theo": "./bin/theo"
+    "loopscale": "./bin/loopscale"
   },
   "files": [
     "dist",

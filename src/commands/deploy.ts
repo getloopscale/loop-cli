@@ -64,7 +64,7 @@ export class DeployCommand {
     const { config, servicesJsonPath, selectedApps, appUnits } = prereqResult;
 
     // Phase 2: Create source bundle and upload (traced)
-    const uploadResult = await tracer.startActiveSpan('theo.cli.deploy.bundle', async (span) => {
+    const uploadResult = await tracer.startActiveSpan('loopscale.cli.deploy.bundle', async (span) => {
       try {
         const result = await this.createAndUploadBundle(opts, config, servicesJsonPath);
         if (typeof result === 'number') {
@@ -83,7 +83,7 @@ export class DeployCommand {
     }
 
     // Phase 3: Submit build and optionally stream SSE events (traced)
-    return tracer.startActiveSpan('theo.cli.deploy.stream', async (span) => {
+    return tracer.startActiveSpan('loopscale.cli.deploy.stream', async (span) => {
       try {
         const code = await this.submitAndStreamBuild(opts, config, environment, selectedApps, appUnits, uploadResult, shouldWait);
         if (code !== 0) {
@@ -109,13 +109,13 @@ export class DeployCommand {
   ): Promise<PrerequisiteResult | number> {
     // 1. Auth check
     if (!this.deps.getToken()) {
-      return exitWithError(this.deps, opts, 'Not authenticated. Run: theo login', 4, 'AUTH_REQUIRED');
+      return exitWithError(this.deps, opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
     // 3. Find theo.yaml
     const yamlResult = this.deps.findTheoYaml();
     if (!yamlResult) {
-      return exitWithError(this.deps, opts, 'No theo.yaml found. Run: theo init', 1, 'MISSING_CONFIG');
+      return exitWithError(this.deps, opts, 'No theo.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
     }
 
     // 3b. Check for YAML parse errors
@@ -305,7 +305,7 @@ export class DeployCommand {
     const missingSecrets = declaredSecrets.filter((s) => !configuredSecrets.includes(s));
     if (missingSecrets.length > 0) {
       const msg = `Missing secrets for env "${environment}": ${missingSecrets.join(', ')}`;
-      const hint = 'Set secrets before deploying. See: https://docs.usetheo.dev/secrets';
+      const hint = 'Set secrets before deploying. See: https://docs.getloopscale.com/secrets';
       if (opts.json) {
         this.deps.writeTo(JSON.stringify({ code: 'MISSING_SECRETS', error: `${msg}. ${hint}`, exit_code: 1 }));
       } else {
@@ -484,7 +484,7 @@ export class DeployCommand {
           status: 'submitted',
         }));
       } else {
-        this.deps.writeTo(`Deploy submitted (${buildResult.build_id}). The deploy is running in the background.\nTrack with: theo logs --build ${buildResult.build_id}`);
+        this.deps.writeTo(`Deploy submitted (${buildResult.build_id}). The deploy is running in the background.\nTrack with: loopscale logs --build ${buildResult.build_id}`);
       }
       return 0;
     }
@@ -585,8 +585,8 @@ export class DeployCommand {
             // A throw in the async event handler (e.g. a malformed terminal
             // payload) must NOT become an unhandled rejection — that would
             // bypass the exit-code contract and hang the deploy until the
-            // bin/theo watchdog. Degrade to a deploy failure (exit 3) and
-            // surface the cause (THEO_DEBUG carries the full chain).
+            // bin/loopscale watchdog. Degrade to a deploy failure (exit 3) and
+            // surface the cause (LOOPSCALE_DEBUG carries the full chain).
             if (resolved) {
               return;
             }
@@ -599,7 +599,7 @@ export class DeployCommand {
                 build_id: buildResult.build_id,
               }));
             } else {
-              this.deps.writeError(`Deploy stream handler error: ${message}. Check \`theo build inspect ${buildResult.build_id}\` for current state.`);
+              this.deps.writeError(`Deploy stream handler error: ${message}. Check \`loopscale build inspect ${buildResult.build_id}\` for current state.`);
             }
             finish(3);
           });
@@ -647,7 +647,7 @@ export class DeployCommand {
               url: app.url ?? null,
             };
             if (app.status === 'failed') {
-              entry.build_log = `theo logs --build ${buildResult.build_id}`;
+              entry.build_log = `loopscale logs --build ${buildResult.build_id}`;
             }
             return entry;
           }),
@@ -670,7 +670,7 @@ export class DeployCommand {
       const data = event.data as Record<string, unknown>;
       const rawReason = String(data.error ?? data.status ?? 'unknown error');
       const reason = sanitizeBuildError(rawReason);
-      const suggestion = `Run: theo logs --build ${buildResult.build_id}`;
+      const suggestion = `Run: loopscale logs --build ${buildResult.build_id}`;
       const errorMsg = /^Build\s+(failed|error)/i.test(reason) ? reason : `Build failed: ${reason}`;
       // Beta Logs Gate Criterion 4 (UX) — best-effort auto-tail.
       // Non-blocking 5s timeout; if Loki has indexed any output for
@@ -807,7 +807,7 @@ export class DeployCommand {
         }));
       } else {
         this.deps.writeError(userMessage);
-        this.deps.writeError(`Run: theo logs --build ${buildResult.build_id}`);
+        this.deps.writeError(`Run: loopscale logs --build ${buildResult.build_id}`);
       }
       finish(3);
       return true;
@@ -835,7 +835,7 @@ export class DeployCommand {
       // source of truth for build state instead of making a claim
       // about unknown state ("may still be running"). The CLI already
       // knows build_id — surface it in the actionable hint.
-      const actionable = `Deploy stream closed before completion. Check \`theo build inspect ${buildResult.build_id}\` for current state.`;
+      const actionable = `Deploy stream closed before completion. Check \`loopscale build inspect ${buildResult.build_id}\` for current state.`;
       if (opts.json) {
         this.deps.writeTo(JSON.stringify({
           code: 'STREAM_CLOSED',

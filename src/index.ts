@@ -81,9 +81,9 @@ export function createProgram(): Command {
   const { version: cliVersion } = require('../package.json');
 
   program
-    .name('theo')
+    .name('loopscale')
     .version(cliVersion)
-    .description('CLI-first Kubernetes TheoCloud for monorepo deployments')
+    .description('CLI-first deploys for LoopScale: one command from monorepo to running service')
     .option('--json', 'Output in JSON format');
 
   // F-05: Configure Commander to output JSON errors when --json is present.
@@ -174,8 +174,8 @@ export function createProgram(): Command {
   registerDiagnosticsCommands(deps);
 
   // Plan v1.1 T4.1 (theo-cli-vercel-like-ux) — zero-config delegation.
-  // `theo` with no positional subcommand and no --help/--version routes to
-  // `theo deploy` (Vercel-parity ergonomic). EC-8 absorbed: help/version
+  // `loopscale` with no positional subcommand and no --help/--version routes to
+  // `loopscale deploy` (Vercel-parity ergonomic). EC-8 absorbed: help/version
   // flags ALWAYS win, regardless of argv position; Commander handles them
   // via exitOverride before this action fires, but we also guard
   // defensively in case the action is reached.
@@ -201,17 +201,17 @@ export function createProgram(): Command {
     if (unknownCommand) {
       if (globalOpts.json) {
         writeTo(JSON.stringify({
-          error: `Unknown command: ${unknownCommand}. Run: theo --help`,
+          error: `Unknown command: ${unknownCommand}. Run: loopscale --help`,
           exit_code: 1,
         }));
       } else {
-        writeError(`Unknown command: ${unknownCommand}. Run: theo --help`);
+        writeError(`Unknown command: ${unknownCommand}. Run: loopscale --help`);
       }
       process.exitCode = 1;
       return;
     }
 
-    // No positional subcommand → delegate to `theo deploy` per Plan v1.1 D3.
+    // No positional subcommand → delegate to `loopscale deploy` per Plan v1.1 D3.
     const deployCmd = program.commands.find((cmd) => cmd.name() === 'deploy');
     if (deployCmd === undefined) {
       // Defensive: deploy registration somehow missing. Fall back to help.
@@ -243,7 +243,7 @@ export function createProgram(): Command {
       return;
     }
     // Parse errors: exitCode=1 já foi setado por writeErr; re-throw para
-    // que parseAsync rejeite e o bin/theo .catch handle propagation.
+    // que parseAsync rejeite e o bin/loopscale .catch handle propagation.
     const usageCodes = new Set([
       'commander.unknownCommand',
       'commander.unknownOption',
@@ -266,7 +266,7 @@ export function createProgram(): Command {
 export const program = createProgram();
 
 if (require.main === module) {
-  // Initialize OTel tracing (opt-in via THEO_TRACING_ENABLED=true).
+  // Initialize OTel tracing (opt-in via LOOPSCALE_TRACING_ENABLED=true).
   initTracing();
 
   process.on('beforeExit', async () => {
@@ -281,9 +281,9 @@ if (require.main === module) {
   // Root span wrapping the entire CLI command execution.
   const commandName = process.argv.slice(2).find(a => !a.startsWith('-')) ?? 'unknown';
   const tracer = getTracer();
-  tracer.startActiveSpan('theo.cli.command', (rootSpan) => {
-    rootSpan.setAttribute('theo.cli.command_name', commandName);
-    rootSpan.setAttribute('theo.cli.args', process.argv.slice(2).join(' '));
+  tracer.startActiveSpan('loopscale.cli.command', (rootSpan) => {
+    rootSpan.setAttribute('loopscale.cli.command_name', commandName);
+    rootSpan.setAttribute('loopscale.cli.args', process.argv.slice(2).join(' '));
 
     program.parseAsync(process.argv)
       .then(() => {

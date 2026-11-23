@@ -66,7 +66,7 @@ function withJitter(intervalMs: number): number {
  * endpoints hit the cloud root, not the engine proxy.
  *
  * Per `src/config/constants.ts:22` (MEET-040) the canonical dev-public
- * value is `THEO_URL=https://app-dev.usetheo.dev/engine`; Caddy routes
+ * value is `LOOPSCALE_URL=https://app-dev.usetheo.dev/engine`; Caddy routes
  * `/v1/auth/*` → cloud service (13002) while `/*` falls through to the
  * dashboard/engine plane. The device-flow endpoints (`/v1/auth/device/*`)
  * live at the cloud ROOT, not under `/engine/...`. Without this strip the
@@ -113,7 +113,7 @@ export async function executeDeviceCodeFlow(deps: DeviceFlowDeps): Promise<Token
     const result = await pollDeviceToken(deps.fetchFn, baseURL, authResp.device_code);
     if (result === null) {
       // Unrecoverable error — stop polling
-      deps.writeError('Authentication failed. Try again with `theo login`.');
+      deps.writeError('Authentication failed. Try again with `loopscale login`.');
       return null;
     }
     if ('status' in result) {
@@ -123,7 +123,7 @@ export async function executeDeviceCodeFlow(deps: DeviceFlowDeps): Promise<Token
         continue;
       }
       if (result.status === 'expired_token') {
-        deps.writeError('Authentication request expired. Run `theo login` to try again.');
+        deps.writeError('Authentication request expired. Run `loopscale login` to try again.');
         return null;
       }
       if (result.status === 'pending') {
@@ -134,7 +134,7 @@ export async function executeDeviceCodeFlow(deps: DeviceFlowDeps): Promise<Token
     return result as TokenResponse;
   }
 
-  deps.writeError('Authentication timed out. Run `theo login` to try again.');
+  deps.writeError('Authentication timed out. Run `loopscale login` to try again.');
   return null;
 }
 
