@@ -26,6 +26,17 @@ describe('debugError', () => {
     expect(writeSpy).not.toHaveBeenCalled();
   });
 
+  it('ignores THEO_DEBUG', () => {
+    delete process.env.LOOPSCALE_DEBUG;
+    process.env.THEO_DEBUG = '1';
+    try {
+      debugError('scope', new Error('boom'));
+    } finally {
+      delete process.env.THEO_DEBUG;
+    }
+    expect(writeSpy).not.toHaveBeenCalled();
+  });
+
   it('writes the scope and error message to stderr when LOOPSCALE_DEBUG is set', () => {
     process.env.LOOPSCALE_DEBUG = '1';
     debugError('auth:login', new Error('connection refused'));

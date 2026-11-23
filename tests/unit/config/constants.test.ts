@@ -9,7 +9,7 @@ describe('CLI config/constants', () => {
     process.env = { ...originalEnv };
     // Clear all URL env vars for clean test state
     for (const name of Object.keys(process.env)) {
-      if (name.startsWith('LOOPSCALE_') || name.startsWith('LOOPSCALE_')) {
+      if (name.startsWith('LOOPSCALE_') || name.startsWith('THEO_')) {
         delete process.env[name];
       }
     }
@@ -44,6 +44,12 @@ describe('CLI config/constants', () => {
       const constants = loadConstants();
       expect(constants.API_REQUEST_TIMEOUT_MS).toBe(5000);
     });
+
+    it('should ignore THEO_API_TIMEOUT', () => {
+      process.env.THEO_API_TIMEOUT = '5000';
+      const constants = loadConstants();
+      expect(constants.API_REQUEST_TIMEOUT_MS).toBe(30000);
+    });
   });
 
   describe('getDefaultApiUrl (MEET-040: unified LOOPSCALE_URL)', () => {
@@ -53,30 +59,23 @@ describe('CLI config/constants', () => {
       expect(constants.getDefaultApiUrl()).toBe('https://api.example.com');
     });
 
-    it('should return THEO_API_URL as legacy fallback', () => {
-      process.env.THEO_API_URL = 'https://api.example.com';
+    it('should ignore THEO_URL', () => {
+      process.env.THEO_URL = 'https://theo.example.com';
       const constants = loadConstants();
-      expect(constants.getDefaultApiUrl()).toBe('https://api.example.com');
+      expect(constants.getDefaultApiUrl()).toBe('http://localhost:8080');
     });
 
-    it('should still accept the legacy THEO_URL', () => {
-      process.env.THEO_URL = 'https://legacy.example.com';
+    it('should ignore THEO_API_URL', () => {
+      process.env.THEO_API_URL = 'https://theo.example.com';
       const constants = loadConstants();
-      expect(constants.getDefaultApiUrl()).toBe('https://legacy.example.com');
+      expect(constants.getDefaultApiUrl()).toBe('http://localhost:8080');
     });
 
-    it('should prefer LOOPSCALE_URL over THEO_URL', () => {
-      process.env.LOOPSCALE_URL = 'https://new.example.com';
-      process.env.THEO_URL = 'https://legacy.example.com';
+    it('should not print anything on stderr when THEO_URL is set', () => {
+      process.env.THEO_URL = 'https://theo.example.com';
       const constants = loadConstants();
-      expect(constants.getDefaultApiUrl()).toBe('https://new.example.com');
-    });
-
-    it('should prefer LOOPSCALE_URL over THEO_API_URL', () => {
-      process.env.LOOPSCALE_URL = 'https://new.example.com';
-      process.env.THEO_API_URL = 'https://old.example.com';
-      const constants = loadConstants();
-      expect(constants.getDefaultApiUrl()).toBe('https://new.example.com');
+      constants.getDefaultApiUrl();
+      expect(process.stderr.write).not.toHaveBeenCalled();
     });
 
     it('should return fallback when no URL env vars set', () => {
@@ -92,10 +91,10 @@ describe('CLI config/constants', () => {
   });
 
   describe('getCloudUrl (MEET-040: defaults to same as API URL)', () => {
-    it('should still accept the legacy THEO_CLOUD_URL', () => {
+    it('should ignore THEO_CLOUD_URL', () => {
       process.env.THEO_CLOUD_URL = 'https://cloud.example.com';
       const constants = loadConstants();
-      expect(constants.getCloudUrl()).toBe('https://cloud.example.com');
+      expect(constants.getCloudUrl()).toBe('http://localhost:8080');
     });
 
     it('should return LOOPSCALE_CLOUD_URL when set', () => {
@@ -123,11 +122,17 @@ describe('CLI config/constants', () => {
     });
   });
 
-  describe('legacy timeout overrides', () => {
-    it('should still accept the legacy THEO_DEPLOY_TIMEOUT', () => {
+  describe('THEO_ timeout variables', () => {
+    it('should ignore THEO_DEPLOY_TIMEOUT', () => {
       process.env.THEO_DEPLOY_TIMEOUT = '90000';
       const constants = loadConstants();
-      expect(constants.DEPLOY_TIMEOUT_MS).toBe(90000);
+      expect(constants.DEPLOY_TIMEOUT_MS).toBe(30 * 60 * 1000);
+    });
+
+    it('should ignore THEO_UPLOAD_TIMEOUT', () => {
+      process.env.THEO_UPLOAD_TIMEOUT = '90000';
+      const constants = loadConstants();
+      expect(constants.UPLOAD_TIMEOUT_MS).toBe(120000);
     });
   });
 
@@ -169,10 +174,10 @@ describe('CLI config/constants', () => {
       expect(constants.getDashboardUrl()).toBe('https://my-dashboard.example.com');
     });
 
-    it('should still accept the legacy THEO_DASHBOARD_URL', () => {
-      process.env.THEO_DASHBOARD_URL = 'https://legacy-dashboard.example.com';
+    it('should ignore THEO_DASHBOARD_URL', () => {
+      process.env.THEO_DASHBOARD_URL = 'https://theo-dashboard.example.com';
       const constants = loadConstants();
-      expect(constants.getDashboardUrl()).toBe('https://legacy-dashboard.example.com');
+      expect(constants.getDashboardUrl()).toBe('https://app.getloopscale.com');
     });
 
     it('should accept http:// URLs (local dev override)', () => {

@@ -59,7 +59,7 @@ describe('harness: spawnTheo', () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
     writeFakeAuthConfig(tmp, { token: 'abc', tenantId: 'tn-x' });
-    const cfgPath = path.join(tmp, '.theo', 'config.json');
+    const cfgPath = path.join(tmp, '.loopscale', 'config.json');
     expect(fs.existsSync(cfgPath)).toBe(true);
     const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf-8'));
     expect(cfg.token).toBe('abc');
