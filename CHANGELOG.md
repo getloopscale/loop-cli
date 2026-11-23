@@ -5,6 +5,8 @@ Format: Keep a Changelog + Semantic Versioning.
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-23
+
 ### Changed
 - Breaking: the package is now `@getloopscale/cli` and the command is `loopscale` instead of `theo`; uninstall `@usetheo/cli` and install `@getloopscale/cli` (#17)
 - Breaking: help text, errors and hints name the product LoopScale and suggest `loopscale <command>` instead of `theo <command>` (#17)
