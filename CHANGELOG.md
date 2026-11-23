@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-23
+
+### Changed
+- Releases are published from GitHub Actions through npm trusted publishing, so each version carries a signed provenance statement linking it to the commit and workflow that built it (#22)
+
 ## [0.1.0] - 2026-11-23
 
 ### Added
