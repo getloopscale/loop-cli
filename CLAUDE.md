@@ -1,7 +1,6 @@
 # LoopScale CLI
 
 Standalone `@getloopscale/cli`, the CLI-first client for LoopScale (TypeScript + Commander).
-Published as `@usetheo/cli` with a `theo` bin until the LoopScale rename.
 Extracted from the `theo` monorepo at M2 of the decomposition (history preserved).
 
 ## What it is
@@ -45,7 +44,7 @@ npm run lint        # eslint
 
 ## Publishing
 
-`@getloopscale/cli` (`@usetheo/cli` before the rename). `publish.yml` publishes on a
+`@getloopscale/cli`. `publish.yml` publishes on a
 `v*` tag once `NPM_TOKEN` is set (owner-gated).
 
 ## Provenance

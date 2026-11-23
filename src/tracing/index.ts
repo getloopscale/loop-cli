@@ -15,7 +15,6 @@ import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { Resource } from '@opentelemetry/resources';
 import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions';
 import { trace, SpanStatusCode } from '@opentelemetry/api';
-import { readEnv } from '../config/env';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { version: CLI_VERSION } = require('../../package.json');
@@ -27,7 +26,7 @@ let provider: NodeTracerProvider | null = null;
  * Default: false (opt-in to avoid impacting CLI DX/startup time).
  */
 function isEnabled(): boolean {
-  const v = readEnv('LOOPSCALE_TRACING_ENABLED', 'THEO_TRACING_ENABLED');
+  const v = process.env.LOOPSCALE_TRACING_ENABLED;
   return v === 'true' || v === '1';
 }
 
@@ -38,12 +37,12 @@ function isEnabled(): boolean {
 export function initTracing(): void {
   if (!isEnabled()) return;
 
-  const endpoint = readEnv('LOOPSCALE_OTEL_ENDPOINT', 'THEO_OTEL_ENDPOINT') || 'http://localhost:4318/v1/traces';
+  const endpoint = process.env.LOOPSCALE_OTEL_ENDPOINT || 'http://localhost:4318/v1/traces';
 
   const resource = new Resource({
     [ATTR_SERVICE_NAME]: 'loopscale-cli',
     [ATTR_SERVICE_VERSION]: CLI_VERSION,
-    'deployment.environment': readEnv('LOOPSCALE_ENV', 'THEO_ENV') || 'development',
+    'deployment.environment': process.env.LOOPSCALE_ENV || 'development',
   });
 
   const exporter = new OTLPTraceExporter({
