@@ -1,11 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2025-2026 The Theo Authors
 
-import { readEnv } from '../config/env';
-
 /**
- * Opt-in diagnostic logging gated by the LOOPSCALE_DEBUG env var
- * (the deprecated THEO_DEBUG is still read).
+ * Opt-in diagnostic logging gated by the LOOPSCALE_DEBUG env var.
  *
  * Several boundary helpers (auth device flow, token refresh) intentionally
  * collapse network/parse failures into a null/typed result so the caller can
@@ -16,7 +13,7 @@ import { readEnv } from '../config/env';
  * consumers (who never set LOOPSCALE_DEBUG) are unaffected.
  */
 export function debugError(scope: string, err: unknown): void {
-  if (!readEnv('LOOPSCALE_DEBUG', 'THEO_DEBUG')) {
+  if (!process.env.LOOPSCALE_DEBUG) {
     return;
   }
   const detail =

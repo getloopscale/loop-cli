@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2025-2026 The Theo Authors
 
-import { readEnv } from './env';
-
 /**
  * Centralized constants for the LoopScale CLI.
  * All magic numbers and configurable defaults live here.
@@ -12,12 +10,11 @@ import { readEnv } from './env';
  */
 
 /**
- * Parse an integer from an environment variable (current name first, then the
- * deprecated `THEO_*` names), falling back to defaultValue on missing or
- * invalid input.
+ * Parse an integer from an environment variable, falling back to defaultValue
+ * on missing or invalid input.
  */
-function envInt(name: string, legacyName: string, defaultValue: number): number {
-  const raw = readEnv(name, legacyName);
+function envInt(name: string, defaultValue: number): number {
+  const raw = process.env[name];
   if (!raw) return defaultValue;
   const parsed = parseInt(raw, 10);
   return isNaN(parsed) ? defaultValue : parsed;
@@ -29,8 +26,7 @@ function envInt(name: string, legacyName: string, defaultValue: number): number 
  * MEET-040: Single URL for all CLI operations.
  * Traefik routes /v1/auth/* → cloud service, /* → engine API.
  *
- * Priority: LOOPSCALE_URL > THEO_URL (deprecated) > THEO_API_URL
- * (deprecated) > fallback.
+ * Priority: LOOPSCALE_URL > fallback.
  * Local dev: port 8080 matches the Traefik-less direct API server.
  * Dev-public cluster: set LOOPSCALE_URL=https://app-dev.usetheo.dev/engine
  * (engine REST is proxied under /engine/* on the dashboard host;
@@ -43,9 +39,9 @@ function envInt(name: string, legacyName: string, defaultValue: number): number 
  */
 export const DEFAULT_API_URL_FALLBACK = 'http://localhost:8080';
 
-/** Returns the unified API URL. Checks LOOPSCALE_URL first, then the legacy THEO_URL and THEO_API_URL. */
+/** Returns the unified API URL from LOOPSCALE_URL, or the local fallback. */
 export function getDefaultApiUrl(): string {
-  const url = readEnv('LOOPSCALE_URL', 'THEO_URL', 'THEO_API_URL') || DEFAULT_API_URL_FALLBACK;
+  const url = process.env.LOOPSCALE_URL || DEFAULT_API_URL_FALLBACK;
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
     throw new Error(`Invalid LOOPSCALE_URL: must start with http:// or https://. Got: ${url}`);
   }
@@ -53,10 +49,10 @@ export function getDefaultApiUrl(): string {
 }
 
 /** HTTP request timeout for API calls (ms). Override: LOOPSCALE_API_TIMEOUT */
-export const API_REQUEST_TIMEOUT_MS = envInt('LOOPSCALE_API_TIMEOUT', 'THEO_API_TIMEOUT', 30000);
+export const API_REQUEST_TIMEOUT_MS = envInt('LOOPSCALE_API_TIMEOUT', 30000);
 
 /** HTTP timeout for source bundle upload (ms). Override: LOOPSCALE_UPLOAD_TIMEOUT */
-export const UPLOAD_TIMEOUT_MS = envInt('LOOPSCALE_UPLOAD_TIMEOUT', 'THEO_UPLOAD_TIMEOUT', 120000);
+export const UPLOAD_TIMEOUT_MS = envInt('LOOPSCALE_UPLOAD_TIMEOUT', 120000);
 
 // --- Dashboard URL (T2.1 of plan 2026-06-11-code-review-remediation) ---
 
@@ -71,13 +67,12 @@ export const UPLOAD_TIMEOUT_MS = envInt('LOOPSCALE_UPLOAD_TIMEOUT', 'THEO_UPLOAD
  * (self-hosted, on-prem, alt cloud cell) can override without forking.
  *
  * Override: LOOPSCALE_DASHBOARD_URL=https://my-dashboard.example.com
- * (the deprecated THEO_DASHBOARD_URL is still read).
  */
 export const DEFAULT_DASHBOARD_URL_FALLBACK = 'https://app.getloopscale.com';
 
 /** Returns the user-facing dashboard URL with env override + validation. */
 export function getDashboardUrl(): string {
-  const url = readEnv('LOOPSCALE_DASHBOARD_URL', 'THEO_DASHBOARD_URL') || DEFAULT_DASHBOARD_URL_FALLBACK;
+  const url = process.env.LOOPSCALE_DASHBOARD_URL || DEFAULT_DASHBOARD_URL_FALLBACK;
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
     throw new Error(
       `Invalid LOOPSCALE_DASHBOARD_URL: must start with http:// or https://. Got: ${url}`,
@@ -91,10 +86,10 @@ export function getDashboardUrl(): string {
 /**
  * MEET-040: getCloudUrl returns the same base URL as getDefaultApiUrl.
  * Traefik routes /v1/auth/* to cloud service. No separate URL needed.
- * LOOPSCALE_CLOUD_URL (or the deprecated THEO_CLOUD_URL) overrides it.
+ * LOOPSCALE_CLOUD_URL overrides it.
  */
 export function getCloudUrl(): string {
-  const url = readEnv('LOOPSCALE_CLOUD_URL', 'THEO_CLOUD_URL');
+  const url = process.env.LOOPSCALE_CLOUD_URL;
   if (url) {
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
       throw new Error(`Invalid LOOPSCALE_CLOUD_URL: must start with http:// or https://. Got: ${url}`);
@@ -130,7 +125,7 @@ export const SSE_MAX_RETRIES = 15;
  * activity-based per-event timeout (deploy.ts:557-572) still resets on
  * every SSE event, so the 30min hard ceiling only fires when the build
  * itself stalls without progress events — the intended semantic. */
-export const DEPLOY_TIMEOUT_MS = envInt('LOOPSCALE_DEPLOY_TIMEOUT', 'THEO_DEPLOY_TIMEOUT', 30 * 60 * 1000);
+export const DEPLOY_TIMEOUT_MS = envInt('LOOPSCALE_DEPLOY_TIMEOUT', 30 * 60 * 1000);
 
 /** Maximum environment name length (RFC 1123 label). */
 export const MAX_ENVIRONMENT_NAME_LENGTH = 63;

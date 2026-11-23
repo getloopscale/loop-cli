@@ -73,7 +73,6 @@ function isolatedParentEnv(): NodeJS.ProcessEnv {
  *   - HOME = fresh tmpHome (config + cache scoped to test)
  *   - NO_COLOR = "1" (defeat ansi)
  *   - LOOPSCALE_URL = http://127.0.0.1:1 unless caller overrides
- *   - THEO_TELEMETRY_DISABLED = "1"
  *   - CI = "true"
  */
 export function spawnTheo(opts: SpawnTheoOptions): Promise<SpawnTheoResult> {
@@ -84,7 +83,6 @@ export function spawnTheo(opts: SpawnTheoOptions): Promise<SpawnTheoResult> {
     NO_COLOR: '1',
     // Default to unreachable. Tests using mock-api-server.ts override this.
     LOOPSCALE_URL: 'http://127.0.0.1:1',
-    THEO_TELEMETRY_DISABLED: '1',
     CI: 'true',
     ...opts.env,
   };
@@ -158,7 +156,6 @@ export function spawnTheoSync(opts: SpawnTheoOptions): SpawnTheoResult {
     HOME: tmpHome,
     NO_COLOR: '1',
     LOOPSCALE_URL: 'http://127.0.0.1:1',
-    THEO_TELEMETRY_DISABLED: '1',
     CI: 'true',
     ...opts.env,
   };
@@ -243,15 +240,15 @@ export function parseAllJsonLines(stdout: string): Record<string, unknown>[] {
  * Write a fake auth config to tmpHome so commands gated by auth pass
  * through to the API call (which the mock server then handles).
  *
- * Mirrors the canonical `~/.theo/config.json` shape: `{token, theoUrl,
- * tenantId}`. Token is intentionally synthetic — mock API decides what
+ * Written to `~/.loopscale/config.json`, the file the CLI reads. Shape:
+ * `{token, theoUrl, tenantId}`. Token is intentionally synthetic — mock API decides what
  * to do with it.
  */
 export function writeFakeAuthConfig(
   tmpHome: string,
   overrides: { token?: string; theoUrl?: string; tenantId?: string } = {},
 ): void {
-  const dir = path.join(tmpHome, '.theo');
+  const dir = path.join(tmpHome, '.loopscale');
   fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
   const cfg = {
     token: overrides.token ?? 'fake-test-token',

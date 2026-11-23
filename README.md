@@ -115,29 +115,28 @@ theokit build --target theo-cloud   # explicit build
 loopscale deploy --prebuilt              # upload only — skip auto-build
 ```
 
-## Migrating from `@usetheo/cli`
+## Configuration
 
-This package was published as `@usetheo/cli` with a `theo` command. It is now
-`@getloopscale/cli` and the command is `loopscale`:
+`loopscale login` stores the login in `~/.loopscale/config.json`, or in
+`$XDG_CONFIG_HOME/loopscale/config.json` when `XDG_CONFIG_HOME` is set.
+`loopscale logout` deletes that file.
 
-```bash
-npm uninstall -g @usetheo/cli
-npm install -g @getloopscale/cli
-```
+| Variable | Effect | Default |
+|---|---|---|
+| `LOOPSCALE_TOKEN` | Token used instead of the stored login (CI) | unset |
+| `LOOPSCALE_URL` | API base URL | `http://localhost:8080` |
+| `LOOPSCALE_CLOUD_URL` | Auth service base URL | value of `LOOPSCALE_URL` |
+| `LOOPSCALE_DASHBOARD_URL` | Dashboard URL shown in sign-in hints | `https://app.getloopscale.com` |
+| `LOOPSCALE_API_TIMEOUT` | API request timeout (ms) | `30000` |
+| `LOOPSCALE_UPLOAD_TIMEOUT` | Source upload timeout (ms) | `120000` |
+| `LOOPSCALE_DEPLOY_TIMEOUT` | Total deploy timeout (ms) | `1800000` |
+| `LOOPSCALE_DEBUG` | Print diagnostic errors on stderr | unset |
+| `LOOPSCALE_TRACING_ENABLED` | Export OpenTelemetry traces (`true` or `1`) | unset |
+| `LOOPSCALE_OTEL_ENDPOINT` | OTLP/HTTP traces endpoint | `http://localhost:4318/v1/traces` |
+| `LOOPSCALE_ENV` | `deployment.environment` trace attribute | `development` |
 
-An existing login keeps working. When `~/.loopscale/config.json` (or
-`$XDG_CONFIG_HOME/loopscale/config.json`) does not exist, the CLI reads the old
-`~/.theo/config.json` (or `$XDG_CONFIG_HOME/theo/config.json`) and prints a
-one-line notice on stderr. Run `loopscale login` to write the new file;
-`loopscale logout` removes both.
-
-Environment variables moved from `THEO_*` to `LOOPSCALE_*` (`LOOPSCALE_URL`,
-`LOOPSCALE_TOKEN`, `LOOPSCALE_DASHBOARD_URL`, `LOOPSCALE_CLOUD_URL`,
-`LOOPSCALE_DEBUG`, `LOOPSCALE_API_TIMEOUT`, `LOOPSCALE_UPLOAD_TIMEOUT`,
-`LOOPSCALE_DEPLOY_TIMEOUT`, `LOOPSCALE_TRACING_ENABLED`,
-`LOOPSCALE_OTEL_ENDPOINT`, `LOOPSCALE_ENV`). The old names are still read when
-the new one is unset, with a one-line notice on stderr. Project files keep their
-names: `theo.yaml`, `.theo/services.json` and `.theoignore` are unchanged.
+Project files read by `loopscale deploy` keep the TheoKit names: `theo.yaml`,
+`.theo/services.json` and `.theoignore`.
 
 ## Commands
 

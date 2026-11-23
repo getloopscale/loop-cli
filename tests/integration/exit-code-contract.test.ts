@@ -38,7 +38,7 @@ interface ContractCase {
 }
 
 // Configurations:
-// - sem ~/.theo/config.json válido
+// - sem ~/.loopscale/config.json válido
 // - LOOPSCALE_URL apontando para port unreachable
 // - cwd = tmp dir SEM theo.yaml (provoca MISSING_CONFIG em alguns) ou COM
 //   theo.yaml (puro auth gate)
@@ -89,7 +89,7 @@ describe('CLI exit code contract (T1.2 / F-02)', () => {
         env: {
           ...process.env,
           LOOPSCALE_URL: 'http://127.0.0.1:1', // unreachable
-          HOME: tmpHome,                   // no ~/.theo/config.json
+          HOME: tmpHome,                   // no ~/.loopscale/config.json
           XDG_CONFIG_HOME: tmpHome,
           LOOPSCALE_TOKEN: '',                  // explicit clear
         },
