@@ -88,9 +88,9 @@ export function registerDeployCommands(deps: CommandDeps): void {
         createSourceBundle,
         checkSensitiveFiles,
         uploadSource: (bundlePath: string, servicesJsonPath: string) =>
-          // configStore.getToken() honors the THEO_TOKEN env var; the older
+          // configStore.getToken() honors the LOOPSCALE_TOKEN env var; the older
           // getConfig()?.token path silently ignored env-only auth (CI mode),
-          // which broke `theo deploy` whenever no config file was written.
+          // which broke `loopscale deploy` whenever no config file was written.
           uploadSource(apiUrl, configStore.getToken(), bundlePath, servicesJsonPath),
         submitBuild: async (input) => {
           const headers: Record<string, string> = {
@@ -167,7 +167,7 @@ export function registerDeployCommands(deps: CommandDeps): void {
           return result;
         },
         // Beta Logs Gate Criterion 4 (UX) — best-effort auto-tail.
-        // Wired against the same /logs endpoint the CLI `theo logs`
+        // Wired against the same /logs endpoint the CLI `loopscale logs`
         // command uses. Always tail=20; swallows errors so a Loki
         // outage doesn't make the deploy hang on cleanup.
         fetchRecentBuildLogs: async (buildId: string) => {
@@ -330,7 +330,7 @@ export function registerDeployCommands(deps: CommandDeps): void {
           return apiClient.get(path);
         },
         // Red Team theo-cloud#160: PRIMARY build inference source — same
-        // endpoint `theo build list` uses. Fixes "No builds found" silent lie
+        // endpoint `loopscale build list` uses. Fixes "No builds found" silent lie
         // when builds exist but no active release binds them yet.
         listBuilds: async (project: string, env?: string, limit?: number) => {
           const params = new URLSearchParams();

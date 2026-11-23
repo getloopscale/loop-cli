@@ -21,7 +21,7 @@ afterEach(async () => {
   while (servers.length) await servers.pop()!.close();
 });
 
-describe('theo project --help', () => {
+describe('loopscale project --help', () => {
   it('exit 0 + lists subcommands', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
@@ -33,7 +33,7 @@ describe('theo project --help', () => {
   });
 });
 
-describe('theo project list', () => {
+describe('loopscale project list', () => {
   it('exit 0 + JSON shape on success', async () => {
     const server = await startMockApi();
     servers.push(server);
@@ -53,7 +53,7 @@ describe('theo project list', () => {
     const r = await spawnTheo({
       args: ['project', 'list', '--json'],
       cwd: tmp,
-      env: { THEO_URL: server.url },
+      env: { LOOPSCALE_URL: server.url },
       timeoutMs: 15_000,
     });
 

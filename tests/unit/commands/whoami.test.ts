@@ -110,13 +110,13 @@ describe('WhoamiCommand', () => {
       const deps = createMockDeps({
         getToken: jest.fn().mockReturnValue('bearer-token'),
         verifyToken: jest.fn().mockResolvedValue({
-          email: '', username: 'theo-e2e', team: 'e2e-tenant',
+          email: '', username: 'loopscale-e2e', team: 'e2e-tenant',
         }),
       });
       const cmd = new WhoamiCommand(deps);
       await cmd.execute();
       const output = (deps.writeTo as jest.Mock).mock.calls.map((c: string[]) => c[0]).join('\n');
-      expect(output).toContain('Authenticated as: theo-e2e');
+      expect(output).toContain('Authenticated as: loopscale-e2e');
       expect(output).not.toMatch(/Authenticated as: $/m);
     });
 
@@ -137,20 +137,20 @@ describe('WhoamiCommand', () => {
       const deps = createMockDeps({
         getToken: jest.fn().mockReturnValue('bearer-token'),
         verifyToken: jest.fn().mockResolvedValue({
-          email: '', username: 'theo-e2e', team: 'e2e-tenant',
+          email: '', username: 'loopscale-e2e', team: 'e2e-tenant',
         }),
       });
       const cmd = new WhoamiCommand(deps);
       await cmd.execute({ json: true });
       const parsed = JSON.parse((deps.writeTo as jest.Mock).mock.calls[0][0]);
       expect(parsed.authenticated).toBe(true);
-      expect(parsed.username).toBe('theo-e2e');
+      expect(parsed.username).toBe('loopscale-e2e');
     });
   });
 
   // CHG-2026-04-23-AUDIT-22: previously whoami reported "Token is invalid or
   // expired" for ANY verifyToken failure — including ECONNREFUSED / timeouts.
-  // This misled users (they'd run `theo login` which would fail for the same
+  // This misled users (they'd run `loopscale login` which would fail for the same
   // reason). Now verifyToken re-throws non-auth errors, and whoami renders a
   // distinct "cannot reach API" message with a specific error code.
   describe('API unreachable (AUDIT-22)', () => {
@@ -166,7 +166,7 @@ describe('WhoamiCommand', () => {
       const errOutput = (deps.writeError as jest.Mock).mock.calls.map((c: string[]) => c[0]).join(' ');
       expect(errOutput).not.toContain('invalid or expired');
       expect(errOutput).toMatch(/reach|unreachable|connect|network|ECONNREFUSED/i);
-      expect(errOutput).toMatch(/THEO_URL|URL|check/i);
+      expect(errOutput).toMatch(/LOOPSCALE_URL|URL|check/i);
     });
 
     it('JSON output uses a distinct code for unreachable (not AUTH_EXPIRED)', async () => {
@@ -213,7 +213,7 @@ describe('WhoamiCommand', () => {
 
       const errOutput = (deps.writeError as jest.Mock).mock.calls.map((c: string[]) => c[0]).join(' ');
       expect(errOutput).toContain('Not authenticated');
-      expect(errOutput).toContain('theo login');
+      expect(errOutput).toContain('loopscale login');
     });
 
     it('should output JSON with authenticated=false', async () => {

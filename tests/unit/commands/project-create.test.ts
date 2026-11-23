@@ -142,7 +142,7 @@ describe('ProjectCreateCommand', () => {
       const cmd = new ProjectCreateCommand(makeDeps({ getToken: () => null }));
       await cmd.execute('my-new-api');
       expect(errors[0]).toContain('Not authenticated');
-      expect(errors[0]).toContain('theo login');
+      expect(errors[0]).toContain('loopscale login');
     });
 
     it('shows actionable error on API failure', async () => {

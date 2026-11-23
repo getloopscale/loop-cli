@@ -91,8 +91,8 @@ describe('ProjectInspectCommand', () => {
       const cmd = new ProjectInspectCommand(makeDeps());
       await cmd.execute('my-api');
       const allOutput = output.join('\n');
-      expect(allOutput).toContain('theo project list');
-      expect(allOutput).toContain('theo project delete my-api');
+      expect(allOutput).toContain('loopscale project list');
+      expect(allOutput).toContain('loopscale project delete my-api');
     });
 
     it('omits created_by when not present', async () => {
@@ -120,7 +120,7 @@ describe('ProjectInspectCommand', () => {
           // Shape that api/internal/routes/projects.go actually returns:
           team: 'e2e-tenant',
           created_at: '2026-04-23T05:55:32Z',
-          created_by: 'theo-e2e',
+          created_by: 'loopscale-e2e',
         } as unknown as { id: string; name: string; team: string; created_at: string; created_by?: string }),
       }));
       const code = await cmd.execute('e2e-test-hello');
@@ -144,7 +144,7 @@ describe('ProjectInspectCommand', () => {
       const cmd = new ProjectInspectCommand(makeDeps({ getToken: () => null }));
       await cmd.execute('my-api');
       expect(errors[0]).toContain('Not authenticated');
-      expect(errors[0]).toContain('theo login');
+      expect(errors[0]).toContain('loopscale login');
     });
   });
 

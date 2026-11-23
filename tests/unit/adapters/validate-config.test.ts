@@ -8,7 +8,7 @@ import * as path from 'path';
 import * as os from 'os';
 
 function tmpDir(): string {
-  return fs.mkdtempSync(path.join(os.tmpdir(), 'theo-test-'));
+  return fs.mkdtempSync(path.join(os.tmpdir(), 'loopscale-test-'));
 }
 
 describe('validateConfig', () => {
@@ -448,10 +448,10 @@ describe('validateConfig', () => {
   });
 
   // ============================================================
-  // theo-stacks templates validation
+  // loopscale-stacks templates validation
   // ============================================================
 
-  describe('theo-stacks templates', () => {
+  describe('loopscale-stacks templates', () => {
     it('monorepo-turbo: api (server) + web (frontend) should pass', () => {
       const config: TheoYaml = {
         project: 'my-app',

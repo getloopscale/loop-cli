@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2025-2026 The Theo Authors
 
-// theo auth refresh
+// loopscale auth refresh
 //
 // Closes F-01 + F-03 from /dogfood full report (2026-05-06): JWT TTL=1h
 // without an automatic refresh path forces operators to manually re-mint
@@ -53,7 +53,7 @@ export class AuthRefreshCommand {
     const refreshToken = this.deps.getRefreshToken();
     if (!refreshToken) {
       const message =
-        'No refresh token stored. Run: theo login (or bash infra/helmfile/scripts/seed-local-user.sh for local dev).';
+        'No refresh token stored. Run: loopscale login (or bash infra/helmfile/scripts/seed-local-user.sh for local dev).';
       if (json) {
         this.deps.writeTo(
           JSON.stringify({
@@ -72,7 +72,7 @@ export class AuthRefreshCommand {
     const tokens = await this.deps.refreshFn(refreshToken);
     if (!tokens) {
       const message =
-        'Refresh token expired or invalid. Run: theo login (or bash infra/helmfile/scripts/seed-local-user.sh for local dev).';
+        'Refresh token expired or invalid. Run: loopscale login (or bash infra/helmfile/scripts/seed-local-user.sh for local dev).';
       if (json) {
         this.deps.writeTo(
           JSON.stringify({

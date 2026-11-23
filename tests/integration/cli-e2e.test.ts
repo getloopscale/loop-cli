@@ -12,7 +12,7 @@
 //     guard so a single env var turns them all on.
 //
 // Note: the former local-only `init: detect monorepo` test was removed together
-// with the `theo init` command and the `src/detection/monorepo` module
+// with the `loopscale init` command and the `src/detection/monorepo` module
 // (TheoKit-only cutover — apps emit `.theo/services.json` via `theokit build`).
 //
 // Operator runbook to enable the live tests:

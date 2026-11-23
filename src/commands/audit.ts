@@ -42,7 +42,7 @@ export class AuditCommand {
   async run(opts: AuditOptions): Promise<number> {
     // Auth guard
     if (!this.deps.getToken()) {
-      return this.writeFailure(opts, 'Not authenticated. Run: theo login', 4, 'AUTH_REQUIRED');
+      return this.writeFailure(opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
     // CHG-2026-04-23-AUDIT-14: catch ApiError explicitly so auth failures
@@ -51,14 +51,14 @@ export class AuditCommand {
     // CHG-2026-04-23-AUDIT-23: every error branch now routes through
     // writeFailure so --json always emits machine-parseable JSON
     // (previously 403/network/null-data used writeError text, breaking
-    // `theo audit --json 2>&1 | jq`). Network errors also get
+    // `loopscale audit --json 2>&1 | jq`). Network errors also get
     // API_UNREACHABLE code aligned with AUDIT-22 whoami.
     let data: AuditResponse | null;
     try {
       data = await this.deps.getAudit(opts.action, opts.since);
     } catch (err) {
       if (err instanceof ApiError && (err.exitCode === 4 || err.statusCode === 401)) {
-        return this.writeFailure(opts, 'Authentication failed. Run: theo login', 4, 'AUTH_REQUIRED');
+        return this.writeFailure(opts, 'Authentication failed. Run: loopscale login', 4, 'AUTH_REQUIRED');
       }
       if (err instanceof ApiError && err.statusCode === 403) {
         return this.writeFailure(
@@ -76,7 +76,7 @@ export class AuditCommand {
         if (!(err instanceof ApiError)) {
           return this.writeFailure(
             opts,
-            `Cannot reach API: ${err.message}. Check THEO_URL.`,
+            `Cannot reach API: ${err.message}. Check LOOPSCALE_URL.`,
             1,
             'API_UNREACHABLE',
           );

@@ -74,7 +74,7 @@ export async function uploadSource(
       (err instanceof Error && err.name === 'TimeoutError');
 
     if (isTimeout) {
-      // Plan v1.2 T5.1 — preserve cause chain so THEO_DEBUG can surface it.
+      // Plan v1.2 T5.1 — preserve cause chain so LOOPSCALE_DEBUG can surface it.
       throw new ApiError(
         'Upload timed out. Check your connection and try again.',
         3,

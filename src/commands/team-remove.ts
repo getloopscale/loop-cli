@@ -36,12 +36,12 @@ export class TeamRemoveCommand {
   async execute(username: string, opts: TeamRemoveOptions = {}): Promise<number> {
     // 1. Auth check
     if (!this.deps.getToken()) {
-      return this.exitWithError(opts, 'Not authenticated. Run: theo login', 4, 'AUTH_REQUIRED');
+      return this.exitWithError(opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
     // 2. Username required
     if (!username || username.trim() === '') {
-      return this.exitWithError(opts, 'Username is required. Usage: theo team remove <username>', 1, 'MISSING_ARGUMENT');
+      return this.exitWithError(opts, 'Username is required. Usage: loopscale team remove <username>', 1, 'MISSING_ARGUMENT');
     }
 
     // 3. Call API
@@ -75,7 +75,7 @@ export class TeamRemoveCommand {
   private handleError(opts: TeamRemoveOptions, err: unknown, username: string): number {
     if (err instanceof ApiError) {
       if (err.exitCode === 4 || err.statusCode === 401) {
-        return this.exitWithError(opts, 'Authentication failed. Run: theo login', 4, 'AUTH_REQUIRED');
+        return this.exitWithError(opts, 'Authentication failed. Run: loopscale login', 4, 'AUTH_REQUIRED');
       }
       if (err.statusCode === 403) {
         return this.exitWithError(

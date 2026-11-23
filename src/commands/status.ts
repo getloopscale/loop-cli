@@ -81,7 +81,7 @@ export class StatusCommand {
 
     // 1. Auth check
     if (!this.deps.getToken()) {
-      return this.exitWithError(opts, 'Not authenticated. Run: theo login', 4, 'AUTH_REQUIRED');
+      return this.exitWithError(opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
     // 2. Resolve project — explicit --project flag wins over theo.yaml.
@@ -92,7 +92,7 @@ export class StatusCommand {
     } else {
       const yamlResult = this.deps.findTheoYaml();
       if (!yamlResult) {
-        return this.exitWithError(opts, 'No theo.yaml found. Run: theo init (or pass --project <name>)', 1, 'MISSING_CONFIG');
+        return this.exitWithError(opts, 'No theo.yaml found. Run: loopscale init (or pass --project <name>)', 1, 'MISSING_CONFIG');
       }
       if (yamlResult.parseError) {
         return this.exitWithError(opts, `Invalid theo.yaml: ${yamlResult.parseError}`, 1, 'INVALID_CONFIG');
@@ -129,9 +129,9 @@ export class StatusCommand {
       // scenario). When the user DID pass --env explicitly, keep the
       // shorter message — they already chose the env scope.
       if (!envExplicit) {
-        this.deps.writeTo(`No deploy in '${environment}'. Try \`theo status --env preview\` or run \`theo env list\` to see all environments.`);
+        this.deps.writeTo(`No deploy in '${environment}'. Try \`loopscale status --env preview\` or run \`loopscale env list\` to see all environments.`);
       } else {
-        this.deps.writeTo(`No deploy in '${environment}'. Run \`theo deploy --env ${environment}\` to get started.`);
+        this.deps.writeTo(`No deploy in '${environment}'. Run \`loopscale deploy --env ${environment}\` to get started.`);
       }
       return 0;
     }
@@ -236,7 +236,7 @@ export class StatusCommand {
       return this.exitWithError(opts, err.message, err.exitCode, err.code);
     }
     // CHG-2026-04-23-AUDIT-24: surface API_UNREACHABLE for network errors so
-    // users know to check THEO_URL. Exit code stays 3 (contract) — only
+    // users know to check LOOPSCALE_URL. Exit code stays 3 (contract) — only
     // the code label and message change.
     const net = classifyNetworkError(err);
     if (net.isNetwork) {

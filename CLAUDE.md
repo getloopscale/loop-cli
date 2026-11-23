@@ -1,12 +1,13 @@
-# theo-cli
+# LoopScale CLI
 
-Standalone `@usetheo/cli` — the CLI-first client for TheoCloud (TypeScript + Commander).
+Standalone `@getloopscale/cli`, the CLI-first client for LoopScale (TypeScript + Commander).
+Published as `@usetheo/cli` with a `theo` bin until the LoopScale rename.
 Extracted from the `theo` monorepo at M2 of the decomposition (history preserved).
 
 ## What it is
 
-A thin HTTP client over the engine API. `theo login`, `theo init`, `theo deploy`,
-`theo status`, `theo logs`, etc. It shares **zero Go/engine code** — the only
+A thin HTTP client over the engine API. `loopscale login`, `loopscale deploy`,
+`loopscale status`, `loopscale logs`, etc. It shares **zero Go/engine code** — the only
 coupling to the engine is the `/api/v1` HTTP/OpenAPI contract.
 
 ## Build / test
@@ -44,7 +45,7 @@ npm run lint        # eslint
 
 ## Publishing
 
-`@usetheo/cli` (the `@theo` scope is unavailable on npm). `publish.yml` publishes on a
+`@getloopscale/cli` (`@usetheo/cli` before the rename). `publish.yml` publishes on a
 `v*` tag once `NPM_TOKEN` is set (owner-gated).
 
 ## Provenance

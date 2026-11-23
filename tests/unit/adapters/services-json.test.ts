@@ -148,7 +148,7 @@ describe('findServicesJson — cascade .theo/ → .theokit/ (Sprint 4 #29.B2)', 
   });
 
   it('prefers .theo/services.json over .theokit/services.json when both exist (backward compat)', () => {
-    const preferred = writeServicesJson(tmpRoot, '{"version":2,"project":"theo-pref","services":[]}');
+    const preferred = writeServicesJson(tmpRoot, '{"version":2,"project":"loopscale-pref","services":[]}');
     writeTheokitServicesJson(tmpRoot, '{"version":2,"project":"theokit-pref","services":[]}');
     const result = findServicesJson(tmpRoot, tmpRoot);
     expect(result?.path).toBe(preferred);
@@ -171,7 +171,7 @@ describe('findServicesJson — cascade .theo/ → .theokit/ (Sprint 4 #29.B2)', 
 
   it('--services-json override still short-circuits the cascade (EC-10 from edge-case-plan)', () => {
     // Override pointing at a custom path bypasses both .theo/ and .theokit/ checks entirely.
-    writeServicesJson(tmpRoot, '{"version":2,"project":"theo-pref","services":[]}');
+    writeServicesJson(tmpRoot, '{"version":2,"project":"loopscale-pref","services":[]}');
     writeTheokitServicesJson(tmpRoot, '{"version":2,"project":"theokit-pref","services":[]}');
     const outDir = path.join(tmpRoot, 'out');
     fs.mkdirSync(outDir);
@@ -182,15 +182,15 @@ describe('findServicesJson — cascade .theo/ → .theokit/ (Sprint 4 #29.B2)', 
   });
 });
 
-// theo#165 — `theo secret` resolvia o projeto SO pelo `theo.yaml` legado e reprovava com
-// "No theo.yaml found. Run: theo init" num projeto que so tem `.theo/services.json` v2 — o
+// loopscale#165 — `loopscale secret` resolvia o projeto SO pelo `theo.yaml` legado e reprovava com
+// "No theo.yaml found. Run: loopscale init" num projeto que so tem `.theo/services.json` v2 — o
 // formato que o proprio theokit gera. `deploy`/`status`/`logs` ja liam o v2, entao o projeto
 // deployava e nao conseguia gerenciar secrets, sem `--project` para contornar.
 //
 // A conversao vive no ADAPTADOR, nao no comando: os comandos continuam consumindo um unico
 // `TheoYamlResult` (DIP), e a raiz de composicao escolhe a fonte.
-describe('theoYamlFromServicesJson (theo#165)', () => {
-  const tmp = path.join(os.tmpdir(), `theo-165-${String(process.pid)}`);
+describe('theoYamlFromServicesJson (loopscale#165)', () => {
+  const tmp = path.join(os.tmpdir(), `loopscale-165-${String(process.pid)}`);
 
   beforeEach(() => { fs.mkdirSync(tmp, { recursive: true }); });
   afterEach(() => { fs.rmSync(tmp, { recursive: true, force: true }); });

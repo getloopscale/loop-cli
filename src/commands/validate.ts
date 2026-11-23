@@ -27,9 +27,9 @@ export class ValidateCommand {
     const yamlResult = this.deps.findTheoYaml();
     if (!yamlResult) {
       if (opts.json) {
-        this.deps.writeTo(JSON.stringify({ valid: false, errors: [{ field: 'theo.yaml', message: 'No theo.yaml found. Run: theo init' }], apps: 0 }));
+        this.deps.writeTo(JSON.stringify({ valid: false, errors: [{ field: 'theo.yaml', message: 'No theo.yaml found. Run: loopscale init' }], apps: 0 }));
       } else {
-        this.deps.writeError('No theo.yaml found. Run: theo init');
+        this.deps.writeError('No theo.yaml found. Run: loopscale init');
       }
       return 1;
     }

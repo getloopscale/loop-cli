@@ -51,7 +51,7 @@ export interface StorageOptions {
 type Sub = 'upload' | 'download' | 'list' | 'stat' | 'delete' | 'share';
 
 /**
- * StorageCommand implements `theo storage <sub>`. Product language only — never
+ * StorageCommand implements `loopscale storage <sub>`. Product language only — never
  * "S3"/"bucket" in output (Rule 3). Exit codes follow the permanent contract
  * (Rule 4): 0 success, 1 usage/limit (user-correctable), 4 auth, 5 partial/network.
  */
@@ -84,7 +84,7 @@ export class StorageCommand {
 
   private async upload(opts: StorageOptions): Promise<number> {
     if (!opts.file || !opts.path) {
-      this.deps.writeError('Usage: theo storage upload <file> <path>');
+      this.deps.writeError('Usage: loopscale storage upload <file> <path>');
       return EXIT_CODES.USAGE;
     }
     const body = await this.deps.readFile(opts.file);
@@ -95,7 +95,7 @@ export class StorageCommand {
 
   private async download(opts: StorageOptions): Promise<number> {
     if (!opts.path) {
-      this.deps.writeError('Usage: theo storage download <path> [dest]');
+      this.deps.writeError('Usage: loopscale storage download <path> [dest]');
       return EXIT_CODES.USAGE;
     }
     const bytes = await this.deps.download(opts.path);
@@ -121,7 +121,7 @@ export class StorageCommand {
 
   private async stat(opts: StorageOptions): Promise<number> {
     if (!opts.path) {
-      this.deps.writeError('Usage: theo storage stat <path>');
+      this.deps.writeError('Usage: loopscale storage stat <path>');
       return EXIT_CODES.USAGE;
     }
     const result = await this.deps.stat(opts.path);
@@ -131,7 +131,7 @@ export class StorageCommand {
 
   private async delete(opts: StorageOptions): Promise<number> {
     if (!opts.path) {
-      this.deps.writeError('Usage: theo storage delete <path>');
+      this.deps.writeError('Usage: loopscale storage delete <path>');
       return EXIT_CODES.USAGE;
     }
     await this.deps.del(opts.path);
@@ -141,7 +141,7 @@ export class StorageCommand {
 
   private async share(opts: StorageOptions): Promise<number> {
     if (!opts.path) {
-      this.deps.writeError('Usage: theo storage share <path> --expires <seconds>');
+      this.deps.writeError('Usage: loopscale storage share <path> --expires <seconds>');
       return EXIT_CODES.USAGE;
     }
     const expires = opts.expires ? parseInt(opts.expires, 10) : 900;

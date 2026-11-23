@@ -2,7 +2,7 @@
 // Copyright 2025-2026 The Theo Authors
 //
 // Plan theo-storage-sync — .theoignore support. A gitignore-style ignore file at
-// the sync root scopes what `theo storage sync` walks/pushes/pulls. This keeps a
+// the sync root scopes what `loopscale storage sync` walks/pushes/pulls. This keeps a
 // large or sensitive subtree (e.g. `knowledge-base/`, `*.local.*`) out of the sync
 // declaratively — the same familiar model as .dockerignore / .npmignore — instead
 // of repeated `--exclude` globs.

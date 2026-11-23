@@ -22,7 +22,7 @@ export interface WhoamiDeps {
    * - Returns null ONLY when the API rejected the credential (401/403).
    * - CHG-2026-04-23-AUDIT-22: throws for network / DNS / timeout / 5xx so
    *   whoami can render "cannot reach API" instead of the misleading
-   *   "token expired" (which led users to run `theo login` in vain).
+   *   "token expired" (which led users to run `loopscale login` in vain).
    */
   verifyToken?: (token: string) => Promise<WhoamiApiResult | null>;
   writeTo: (msg: string) => void;
@@ -48,7 +48,7 @@ export class WhoamiCommand {
       if (opts.json) {
         this.deps.writeTo(JSON.stringify({ authenticated: false }));
       } else {
-        this.deps.writeError('Not authenticated. Run: theo login');
+        this.deps.writeError('Not authenticated. Run: loopscale login');
       }
       return 4;
     }
@@ -58,13 +58,13 @@ export class WhoamiCommand {
       // CHG-2026-04-23-AUDIT-22: verifyToken throws on network/5xx so we can
       // distinguish "API unreachable" from "token rejected". Previously both
       // collapsed to "Token is invalid or expired" — misleading the user
-      // into running `theo login` against the same unreachable endpoint.
+      // into running `loopscale login` against the same unreachable endpoint.
       let apiResult: WhoamiApiResult | null;
       try {
         apiResult = await this.deps.verifyToken(token);
       } catch (err) {
         const reason = err instanceof Error ? err.message : String(err);
-        const message = `Cannot reach API: ${reason}. Check THEO_URL.`;
+        const message = `Cannot reach API: ${reason}. Check LOOPSCALE_URL.`;
         if (opts.json) {
           this.deps.writeTo(JSON.stringify({
             authenticated: false,
@@ -104,9 +104,9 @@ export class WhoamiCommand {
 
       // API rejected the token — not authenticated
       if (opts.json) {
-        this.deps.writeTo(JSON.stringify({ authenticated: false, error: 'Token is invalid or expired. Run: theo login' }));
+        this.deps.writeTo(JSON.stringify({ authenticated: false, error: 'Token is invalid or expired. Run: loopscale login' }));
       } else {
-        this.deps.writeError('Token is invalid or expired. Run: theo login');
+        this.deps.writeError('Token is invalid or expired. Run: loopscale login');
       }
       return 4;
     }
@@ -119,7 +119,7 @@ export class WhoamiCommand {
       if (opts.json) {
         this.deps.writeTo(JSON.stringify({ authenticated: false }));
       } else {
-        this.deps.writeError('Not authenticated. Run: theo login');
+        this.deps.writeError('Not authenticated. Run: loopscale login');
       }
       return 4;
     }

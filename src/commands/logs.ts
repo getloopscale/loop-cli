@@ -55,7 +55,7 @@ export type StreamRuntimeLogsFn = (
 /**
  * BuildListResponse — canonical shape returned by /api/v1/projects/{name}/builds
  * (same as build-list.ts). Kept structurally compatible so LogsCommand can call
- * the SAME source of truth `theo build list` uses when inferring the last build.
+ * the SAME source of truth `loopscale build list` uses when inferring the last build.
  * Red Team theo-cloud#160: previously the CLI only had getProjectStatus (whose
  * last_build reflects the release-active build, not the "most recent build in
  * env"), which returned null in valid scenarios (e.g., preview env with recent
@@ -77,7 +77,7 @@ export interface LogsDeps {
   findTheoYaml: () => TheoYamlResult | null;
   getLogs: (buildID: string, opts: { tail?: number; step?: string; since?: string }) => Promise<LogsApiResponse>;
   /**
-   * Red Team #160: PRIMARY inference source — the SAME endpoint `theo build list`
+   * Red Team #160: PRIMARY inference source — the SAME endpoint `loopscale build list`
    * uses. When wired, LogsCommand prefers this over getProjectStatus for finding
    * the last build in the target env. Optional so legacy call sites (tests) still
    * compile; production wiring in register/deploy.ts provides it.
@@ -95,7 +95,7 @@ export interface LogsDeps {
   /** SSE streaming function for --follow mode. Optional: if absent, --follow is unsupported. */
   streamLogs?: StreamLogsFn;
   /**
-   * SSE streaming function for `theo logs --runtime` mode.
+   * SSE streaming function for `loopscale logs --runtime` mode.
    * Optional: when absent, --runtime returns an error rather than
    * silently no-op.
    */
@@ -145,7 +145,7 @@ export class LogsCommand {
   async execute(opts: LogsOptions = {}): Promise<number> {
     // 1. Auth check
     if (!this.deps.getToken()) {
-      return this.exitWithError(opts, 'Not authenticated. Run: theo login', 4, 'AUTH_REQUIRED');
+      return this.exitWithError(opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
     // Beta Logs Gate Criterion 3 — runtime mode bypasses build-id
@@ -168,19 +168,19 @@ export class LogsCommand {
         }
         projectName = yaml.content.project;
       }
-      // Red Team theo-cloud#160: prefer listBuilds (same SoT as `theo build list`)
+      // Red Team theo-cloud#160: prefer listBuilds (same SoT as `loopscale build list`)
       // over getProjectStatus.last_build. The latter reflects the ACTIVE release's
       // build (release-bound view), NOT the most recent build in env (build-history
       // view). The two diverge in real scenarios (e.g., preview env with a recent
       // CANCELLED + SUCCEEDED build but no active release yet) → CLI reported "No
-      // builds found" while `theo build list` showed 2 builds. Canonical fix: hit
-      // the same endpoint `theo build list` does.
+      // builds found" while `loopscale build list` showed 2 builds. Canonical fix: hit
+      // the same endpoint `loopscale build list` does.
       if (!this.deps.listBuilds && !this.deps.getProjectStatus) {
-        return this.exitWithError(opts, 'Build ID is required. Usage: theo logs --build <id>', 1, 'MISSING_BUILD_ID');
+        return this.exitWithError(opts, 'Build ID is required. Usage: loopscale logs --build <id>', 1, 'MISSING_BUILD_ID');
       }
       const env = opts.env ?? 'production';
       let inferred: string | undefined;
-      // Primary: listBuilds (canonical — same as `theo build list`)
+      // Primary: listBuilds (canonical — same as `loopscale build list`)
       if (this.deps.listBuilds) {
         try {
           const resp = await this.deps.listBuilds(projectName, env, 1);
@@ -362,7 +362,7 @@ export class LogsCommand {
   private handleError(opts: LogsOptions, err: unknown): number {
     if (err instanceof ApiError) {
       if (err.exitCode === 4) {
-        return this.exitWithError(opts, 'Authentication failed. Run: theo login', 4, 'AUTH_REQUIRED');
+        return this.exitWithError(opts, 'Authentication failed. Run: loopscale login', 4, 'AUTH_REQUIRED');
       }
       return this.exitWithError(opts, err.message, err.exitCode, err.code);
     }

@@ -121,7 +121,7 @@ describe('TeamAddCommand', () => {
       }));
       await cmd.execute('ghost');
       expect(errors[0]).toContain('User ghost not found');
-      expect(errors[0]).toContain('theo login');
+      expect(errors[0]).toContain('loopscale login');
     });
 
     it('shows invalid role error with valid options', async () => {

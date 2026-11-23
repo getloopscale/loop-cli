@@ -51,7 +51,7 @@ export class BuildListCommand {
   async execute(opts: BuildListOptions = {}): Promise<number> {
     // 1. Auth check
     if (!this.deps.getToken()) {
-      return this.exitWithError(opts, 'Not authenticated. Run: theo login', 4, 'AUTH_REQUIRED');
+      return this.exitWithError(opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
     // 2. Resolve project — explicit --project flag wins over theo.yaml.
@@ -62,7 +62,7 @@ export class BuildListCommand {
     } else {
       const yamlResult = this.deps.findTheoYaml();
       if (!yamlResult) {
-        return this.exitWithError(opts, 'No theo.yaml found. Run: theo init (or pass --project <name>)', 1, 'MISSING_CONFIG');
+        return this.exitWithError(opts, 'No theo.yaml found. Run: loopscale init (or pass --project <name>)', 1, 'MISSING_CONFIG');
       }
       if (yamlResult.parseError) {
         return this.exitWithError(opts, `Invalid theo.yaml: ${yamlResult.parseError}`, 1, 'INVALID_CONFIG');
@@ -129,7 +129,7 @@ export class BuildListCommand {
   private handleError(opts: BuildListOptions, err: unknown): number {
     if (err instanceof ApiError) {
       if (err.exitCode === 4 || err.statusCode === 401) {
-        return this.exitWithError(opts, 'Authentication failed. Run: theo login', 4, 'AUTH_REQUIRED');
+        return this.exitWithError(opts, 'Authentication failed. Run: loopscale login', 4, 'AUTH_REQUIRED');
       }
       return this.exitWithError(opts, `Failed to list builds: ${err.message}. Try again.`, 1, err.code);
     }

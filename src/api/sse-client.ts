@@ -135,7 +135,7 @@ export class SSEClient {
 
         if (this.retryCount >= this.maxRetries) {
           this.onError(new ApiError(
-            `SSE connection failed after ${this.maxRetries} retries. The build may still be running — check status with theo status.`,
+            `SSE connection failed after ${this.maxRetries} retries. The build may still be running — check status with loopscale status.`,
             3,
             0,
           ));
@@ -401,7 +401,7 @@ export class SSEClient {
     if (this.pollFailureCount >= this.maxRetries) {
       this.onError(
         new ApiError(
-          `Build status polling failed after ${this.maxRetries} retries. The build may still be running — check status with theo status.`,
+          `Build status polling failed after ${this.maxRetries} retries. The build may still be running — check status with loopscale status.`,
           3,
           0,
         ),

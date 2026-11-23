@@ -43,7 +43,7 @@ export class BillingCommand {
   private async show(opts: BillingOptions): Promise<number> {
     const billing = await this.deps.getBilling();
     if (!billing) {
-      return this.exitWithError(opts, 'Failed to retrieve account information. Run: theo login', 4, 'AUTH_FAILED');
+      return this.exitWithError(opts, 'Failed to retrieve account information. Run: loopscale login', 4, 'AUTH_FAILED');
     }
 
     if (opts.json) {
@@ -67,7 +67,7 @@ export class BillingCommand {
       }
 
       this.deps.writeTo('');
-      this.deps.writeTo('Manage your plan: theo billing portal');
+      this.deps.writeTo('Manage your plan: loopscale billing portal');
     }
 
     return 0;
@@ -76,7 +76,7 @@ export class BillingCommand {
   private async portal(opts: BillingOptions): Promise<number> {
     const portal = await this.deps.getPortalURL();
     if (!portal) {
-      return this.exitWithError(opts, 'Failed to open subscription portal. Run: theo login', 4, 'AUTH_FAILED');
+      return this.exitWithError(opts, 'Failed to open subscription portal. Run: loopscale login', 4, 'AUTH_FAILED');
     }
 
     if (opts.json) {

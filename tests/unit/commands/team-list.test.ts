@@ -106,7 +106,7 @@ describe('TeamListCommand', () => {
       const cmd = new TeamListCommand(makeDeps({ getToken: () => null }));
       await cmd.execute();
       expect(errors[0]).toContain('Not authenticated');
-      expect(errors[0]).toContain('theo login');
+      expect(errors[0]).toContain('loopscale login');
     });
   });
 
@@ -147,9 +147,9 @@ describe('TeamListCommand', () => {
   // CHG-2026-04-23-AUDIT-24: network failures were being reported as generic
   // "Failed to list team members: fetch failed. Try again." with
   // code=UNEXPECTED_ERROR — same hint as a transient server error, no
-  // indication to check THEO_URL. Now matches whoami / audit pattern.
+  // indication to check LOOPSCALE_URL. Now matches whoami / audit pattern.
   describe('API unreachable (AUDIT-24)', () => {
-    it('network error produces API_UNREACHABLE code + Check THEO_URL hint', async () => {
+    it('network error produces API_UNREACHABLE code + Check LOOPSCALE_URL hint', async () => {
       const cmd = new TeamListCommand(makeDeps({
         listMembers: async () => { throw new Error('fetch failed'); },
       }));
@@ -158,7 +158,7 @@ describe('TeamListCommand', () => {
       const parsed = JSON.parse(output[0]);
       expect(parsed.code).toBe('API_UNREACHABLE');
       expect(parsed.error).toContain('Cannot reach API');
-      expect(parsed.error).toContain('Check THEO_URL');
+      expect(parsed.error).toContain('Check LOOPSCALE_URL');
     });
 
     it('ECONNREFUSED classified as API_UNREACHABLE', async () => {

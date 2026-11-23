@@ -22,7 +22,7 @@ afterEach(async () => {
   while (servers.length) await servers.pop()!.close();
 });
 
-describe('theo env --help', () => {
+describe('loopscale env --help', () => {
   it('exit 0 + lists subcommands', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
@@ -35,7 +35,7 @@ describe('theo env --help', () => {
   });
 });
 
-describe('theo env list', () => {
+describe('loopscale env list', () => {
   it('exit non-zero without auth + theo.yaml', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
@@ -64,7 +64,7 @@ describe('theo env list', () => {
     const r = await spawnTheo({
       args: ['env', 'list', '--json'],
       cwd: tmp,
-      env: { THEO_URL: server.url },
+      env: { LOOPSCALE_URL: server.url },
       timeoutMs: 15_000,
     });
     // Tolerate either 0 (perfect path match) or 1 (API path mismatch

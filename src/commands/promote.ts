@@ -22,7 +22,7 @@ export interface PromoteDeps {
   isCI?: boolean;
   /**
    * Red Team theo-cloud#161: true when stdin has no TTY (e.g., pipes /
-   * redirects / harnesses). Without this, `theo promote --from X --to Y`
+   * redirects / harnesses). Without this, `loopscale promote --from X --to Y`
    * without `--yes` hung on the [y/N] prompt reading a stdin that would
    * never produce input, and the outer withTimeout wrapper eventually
    * mis-blamed "Promotion timed out. Check your connection." Fail-fast
@@ -51,13 +51,13 @@ export class PromoteCommand {
 
     // 1. Auth check
     if (!this.deps.getToken()) {
-      return this.exitWithError(opts, 'Not authenticated. Run: theo login', 4, 'AUTH_REQUIRED');
+      return this.exitWithError(opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
     // 2. Find theo.yaml
     const yamlResult = this.deps.findTheoYaml();
     if (!yamlResult) {
-      return this.exitWithError(opts, 'No theo.yaml found. Run: theo init', 1, 'MISSING_CONFIG');
+      return this.exitWithError(opts, 'No theo.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
     }
 
     if (yamlResult.parseError) {
@@ -155,7 +155,7 @@ export class PromoteCommand {
   private handleError(opts: PromoteOptions, err: unknown): number {
     if (err instanceof ApiError) {
       if (err.exitCode === 4) {
-        return this.exitWithError(opts, 'Authentication failed. Run: theo login', 4, 'AUTH_REQUIRED');
+        return this.exitWithError(opts, 'Authentication failed. Run: loopscale login', 4, 'AUTH_REQUIRED');
       }
       if (err.statusCode === 409 && err.code === 'CONCURRENT_ACTIVATION') {
         // T5.1 CV-M-1 of plan 2026-06-01-p3-infra-observability-test-debt:

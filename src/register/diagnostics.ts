@@ -2,7 +2,7 @@
 // Copyright 2025-2026 The Theo Authors
 //
 // T2.6 of plan 2026-05-26-maturity-3-62-to-4-0-roadmap:
-// Wire the `theo doctor` command (commands/doctor.ts, M01 audit gap).
+// Wire the `loopscale doctor` command (commands/doctor.ts, M01 audit gap).
 // The DoctorCommand was fully implemented but never registered — closing
 // that orphan-wiring gap here.
 

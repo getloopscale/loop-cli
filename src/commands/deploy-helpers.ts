@@ -90,7 +90,7 @@ export function mapSyncFailureReason(reason: string, buildId: string): string {
     'CRASH_LOOP': 'Service keeps crashing on startup. Check your app logs for startup errors (uncaught exceptions, missing env vars, port conflicts).',
 
     // ─── Build pipeline failures ─────────────────────────────────
-    'BUILD_DOCKERFILE_INVALID': 'Your Dockerfile failed validation. Theo enforces an allow-list of base images and refuses --privileged/--security=insecure flags. Review the build logs for the specific rejection rule.',
+    'BUILD_DOCKERFILE_INVALID': 'Your Dockerfile failed validation. LoopScale enforces an allow-list of base images and refuses --privileged/--security=insecure flags. Review the build logs for the specific rejection rule.',
     'BUILD_DEPENDENCY_FAILED': 'Dependency installation failed during build (npm/pip/go mod). Check your lockfile is committed and that all packages resolve.',
     'BUILD_SIGN_FAILED': 'Image signing failed. This is usually a transient cosign infrastructure issue — retry the deploy. If persistent, contact support.',
     'BUILD_PUSH_FAILED': 'Could not push the built image to the registry. Usually transient — retry. If persistent, registry quota may be exhausted.',
@@ -99,26 +99,26 @@ export function mapSyncFailureReason(reason: string, buildId: string): string {
     // ─── Sync / deploy failures ──────────────────────────────────
     'ACTIVATION_FAILED': 'The deploy could not activate the new release. Check that no concurrent deploy is in flight, then retry.',
     'POLICY_VIOLATION': 'Your image was rejected by the security policy (unsigned, missing SBOM, or unapproved base image). Build logs identify the specific policy.',
-    'INVALID_SPEC': 'The deployment manifest is malformed. This is usually a Theo-side issue — please contact support with the build ID.',
-    'INGRESS_NOT_READY': 'Public route could not be provisioned. Check that your custom domain DNS is correctly configured (run `theo domains list`).',
-    'TLS_CERT_PENDING': 'TLS certificate is still being issued by Let\'s Encrypt. This usually completes within 5min — wait and check `theo status` again.',
+    'INVALID_SPEC': 'The deployment manifest is malformed. This is usually a LoopScale-side issue — please contact support with the build ID.',
+    'INGRESS_NOT_READY': 'Public route could not be provisioned. Check that your custom domain DNS is correctly configured (run `loopscale domains list`).',
+    'TLS_CERT_PENDING': 'TLS certificate is still being issued by Let\'s Encrypt. This usually completes within 5min — wait and check `loopscale status` again.',
     'NETWORK_POLICY_BLOCKED': 'Network policy denied a required connection during startup. Contact support — this is a platform-side configuration issue.',
 
     // ─── Progressive delivery (Argo Rollouts) ────────────────────
     'ANALYSIS_FAILED': 'Canary analysis failed — your new version did not meet the success-rate or latency thresholds. The deploy auto-rolled-back to the previous version.',
     'POD_UNHEALTHY': 'Canary pods did not reach healthy state within the progress deadline (5min). The deploy auto-rolled-back. Check the canary pod logs.',
-    'USER_ABORTED': 'A user (or automation) aborted the rollout via `theo rollback`. The deploy reverted to the previous version.',
-    'ROLLOUT_ABORTED': 'Canary rollout was aborted before completion. Check `theo status` for the abort reason.',
+    'USER_ABORTED': 'A user (or automation) aborted the rollout via `loopscale rollback`. The deploy reverted to the previous version.',
+    'ROLLOUT_ABORTED': 'Canary rollout was aborted before completion. Check `loopscale status` for the abort reason.',
 
     // ─── Resource / quota failures ───────────────────────────────
-    'PLAN_QUOTA_EXCEEDED': 'You\'ve reached your plan\'s resource limit (projects, builds, environments, or seats). Run `theo status` to see usage, or upgrade your plan.',
-    'SECRET_SYNC_FAILED': 'A secret your app depends on could not be made available to the running pod. Verify the secret exists via `theo secrets list`.',
+    'PLAN_QUOTA_EXCEEDED': 'You\'ve reached your plan\'s resource limit (projects, builds, environments, or seats). Run `loopscale status` to see usage, or upgrade your plan.',
+    'SECRET_SYNC_FAILED': 'A secret your app depends on could not be made available to the running pod. Verify the secret exists via `loopscale secrets list`.',
   };
 
   const message = knownReasons[reason]
     ?? `Deploy failed: ${reason.toLowerCase().replace(/_/g, ' ')}. Check service logs for details.`;
 
-  return `${message} Run: theo logs --build ${buildId}`;
+  return `${message} Run: loopscale logs --build ${buildId}`;
 }
 
 /**

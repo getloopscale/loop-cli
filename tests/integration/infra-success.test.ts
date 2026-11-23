@@ -24,7 +24,7 @@ afterEach(async () => {
   while (servers.length) await servers.pop()!.close();
 });
 
-describe('theo build --help', () => {
+describe('loopscale build --help', () => {
   it('exit 0 + lists list/inspect/cancel', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
@@ -36,7 +36,7 @@ describe('theo build --help', () => {
   });
 });
 
-describe('theo build list', () => {
+describe('loopscale build list', () => {
   it('exit 4 without auth', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
@@ -49,7 +49,7 @@ describe('theo build list', () => {
   });
 });
 
-describe('theo secret --help', () => {
+describe('loopscale secret --help', () => {
   it('exit 0 + lists set/list/delete', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
@@ -61,7 +61,7 @@ describe('theo secret --help', () => {
   });
 });
 
-describe('theo audit', () => {
+describe('loopscale audit', () => {
   it('exit 4 without auth', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
@@ -89,7 +89,7 @@ describe('theo audit', () => {
     const r = await spawnTheo({
       args: ['audit', '--json'],
       cwd: tmp,
-      env: { THEO_URL: server.url },
+      env: { LOOPSCALE_URL: server.url },
       timeoutMs: 15_000,
     });
     expect(r.exitCode).not.toBe(143);
