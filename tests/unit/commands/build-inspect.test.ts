@@ -80,7 +80,7 @@ describe('BuildInspectCommand', () => {
       await cmd.execute('bld-abc12345');
 
       const output = (deps.writeTo as jest.Mock).mock.calls.map((c: string[]) => c[0]).join('\n');
-      expect(output).toContain('theo logs --build bld-abc12345');
+      expect(output).toContain('loopscale logs --build bld-abc12345');
     });
   });
 
@@ -168,7 +168,7 @@ describe('BuildInspectCommand', () => {
       const exitCode = await cmd.execute('bld-abc12345');
 
       expect(exitCode).toBe(4);
-      expect(deps.writeError).toHaveBeenCalledWith('Not authenticated. Run: theo login');
+      expect(deps.writeError).toHaveBeenCalledWith('Not authenticated. Run: loopscale login');
       expect(deps.getBuild).not.toHaveBeenCalled();
     });
 

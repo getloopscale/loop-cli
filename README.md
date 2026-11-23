@@ -1,12 +1,10 @@
 <div align="center">
 
-<img src="https://usetheo.dev/logo.png" alt="Theo CLI" width="128" height="128" />
-
-# Theo CLI
+# LoopScale CLI
 
 **From monorepo to running service in one command.**
 
-The CLI-first deploy client for **TheoCloud** — authenticate, build, upload, and
+The CLI-first deploy client for **LoopScale** — authenticate, build, upload, and
 stream a deploy from your terminal or CI. A thin HTTP client over the engine's
 REST API: scriptable exit codes, stable `--json` output, zero-config deploys.
 Apache-2.0.
@@ -16,32 +14,32 @@ Apache-2.0.
 [![Tests](https://img.shields.io/badge/tests-1%2C300%2B%20passing-brightgreen?style=flat-square)](#testing)
 [![Node](https://img.shields.io/badge/node-%E2%89%A520-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org)
 [![Commander](https://img.shields.io/badge/Commander.js-12-555?style=flat-square)](https://github.com/tj/commander.js)
-[![npm](https://img.shields.io/badge/npm-%40usetheo%2Fcli-CB3837?style=flat-square&logo=npm&logoColor=white)](https://www.npmjs.com/package/@usetheo/cli)
+[![npm](https://img.shields.io/badge/npm-%40getloopscale%2Fcli-CB3837?style=flat-square&logo=npm&logoColor=white)](https://www.npmjs.com/package/@getloopscale/cli)
 [![Status](https://img.shields.io/badge/status-pre--release-orange?style=flat-square)](#status)
 
-[Quickstart](#quickstart) · [Why](#why-theo-cli) · [Commands](#commands) · [CI/CD](#cicd) · [Contracts](#contracts) · [Architecture](#architecture) · [Comparison](#comparison) · [Roadmap](#roadmap) · [Contributing](#contributing)
+[Quickstart](#quickstart) · [Why](#why-loopscale-cli) · [Commands](#commands) · [CI/CD](#cicd) · [Contracts](#contracts) · [Architecture](#architecture) · [Comparison](#comparison) · [Roadmap](#roadmap) · [Contributing](#contributing)
 
-**Part of [Theo](https://usetheo.dev) — the open platform for AI agents.** [Learn more →](https://usetheo.dev)
+**Part of [LoopScale](https://getloopscale.com).**
 
 </div>
 
 ---
 
-## Why Theo CLI?
+## Why LoopScale CLI?
 
 Shipping an app shouldn't mean hand-rolling a tarball, a multipart upload, an
 auth refresh dance, an SSE log stream, and a pile of exit-code handling in every
 CI script. Managed PaaS CLIs give you that ergonomics — but they bind you to
 their control plane.
 
-**Theo CLI gives you the deploy ergonomics of a managed PaaS over a control
-plane you can self-host.** Point it at a TheoCloud API, run `theo`, and your
+**LoopScale CLI gives you the deploy ergonomics of a managed PaaS over a control
+plane you can self-host.** Point it at a LoopScale API, run `loopscale`, and your
 monorepo's apps build and deploy in one step — with the build/deploy events
 streaming back to your terminal and a clean exit code your CI can branch on.
 
 ```bash
-theo login            # device-flow OAuth, once per machine
-theo                  # zero-config: builds + uploads + streams the deploy
+loopscale login            # device-flow OAuth, once per machine
+loopscale                  # zero-config: builds + uploads + streams the deploy
 ```
 
 It shares **zero** engine code: the only coupling is the `/api/v1` HTTP
@@ -50,7 +48,7 @@ fast to install, and decoupled from the platform's internals.
 
 ## Features
 
-- **Zero-config deploy** — `theo` with no subcommand routes to `theo deploy`; a
+- **Zero-config deploy** — `loopscale` with no subcommand routes to `loopscale deploy`; a
   missing `.theo/services.json` triggers a `theokit build` automatically.
 - **Monorepo-native** — deploys multiple apps from one repo in a single command,
   with per-app runtime, scaling, secrets, and domains.
@@ -62,13 +60,13 @@ fast to install, and decoupled from the platform's internals.
 - **Resilient HTTP** — retry with exponential backoff + jitter on `429/502/503/504`
   and network errors; `MAINTENANCE_MODE` surfaces immediately instead of silently
   retrying.
-- **Device-flow auth (RFC 8628)** — browser login for humans, `THEO_TOKEN` for
+- **Device-flow auth (RFC 8628)** — browser login for humans, `LOOPSCALE_TOKEN` for
   CI; tokens persisted with `0o600` perms and refreshed transparently on `401`.
 - **CI/prebuilt mode** — `--prebuilt` / `--skip-build` for pipelines that split
   build and deploy across stages (Vercel-style).
 - **Progressive delivery aware** — renders canary rollout progress and surfaces
   aborts with the right exit code.
-- **OpenTelemetry tracing** — opt-in via `THEO_TRACING_ENABLED`; W3C trace
+- **OpenTelemetry tracing** — opt-in via `LOOPSCALE_TRACING_ENABLED`; W3C trace
   context is propagated into the engine so a CLI command and its API spans share
   one trace.
 - **Pure TypeScript, HTTP-only** — production deps are Commander + HTTP/telemetry
@@ -76,51 +74,75 @@ fast to install, and decoupled from the platform's internals.
 
 ## Quickstart
 
-Theo CLI runs on **Node ≥ 20**. It is **pre-release**; until it is published to
+LoopScale CLI runs on **Node ≥ 20**. It is **pre-release**; until it is published to
 npm you can run it from source.
 
 ```bash
 # From source
-git clone https://github.com/usetheoai/theo-cli.git
-cd theo-cli
+git clone https://github.com/getloopscale/cli.git
+cd cli
 npm ci
 npm run build
-node bin/theo --help
+node bin/loopscale --help
 ```
 
 ```bash
 # Once published (pinned in your project — recommended)
-npm install --save-dev @usetheo/cli
+npm install --save-dev @getloopscale/cli
 
 # Or globally
-npm install -g @usetheo/cli
+npm install -g @getloopscale/cli
 ```
 
-You also need [TheoKit](https://github.com/usetheo/theokit) so `theo deploy` can
+You also need [TheoKit](https://github.com/usetheo/theokit) so `loopscale deploy` can
 build the `.theo/services.json` artifact automatically. In typical TheoKit
 projects it is already a dev dependency (`npm install theokit`).
 
 Then drive it end to end:
 
 ```bash
-theo login                    # authenticate once per machine
-theo                          # zero-config deploy — build + upload + stream
-theo status                   # current release state
-theo logs --build <id>        # tail build/runtime logs
-theo rollback                 # restore the previous release
+loopscale login                    # authenticate once per machine
+loopscale                          # zero-config deploy — build + upload + stream
+loopscale status                   # current release state
+loopscale logs --build <id>        # tail build/runtime logs
+loopscale rollback                 # restore the previous release
 ```
 
 The legacy two-step flow still works:
 
 ```bash
 theokit build --target theo-cloud   # explicit build
-theo deploy --prebuilt              # upload only — skip auto-build
+loopscale deploy --prebuilt              # upload only — skip auto-build
 ```
+
+## Migrating from `@usetheo/cli`
+
+This package was published as `@usetheo/cli` with a `theo` command. It is now
+`@getloopscale/cli` and the command is `loopscale`:
+
+```bash
+npm uninstall -g @usetheo/cli
+npm install -g @getloopscale/cli
+```
+
+An existing login keeps working. When `~/.loopscale/config.json` (or
+`$XDG_CONFIG_HOME/loopscale/config.json`) does not exist, the CLI reads the old
+`~/.theo/config.json` (or `$XDG_CONFIG_HOME/theo/config.json`) and prints a
+one-line notice on stderr. Run `loopscale login` to write the new file;
+`loopscale logout` removes both.
+
+Environment variables moved from `THEO_*` to `LOOPSCALE_*` (`LOOPSCALE_URL`,
+`LOOPSCALE_TOKEN`, `LOOPSCALE_DASHBOARD_URL`, `LOOPSCALE_CLOUD_URL`,
+`LOOPSCALE_DEBUG`, `LOOPSCALE_API_TIMEOUT`, `LOOPSCALE_UPLOAD_TIMEOUT`,
+`LOOPSCALE_DEPLOY_TIMEOUT`, `LOOPSCALE_TRACING_ENABLED`,
+`LOOPSCALE_OTEL_ENDPOINT`, `LOOPSCALE_ENV`). The old names are still read when
+the new one is unset, with a one-line notice on stderr. Project files keep their
+names: `theo.yaml`, `.theo/services.json` and `.theoignore` are unchanged.
 
 ## Commands
 
 24 end-user commands. Every command accepts `--json` for machine-readable
-output. Run `theo <command> --help` for the full flag set. (Platform
+output. Run `loopscale <command> --help` for the full flag set. (Platform
 installation and operator tooling are intentionally **not** part of the
 end-user CLI.)
 
@@ -129,10 +151,10 @@ end-user CLI.)
 
 | Command | Description |
 |---|---|
-| `theo login` | Authenticate with your account (device-flow OAuth, or `--token` for CI) |
-| `theo logout` | Remove stored credentials |
-| `theo whoami` | Show the current authenticated user |
-| `theo auth` | Authentication maintenance (refresh tokens) |
+| `loopscale login` | Authenticate with your account (device-flow OAuth, or `--token` for CI) |
+| `loopscale logout` | Remove stored credentials |
+| `loopscale whoami` | Show the current authenticated user |
+| `loopscale auth` | Authentication maintenance (refresh tokens) |
 
 </details>
 
@@ -141,13 +163,13 @@ end-user CLI.)
 
 | Command | Description |
 |---|---|
-| `theo deploy` | Build + upload + stream the deploy (`theo` with no subcommand routes here) |
-| `theo status` | Show environment status for the current project |
-| `theo logs` | Show build / runtime logs (tail or fetch) |
-| `theo rollback` | Roll back to a previous release |
-| `theo promote` | Promote a release from one environment to another |
-| `theo cancel <build-id>` | Cancel a running or queued build |
-| `theo validate` | Validate `theo.yaml` configuration |
+| `loopscale deploy` | Build + upload + stream the deploy (`loopscale` with no subcommand routes here) |
+| `loopscale status` | Show environment status for the current project |
+| `loopscale logs` | Show build / runtime logs (tail or fetch) |
+| `loopscale rollback` | Roll back to a previous release |
+| `loopscale promote` | Promote a release from one environment to another |
+| `loopscale cancel <build-id>` | Cancel a running or queued build |
+| `loopscale validate` | Validate `theo.yaml` configuration |
 
 </details>
 
@@ -156,26 +178,26 @@ end-user CLI.)
 
 | Command | Description |
 |---|---|
-| `theo project` | Manage projects |
-| `theo team` | Manage team members |
-| `theo env` | Manage environments |
-| `theo domain` | Manage custom domains |
-| `theo build` | Manage builds |
-| `theo secret` | Manage application secrets |
-| `theo scale` | Scale a service (fixed replicas or autoscaling) |
-| `theo preview` | Manage preview environments |
-| `theo storage` | Store files (`upload`/`download`/`list`/`share`) + `theo storage sync` a folder ↔ local dir |
+| `loopscale project` | Manage projects |
+| `loopscale team` | Manage team members |
+| `loopscale env` | Manage environments |
+| `loopscale domain` | Manage custom domains |
+| `loopscale build` | Manage builds |
+| `loopscale secret` | Manage application secrets |
+| `loopscale scale` | Scale a service (fixed replicas or autoscaling) |
+| `loopscale preview` | Manage preview environments |
+| `loopscale storage` | Store files (`upload`/`download`/`list`/`share`) + `loopscale storage sync` a folder ↔ local dir |
 
 </details>
 
 <details>
 <summary><b>Claude Code integration</b> — keep a shared <code>.claude/</code> in sync</summary>
 
-`theo storage sync <dir> --prefix <p>` bidirectionally syncs a stored folder to a
+`loopscale storage sync <dir> --prefix <p>` bidirectionally syncs a stored folder to a
 local directory (conflict-safe, `--dry-run`, `--exclude` globs). Wire it to Claude
 Code's `SessionStart`/`SessionEnd` hooks to pull your shared `.claude/` on session
 start and push edits on end — see
-[`integrations/claude-code/`](https://github.com/usetheoai/theo-cli/tree/develop/integrations/claude-code)
+[`integrations/claude-code/`](https://github.com/getloopscale/cli/tree/develop/integrations/claude-code)
 for the example `settings.json` and the safety notes (executable config is fenced
 out of the sync by default).
 
@@ -186,8 +208,8 @@ out of the sync by default).
 
 | Command | Description |
 |---|---|
-| `theo connect` | Connect a GitHub repository for auto-deploy on push |
-| `theo disconnect` | Disconnect the repository (stop auto-deploy) |
+| `loopscale connect` | Connect a GitHub repository for auto-deploy on push |
+| `loopscale disconnect` | Disconnect the repository (stop auto-deploy) |
 
 </details>
 
@@ -196,16 +218,16 @@ out of the sync by default).
 
 | Command | Description |
 |---|---|
-| `theo billing` | View plan and usage, or open the billing portal |
-| `theo audit` | View the audit log (requires `admin` or `owner`) |
-| `theo doctor` | Run a health check on the CLI environment |
+| `loopscale billing` | View plan and usage, or open the billing portal |
+| `loopscale audit` | View the audit log (requires `admin` or `owner`) |
+| `loopscale doctor` | Run a health check on the CLI environment |
 
 </details>
 
 ## CI/CD
 
 CI pipelines that split build and deploy across stages use `--prebuilt` (an
-alias of `--skip-build`) and authenticate with `THEO_TOKEN`:
+alias of `--skip-build`) and authenticate with `LOOPSCALE_TOKEN`:
 
 ```yaml
 jobs:
@@ -220,14 +242,14 @@ jobs:
     steps:
       - run: npm ci
       - uses: actions/download-artifact@v4
-      - run: npx @usetheo/cli deploy --prebuilt
+      - run: npx @getloopscale/cli deploy --prebuilt
         env:
-          THEO_TOKEN: ${{ secrets.THEO_TOKEN }}
+          LOOPSCALE_TOKEN: ${{ secrets.LOOPSCALE_TOKEN }}
 ```
 
 Tune the `theokit build` subprocess with `THEOKIT_BUILD_TIMEOUT_MS` (default
 `600000`) and `THEOKIT_BIN` (override the auto-resolved binary). For a custom
-`distDir`, point at the artifact explicitly: `theo deploy --services-json ./out/services.json`.
+`distDir`, point at the artifact explicitly: `loopscale deploy --services-json ./out/services.json`.
 
 ## Contracts
 
@@ -260,7 +282,7 @@ dependencies (`CommandDeps`) and registers every command group; commands
 orchestrate use cases over the HTTP boundary.
 
 ```
-bin/theo                  node launcher (+ 15-min watchdog)
+bin/loopscale                  node launcher (+ 15-min watchdog)
   └─ dist/index.js
 src/
 ├── index.ts              createProgram() — composition root, signals, exit-code wiring
@@ -291,24 +313,24 @@ imports **nothing** from the engine repo.
 
 ## Comparison
 
-Where Theo CLI fits among deploy CLIs:
+Where LoopScale CLI fits among deploy CLIs:
 
-| | **Theo CLI** | Vercel CLI | Railway CLI | Fly.io `flyctl` | Heroku CLI |
+| | **LoopScale CLI** | Vercel CLI | Railway CLI | Fly.io `flyctl` | Heroku CLI |
 |---|---|---|---|---|---|
 | Open source | ✅ Apache-2.0 | ❌ | ✅ MIT | ✅ Apache-2.0 | ✅ (deprecated OSS) |
 | Self-hostable control plane | ✅ (operator-provisioned) | ❌ (managed) | ❌ (managed) | ❌ (managed) | ❌ (managed) |
 | Primary language | **TypeScript** | TypeScript | Rust | Go | TypeScript |
-| Zero-config deploy | ✅ `theo` | ✅ `vercel` | ✅ `railway up` | partial (`fly launch`) | ❌ (git push) |
+| Zero-config deploy | ✅ `loopscale` | ✅ `vercel` | ✅ `railway up` | partial (`fly launch`) | ❌ (git push) |
 | Monorepo multi-app in one deploy | ✅ | partial | partial | ❌ (per-app) | ❌ |
 | Documented exit-code contract | ✅ `0–5` | partial | partial | partial | partial |
 | Stable `--json` on every command | ✅ | partial | partial | ✅ | partial |
 | Streamed build/deploy events | ✅ SSE | ✅ | ✅ | ✅ | ✅ |
 
-<sub>Best-effort comparison from public documentation as of June 2026. Theo CLI
+<sub>Best-effort comparison from public documentation as of June 2026. LoopScale CLI
 is the TypeScript-native, self-hostable choice: it tracks the deploy ergonomics
 of managed PaaS CLIs while running against a control plane you can host
 yourself. "partial" means the capability exists but is narrower or
-undocumented relative to Theo's. Spot an error? Open a PR.</sub>
+undocumented relative to LoopScale's. Spot an error? Open a PR.</sub>
 
 ## Testing
 
@@ -331,7 +353,7 @@ command.
 
 ## Roadmap
 
-`theo-cli` was extracted from the `theo` monorepo (history preserved) at M2 of
+The CLI was extracted from the `theo` monorepo (history preserved) at M2 of
 the platform decomposition and now ships as a standalone repo.
 
 | Area | Status |
@@ -344,7 +366,7 @@ the platform decomposition and now ships as a standalone repo.
 | Consumer-driven engine contract test (+ Pact) | **Shipped** |
 | OpenTelemetry tracing | **Shipped** |
 | Scope CLI to end-user experience (platform/operator tooling removed) | **Shipped** |
-| Publish `@usetheo/cli` to npm | Planned |
+| Publish `@getloopscale/cli` to npm | Planned |
 | TS import-boundary lint (enforce HTTP-only mechanically) | Planned |
 
 ## Status
@@ -359,8 +381,8 @@ the platform decomposition and now ships as a standalone repo.
 ## Contributing
 
 ```bash
-git clone https://github.com/usetheoai/theo-cli.git
-cd theo-cli
+git clone https://github.com/getloopscale/cli.git
+cd cli
 npm ci
 npm test
 ```
@@ -375,12 +397,9 @@ never import engine code).
 
 <div align="center">
 
-**If Theo CLI is useful to you, [give it a ⭐](https://github.com/usetheoai/theo-cli) — it's the signal that keeps the project moving.**
+**If LoopScale CLI is useful to you, [give it a ⭐](https://github.com/getloopscale/cli) — it's the signal that keeps the project moving.**
 
-[![Discord](https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white)](https://discord.usetheo.dev/)
-[![X](https://img.shields.io/badge/X-@usetheodev-000000?style=flat-square&logo=x&logoColor=white)](https://x.com/usetheodev)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-usetheodev-0A66C2?style=flat-square&logo=linkedin&logoColor=white)](https://linkedin.com/company/usetheodev)
 
-**Part of [Theo](https://usetheo.dev) — the open platform for AI agents.**
+**Part of [LoopScale](https://getloopscale.com).**
 
 </div>

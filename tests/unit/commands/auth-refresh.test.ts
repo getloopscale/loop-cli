@@ -84,7 +84,7 @@ describe('AuthRefreshCommand', () => {
       const parsed = JSON.parse(written);
       expect(parsed.code).toBe('MISSING_REFRESH_TOKEN');
       expect(parsed.exit_code).toBe(4);
-      expect(parsed.error).toContain('theo login');
+      expect(parsed.error).toContain('loopscale login');
     });
 
     it('hints at seed-local-user.sh in human mode', async () => {

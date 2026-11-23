@@ -19,7 +19,7 @@ afterEach(() => {
   while (tmpHomes.length) cleanupTmpHome(tmpHomes.pop()!);
 });
 
-describe('theo deploy --help', () => {
+describe('loopscale deploy --help', () => {
   it('exit 0', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
@@ -29,7 +29,7 @@ describe('theo deploy --help', () => {
   });
 });
 
-describe('theo validate', () => {
+describe('loopscale validate', () => {
   it('exit 0 with valid theo.yaml', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
@@ -74,7 +74,7 @@ environments:
   });
 });
 
-describe('theo cancel', () => {
+describe('loopscale cancel', () => {
   it('exit 1 without build-id arg', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
@@ -89,7 +89,7 @@ describe('theo cancel', () => {
   });
 });
 
-describe('theo logs', () => {
+describe('loopscale logs', () => {
   it('exit 4 without auth', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
@@ -102,7 +102,7 @@ describe('theo logs', () => {
   });
 });
 
-describe('theo status', () => {
+describe('loopscale status', () => {
   it('exit 4 without auth', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);

@@ -169,7 +169,7 @@ export class DeployRenderer {
     // only the post-build phase (deliver + verify), NOT the build itself.
     // For a deploy whose build took 718s and post-build verify took 104s,
     // "Deploy completed in 104s" undercounts by ~7x and misleads the user
-    // about what `theo deploy` actually cost. Surface the build duration
+    // about what `loopscale deploy` actually cost. Surface the build duration
     // (when known) + the total wall-clock so the number matches lived
     // experience.
     const total = formatDeployTotal(result);

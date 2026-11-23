@@ -2,7 +2,7 @@
 // Copyright 2025-2026 The Theo Authors
 //
 // Plan theo-storage-sync — .theoignore support. A gitignore-style ignore file at
-// the sync root scopes what `theo storage sync` walks/pushes/pulls, so a large
+// the sync root scopes what `loopscale storage sync` walks/pushes/pulls, so a large
 // or sensitive dir (e.g. knowledge-base/, *.local.*) is excluded declaratively
 // instead of via repeated --exclude globs. Reuses the `ignore` package (Rule 9).
 
@@ -13,7 +13,7 @@ import path from 'path';
 import { loadSyncIgnore } from '../../../src/lib/sync-ignore';
 
 async function tmp(): Promise<string> {
-  return fs.mkdtemp(path.join(os.tmpdir(), 'theo-sync-ignore-'));
+  return fs.mkdtemp(path.join(os.tmpdir(), 'loopscale-sync-ignore-'));
 }
 
 describe('loadSyncIgnore — gitignore-style matcher for the sync root', () => {

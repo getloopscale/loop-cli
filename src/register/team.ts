@@ -141,7 +141,7 @@ export function registerTeamCommands(deps: CommandDeps): void {
       });
     });
 
-  // Plan T2.5 D8 full — theo team switch <name>
+  // Plan T2.5 D8 full — loopscale team switch <name>
   // Sets users.active_tenant_id (migration 000018) via POST /api/v1/auth/team/switch.
   // Closes F-S2-02 silent team swap: explicit user-driven selection persisted.
   teamCmd

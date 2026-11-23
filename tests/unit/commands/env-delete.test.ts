@@ -145,7 +145,7 @@ describe('EnvDeleteCommand', () => {
       const cmd = new EnvDeleteCommand(makeDeps({ getToken: () => null }));
       await cmd.execute('staging', { confirm: 'staging' });
       expect(errors[0]).toContain('Not authenticated');
-      expect(errors[0]).toContain('theo login');
+      expect(errors[0]).toContain('loopscale login');
     });
 
     it('shows actionable error on delete failure', async () => {

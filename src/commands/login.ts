@@ -34,14 +34,14 @@ export interface LoginOptions {
   // admin API for dogfood tests). When both are present, behavior matches the
   // device-flow path: configStore stores access + refresh + expires_in, and
   // the existing `onUnauthorized → ensureFreshToken` pipeline can renew the
-  // access_token silently on 401 without re-running `theo login`.
+  // access_token silently on 401 without re-running `loopscale login`.
   // Added 2026-05-13 per CTO-mandate T2 amendment (test↔prod auth-refresh
   // parity, finding-2026-05-13-e2e-token-refresh-divergence.md).
   refreshToken?: string;
   expiresIn?: number;
   // Plan J-05 — explicit opt-in to the OAuth2 Device Code Flow (RFC 8628).
   // The implicit "no --token + non-CI" path is preserved; this flag adds
-  // discoverability so `theo login --device-flow` is a documented public
+  // discoverability so `loopscale login --device-flow` is a documented public
   // contract referenced in the J-05 DoD. Honored in CI too (operator opts
   // in deliberately) — bypasses the "use --token in CI" guard.
   deviceFlow?: boolean;
@@ -63,7 +63,7 @@ export class LoginCommand {
         return this.exitWithError(
           opts,
           'Device authentication is not available in this build. ' +
-          'Use: theo login --token <token>',
+          'Use: loopscale login --token <token>',
           4,
           'DEVICE_FLOW_UNAVAILABLE'
         );
@@ -73,7 +73,7 @@ export class LoginCommand {
 
     if (!opts.token) {
       if (this.deps.isCI) {
-        return this.exitWithError(opts, 'In CI mode, use: theo login --token <token>', 1, 'MISSING_TOKEN');
+        return this.exitWithError(opts, 'In CI mode, use: loopscale login --token <token>', 1, 'MISSING_TOKEN');
       }
 
       // Device Code Flow — interactive browser-based login (legacy implicit path).
@@ -83,7 +83,7 @@ export class LoginCommand {
 
       return this.exitWithError(
         opts,
-        'Token is required. Use: theo login --token <token>\n' +
+        'Token is required. Use: loopscale login --token <token>\n' +
         'Generate a token at your account settings or ask your team admin.',
         1,
         'MISSING_TOKEN'
@@ -99,7 +99,7 @@ export class LoginCommand {
         return this.exitWithError(
           opts,
           'Authentication failed. Your token may be expired, revoked, or missing required scopes.\n' +
-          `Sign up or sign in at ${getDashboardUrl()} to obtain a token, then run: theo login --token <token>`,
+          `Sign up or sign in at ${getDashboardUrl()} to obtain a token, then run: loopscale login --token <token>`,
           4,
           'AUTH_FAILED'
         );
@@ -128,7 +128,7 @@ export class LoginCommand {
       this.deps.writeTo(`  Authenticated as ${result.email}`);
       this.deps.writeTo(`  Team: ${team}`);
       this.deps.writeTo('');
-      this.deps.writeTo('  Next: run `theo deploy` to deploy your project');
+      this.deps.writeTo('  Next: run `loopscale deploy` to deploy your project');
     }
 
     return 0;
@@ -137,7 +137,7 @@ export class LoginCommand {
   private async executeDeviceFlow(opts: LoginOptions): Promise<number> {
     const result = await this.deps.executeDeviceFlow!();
     if (!result) {
-      return this.exitWithError(opts, 'Authentication failed. Try again with: theo login', 4, 'AUTH_FAILED');
+      return this.exitWithError(opts, 'Authentication failed. Try again with: loopscale login', 4, 'AUTH_FAILED');
     }
 
     // Validate the received token to get user info
@@ -169,7 +169,7 @@ export class LoginCommand {
       this.deps.writeTo(`  Team: ${team}`);
       this.deps.writeTo(`  Token expires: ${expiry}`);
       this.deps.writeTo('');
-      this.deps.writeTo('  Next: run `theo deploy` to deploy your project');
+      this.deps.writeTo('  Next: run `loopscale deploy` to deploy your project');
     }
     return 0;
   }

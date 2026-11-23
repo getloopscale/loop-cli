@@ -119,7 +119,7 @@ describe('Device Code Flow', () => {
     }
   });
 
-  // Regression: THEO_URL=https://app-dev.usetheo.dev/engine is the canonical
+  // Regression: LOOPSCALE_URL=https://app-dev.usetheo.dev/engine is the canonical
   // dev-public value (per src/config/constants.ts) so engine REST calls
   // (everything under /api/v1) hit the cloud /engine/* proxy. But the device
   // flow endpoints live at the CLOUD root (/v1/auth/device/*), not inside the
@@ -239,9 +239,9 @@ describe('refreshAccessToken', () => {
     expect(result).toBeNull();
   });
 
-  it('surfaces the network cause under THEO_DEBUG while still returning null', async () => {
-    const original = process.env.THEO_DEBUG;
-    process.env.THEO_DEBUG = '1';
+  it('surfaces the network cause under LOOPSCALE_DEBUG while still returning null', async () => {
+    const original = process.env.LOOPSCALE_DEBUG;
+    process.env.LOOPSCALE_DEBUG = '1';
     const writeSpy = jest
       .spyOn(process.stderr, 'write')
       .mockReturnValue(true);
@@ -264,9 +264,9 @@ describe('refreshAccessToken', () => {
     } finally {
       writeSpy.mockRestore();
       if (original === undefined) {
-        delete process.env.THEO_DEBUG;
+        delete process.env.LOOPSCALE_DEBUG;
       } else {
-        process.env.THEO_DEBUG = original;
+        process.env.LOOPSCALE_DEBUG = original;
       }
     }
   });

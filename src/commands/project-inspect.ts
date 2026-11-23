@@ -46,12 +46,12 @@ export class ProjectInspectCommand {
   async execute(name: string, opts: ProjectInspectOptions = {}): Promise<number> {
     // 1. Auth check
     if (!this.deps.getToken()) {
-      return this.exitWithError(opts, 'Not authenticated. Run: theo login', 4, 'AUTH_REQUIRED');
+      return this.exitWithError(opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
     // 2. Name required
     if (!name || name.trim() === '') {
-      return this.exitWithError(opts, 'Project name is required. Usage: theo project inspect <name>', 1, 'MISSING_ARGUMENT');
+      return this.exitWithError(opts, 'Project name is required. Usage: loopscale project inspect <name>', 1, 'MISSING_ARGUMENT');
     }
 
     // 3. Call API
@@ -76,7 +76,7 @@ export class ProjectInspectCommand {
       this.deps.writeTo(`  Created by: ${project.created_by}`);
     }
     this.deps.writeTo('');
-    this.deps.writeTo(`Manage: theo project list | theo project delete ${project.name}`);
+    this.deps.writeTo(`Manage: loopscale project list | loopscale project delete ${project.name}`);
 
     return 0;
   }
@@ -97,7 +97,7 @@ export class ProjectInspectCommand {
   private handleError(opts: ProjectInspectOptions, err: unknown, name: string): number {
     if (err instanceof ApiError) {
       if (err.exitCode === 4 || err.statusCode === 401) {
-        return this.exitWithError(opts, 'Authentication failed. Run: theo login', 4, 'AUTH_REQUIRED');
+        return this.exitWithError(opts, 'Authentication failed. Run: loopscale login', 4, 'AUTH_REQUIRED');
       }
       if (err.statusCode === 404) {
         return this.exitWithError(opts, `Project "${name}" not found.`, 1, 'PROJECT_NOT_FOUND');

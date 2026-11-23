@@ -84,13 +84,13 @@ export class PreviewListCommand {
   async execute(opts: PreviewListOptions = {}): Promise<number> {
     // 1. Auth check
     if (!this.deps.getToken()) {
-      return this.exitWithError(opts, 'Not authenticated. Run: theo login', 4, 'AUTH_REQUIRED');
+      return this.exitWithError(opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
     // 2. Find theo.yaml
     const yamlResult = this.deps.findTheoYaml();
     if (!yamlResult) {
-      return this.exitWithError(opts, 'No theo.yaml found. Run: theo init', 1, 'MISSING_CONFIG');
+      return this.exitWithError(opts, 'No theo.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
     }
 
     if (yamlResult.parseError) {
@@ -164,7 +164,7 @@ export class PreviewListCommand {
   private handleError(opts: PreviewListOptions, err: unknown): number {
     if (err instanceof ApiError) {
       if (err.exitCode === 4) {
-        return this.exitWithError(opts, 'Authentication failed. Run: theo login', 4, 'AUTH_REQUIRED');
+        return this.exitWithError(opts, 'Authentication failed. Run: loopscale login', 4, 'AUTH_REQUIRED');
       }
       // Sprint 5 / T4.1: PREVIEW_NOT_AVAILABLE removed — preview API is
       // now wired (api/internal/routes/preview.go is registered with the
@@ -194,18 +194,18 @@ export class PreviewInspectCommand {
   async execute(id: string, opts: PreviewInspectOptions = {}): Promise<number> {
     // 1. Auth check
     if (!this.deps.getToken()) {
-      return this.exitWithError(opts, 'Not authenticated. Run: theo login', 4, 'AUTH_REQUIRED');
+      return this.exitWithError(opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
     // 2. Validate ID
     if (!id || id.trim() === '') {
-      return this.exitWithError(opts, 'Preview ID is required. Usage: theo preview inspect <id>', 1, 'MISSING_ARGUMENT');
+      return this.exitWithError(opts, 'Preview ID is required. Usage: loopscale preview inspect <id>', 1, 'MISSING_ARGUMENT');
     }
 
     // 3. Find theo.yaml
     const yamlResult = this.deps.findTheoYaml();
     if (!yamlResult) {
-      return this.exitWithError(opts, 'No theo.yaml found. Run: theo init', 1, 'MISSING_CONFIG');
+      return this.exitWithError(opts, 'No theo.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
     }
 
     if (yamlResult.parseError) {
@@ -267,7 +267,7 @@ export class PreviewInspectCommand {
   private handleError(opts: PreviewInspectOptions, err: unknown, id: string): number {
     if (err instanceof ApiError) {
       if (err.exitCode === 4) {
-        return this.exitWithError(opts, 'Authentication failed. Run: theo login', 4, 'AUTH_REQUIRED');
+        return this.exitWithError(opts, 'Authentication failed. Run: loopscale login', 4, 'AUTH_REQUIRED');
       }
       if (err.statusCode === 404) {
         return this.exitWithError(opts, `Preview ${id} not found.`, 1, 'PREVIEW_NOT_FOUND');
@@ -296,18 +296,18 @@ export class PreviewDeleteCommand {
   async execute(id: string, opts: PreviewDeleteOptions = {}): Promise<number> {
     // 1. Auth check
     if (!this.deps.getToken()) {
-      return this.exitWithError(opts, 'Not authenticated. Run: theo login', 4, 'AUTH_REQUIRED');
+      return this.exitWithError(opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
     // 2. Validate ID
     if (!id || id.trim() === '') {
-      return this.exitWithError(opts, 'Preview ID is required. Usage: theo preview delete <id>', 1, 'MISSING_ARGUMENT');
+      return this.exitWithError(opts, 'Preview ID is required. Usage: loopscale preview delete <id>', 1, 'MISSING_ARGUMENT');
     }
 
     // 3. Find theo.yaml
     const yamlResult = this.deps.findTheoYaml();
     if (!yamlResult) {
-      return this.exitWithError(opts, 'No theo.yaml found. Run: theo init', 1, 'MISSING_CONFIG');
+      return this.exitWithError(opts, 'No theo.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
     }
 
     if (yamlResult.parseError) {
@@ -365,7 +365,7 @@ export class PreviewDeleteCommand {
   private handleError(opts: PreviewDeleteOptions, err: unknown, id: string): number {
     if (err instanceof ApiError) {
       if (err.exitCode === 4) {
-        return this.exitWithError(opts, 'Authentication failed. Run: theo login', 4, 'AUTH_REQUIRED');
+        return this.exitWithError(opts, 'Authentication failed. Run: loopscale login', 4, 'AUTH_REQUIRED');
       }
       if (err.statusCode === 404) {
         return this.exitWithError(opts, `Preview ${id} not found.`, 1, 'PREVIEW_NOT_FOUND');

@@ -107,7 +107,7 @@ describe('RollbackCommand', () => {
 
       expect(exitCode).toBe(4);
       const errorOutput = (deps.writeError as jest.Mock).mock.calls.map((c: string[]) => c[0]).join('\n');
-      expect(errorOutput).toContain('theo login');
+      expect(errorOutput).toContain('loopscale login');
     });
   });
 
@@ -120,7 +120,7 @@ describe('RollbackCommand', () => {
 
       expect(exitCode).toBe(1);
       const errorOutput = (deps.writeError as jest.Mock).mock.calls.map((c: string[]) => c[0]).join('\n');
-      expect(errorOutput).toContain('theo init');
+      expect(errorOutput).toContain('loopscale init');
     });
   });
 
@@ -185,7 +185,7 @@ describe('RollbackCommand', () => {
 
   // CHG-2026-04-23-AUDIT-25: network errors now carry code=API_UNREACHABLE.
   describe('API unreachable (AUDIT-25)', () => {
-    it('network error produces API_UNREACHABLE code + Check THEO_URL hint', async () => {
+    it('network error produces API_UNREACHABLE code + Check LOOPSCALE_URL hint', async () => {
       const deps = createMockDeps({
         rollback: jest.fn().mockRejectedValue(new Error('fetch failed')),
       });
@@ -196,7 +196,7 @@ describe('RollbackCommand', () => {
       expect(exitCode).toBe(3);
       const parsed = JSON.parse((deps.writeTo as jest.Mock).mock.calls[0][0]);
       expect(parsed.code).toBe('API_UNREACHABLE');
-      expect(parsed.error).toContain('Check THEO_URL');
+      expect(parsed.error).toContain('Check LOOPSCALE_URL');
     });
   });
 

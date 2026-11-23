@@ -31,7 +31,7 @@ describe('ScaleCommand', () => {
       expect(deps.scale).toHaveBeenCalledWith('my-app', 'production', 'api', { replicas: 3 });
       const output = (deps.writeTo as jest.Mock).mock.calls.map((c: string[]) => c[0]).join('\n');
       expect(output).toContain('Replicas: 3');
-      expect(output).toContain('theo deploy');
+      expect(output).toContain('loopscale deploy');
     });
 
     it('should use specified environment', async () => {
@@ -178,7 +178,7 @@ describe('ScaleCommand', () => {
 
       expect(exitCode).toBe(4);
       const errorOutput = (deps.writeError as jest.Mock).mock.calls.map((c: string[]) => c[0]).join('\n');
-      expect(errorOutput).toContain('theo login');
+      expect(errorOutput).toContain('loopscale login');
     });
   });
 
@@ -191,7 +191,7 @@ describe('ScaleCommand', () => {
 
       expect(exitCode).toBe(1);
       const errorOutput = (deps.writeError as jest.Mock).mock.calls.map((c: string[]) => c[0]).join('\n');
-      expect(errorOutput).toContain('theo init');
+      expect(errorOutput).toContain('loopscale init');
     });
   });
 
@@ -270,7 +270,7 @@ describe('ScaleCommand', () => {
   // CHG-2026-04-23-AUDIT-25: network errors now carry code=API_UNREACHABLE
   // so CI scripts can match a single predicate across all commands.
   describe('API unreachable (AUDIT-25)', () => {
-    it('network error produces API_UNREACHABLE code + Check THEO_URL hint', async () => {
+    it('network error produces API_UNREACHABLE code + Check LOOPSCALE_URL hint', async () => {
       const deps = createMockDeps({
         scale: jest.fn().mockRejectedValue(new Error('fetch failed')),
       });
@@ -281,7 +281,7 @@ describe('ScaleCommand', () => {
       expect(exitCode).toBe(3);
       const parsed = JSON.parse((deps.writeTo as jest.Mock).mock.calls[0][0]);
       expect(parsed.code).toBe('API_UNREACHABLE');
-      expect(parsed.error).toContain('Check THEO_URL');
+      expect(parsed.error).toContain('Check LOOPSCALE_URL');
     });
   });
 

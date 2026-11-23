@@ -7,8 +7,8 @@ import { trace } from '@opentelemetry/api';
 describe('tracing', () => {
   afterEach(async () => {
     await shutdownTracing();
-    delete process.env.THEO_TRACING_ENABLED;
-    delete process.env.THEO_OTEL_ENDPOINT;
+    delete process.env.LOOPSCALE_TRACING_ENABLED;
+    delete process.env.LOOPSCALE_OTEL_ENDPOINT;
   });
 
   it('does not crash when tracing is disabled (default)', () => {
@@ -17,8 +17,8 @@ describe('tracing', () => {
   });
 
   it('registers a real TracerProvider when enabled', () => {
-    process.env.THEO_TRACING_ENABLED = 'true';
-    process.env.THEO_OTEL_ENDPOINT = 'http://localhost:4318/v1/traces';
+    process.env.LOOPSCALE_TRACING_ENABLED = 'true';
+    process.env.LOOPSCALE_OTEL_ENDPOINT = 'http://localhost:4318/v1/traces';
     initTracing();
 
     // When enabled, the tracer should produce valid (non-zero) trace IDs
@@ -30,13 +30,13 @@ describe('tracing', () => {
     span.end();
   });
 
-  it('initializes when THEO_TRACING_ENABLED=1', () => {
-    process.env.THEO_TRACING_ENABLED = '1';
+  it('initializes when LOOPSCALE_TRACING_ENABLED=1', () => {
+    process.env.LOOPSCALE_TRACING_ENABLED = '1';
     expect(() => initTracing()).not.toThrow();
   });
 
-  it('does not initialize when THEO_TRACING_ENABLED=false', () => {
-    process.env.THEO_TRACING_ENABLED = 'false';
+  it('does not initialize when LOOPSCALE_TRACING_ENABLED=false', () => {
+    process.env.LOOPSCALE_TRACING_ENABLED = 'false';
     expect(() => initTracing()).not.toThrow();
   });
 
@@ -45,13 +45,13 @@ describe('tracing', () => {
   });
 
   it('shuts down gracefully after initialization', async () => {
-    process.env.THEO_TRACING_ENABLED = 'true';
+    process.env.LOOPSCALE_TRACING_ENABLED = 'true';
     initTracing();
     await expect(shutdownTracing()).resolves.not.toThrow();
   });
 
   it('returns a tracer that can create spans with valid IDs', () => {
-    process.env.THEO_TRACING_ENABLED = 'true';
+    process.env.LOOPSCALE_TRACING_ENABLED = 'true';
     initTracing();
 
     const tracer = getTracer();

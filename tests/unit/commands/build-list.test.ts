@@ -86,7 +86,7 @@ describe('BuildListCommand', () => {
               environment: 'production',
               status: 'SUCCEEDED',
               commit_sha: '3792658fac8e66da9fcfac910882091d3978059e',
-              created_by: 'theo-e2e',
+              created_by: 'loopscale-e2e',
               created_at: '2026-04-23T14:27:23Z',
               duration_seconds: 187,
             },
@@ -201,7 +201,7 @@ describe('BuildListCommand', () => {
       const exitCode = await cmd.execute();
 
       expect(exitCode).toBe(4);
-      expect(deps.writeError).toHaveBeenCalledWith('Not authenticated. Run: theo login');
+      expect(deps.writeError).toHaveBeenCalledWith('Not authenticated. Run: loopscale login');
       expect(deps.listBuilds).not.toHaveBeenCalled();
     });
 
@@ -232,7 +232,7 @@ describe('BuildListCommand', () => {
 
   // CHG-2026-04-23-AUDIT-24: same rationale as team-list / project-list.
   describe('API unreachable (AUDIT-24)', () => {
-    it('network error produces API_UNREACHABLE code + Check THEO_URL hint', async () => {
+    it('network error produces API_UNREACHABLE code + Check LOOPSCALE_URL hint', async () => {
       const deps = createMockDeps({
         listBuilds: jest.fn().mockRejectedValue(new Error('fetch failed')),
       });
@@ -244,7 +244,7 @@ describe('BuildListCommand', () => {
       const parsed = JSON.parse((deps.writeTo as jest.Mock).mock.calls[0][0]);
       expect(parsed.code).toBe('API_UNREACHABLE');
       expect(parsed.error).toContain('Cannot reach API');
-      expect(parsed.error).toContain('Check THEO_URL');
+      expect(parsed.error).toContain('Check LOOPSCALE_URL');
     });
 
     it('non-network Error keeps UNEXPECTED_ERROR code', async () => {
@@ -269,7 +269,7 @@ describe('BuildListCommand', () => {
       const exitCode = await cmd.execute();
 
       expect(exitCode).toBe(1);
-      expect(deps.writeError).toHaveBeenCalledWith('No theo.yaml found. Run: theo init (or pass --project <name>)');
+      expect(deps.writeError).toHaveBeenCalledWith('No theo.yaml found. Run: loopscale init (or pass --project <name>)');
       expect(deps.listBuilds).not.toHaveBeenCalled();
     });
 

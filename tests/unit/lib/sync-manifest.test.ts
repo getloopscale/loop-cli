@@ -13,7 +13,7 @@ import path from 'path';
 import { hashBytes, readManifest, writeManifest, SyncManifestError, Manifest } from '../../../src/lib/sync-manifest';
 
 async function tmp(): Promise<string> {
-  return fs.mkdtemp(path.join(os.tmpdir(), 'theo-sync-manifest-'));
+  return fs.mkdtemp(path.join(os.tmpdir(), 'loopscale-sync-manifest-'));
 }
 
 describe('sync-manifest', () => {

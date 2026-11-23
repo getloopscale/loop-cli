@@ -119,7 +119,7 @@ function handleApiError(
 ): number {
   if (err instanceof ApiError) {
     if (err.exitCode === 4 || err.statusCode === 401) {
-      return exitWithError(deps, json, 'Authentication failed. Run: theo login', 4, 'AUTH_REQUIRED');
+      return exitWithError(deps, json, 'Authentication failed. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
     return exitWithError(deps, json, `${action}: ${err.message}`, 3, err.code);
   }
@@ -150,11 +150,11 @@ export class DomainAddCommand {
 
   async execute(domain: string, opts: DomainAddOptions): Promise<number> {
     if (!this.deps.getToken()) {
-      return exitWithError(this.deps, opts.json, 'Not authenticated. Run: theo login', 4, 'AUTH_REQUIRED');
+      return exitWithError(this.deps, opts.json, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
     if (!domain || domain.trim() === '') {
-      return exitWithError(this.deps, opts.json, 'Domain name is required. Usage: theo domain add <domain> --project <p> --app <a> --env <e>', 1, 'MISSING_ARGUMENT');
+      return exitWithError(this.deps, opts.json, 'Domain name is required. Usage: loopscale domain add <domain> --project <p> --app <a> --env <e>', 1, 'MISSING_ARGUMENT');
     }
     if (!opts.project) {
       return exitWithError(this.deps, opts.json, '--project is required', 1, 'MISSING_ARGUMENT');
@@ -195,7 +195,7 @@ export class DomainAddCommand {
         this.deps.writeTo(`    GoDaddy:    Domains → DNS → Nameservers → Change`);
         this.deps.writeTo(`    Namecheap:  Domain List → Manage → Nameservers → Custom DNS`);
         this.deps.writeTo(`    Hostinger:  Domains → DNS/Nameservers → Change Nameservers\n`);
-        this.deps.writeTo(`  After changing, run: theo domain status ${domain}`);
+        this.deps.writeTo(`  After changing, run: loopscale domain status ${domain}`);
         return 0;
       }
 
@@ -210,7 +210,7 @@ export class DomainAddCommand {
       if (result.verification) {
         this.deps.writeTo(`  TXT    ${result.verification.txt_name.padEnd(40)} ${result.verification.txt_value}\n`);
       }
-      this.deps.writeTo(`  Then run: theo domain verify ${domain}`);
+      this.deps.writeTo(`  Then run: loopscale domain verify ${domain}`);
       return 0;
     } catch (err) {
       if (err instanceof ApiError && err.statusCode === 409) {
@@ -234,10 +234,10 @@ export class DomainVerifyCommand {
 
   async execute(domain: string, opts: DomainVerifyOptions = {}): Promise<number> {
     if (!this.deps.getToken()) {
-      return exitWithError(this.deps, opts.json, 'Not authenticated. Run: theo login', 4, 'AUTH_REQUIRED');
+      return exitWithError(this.deps, opts.json, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
     if (!domain || domain.trim() === '') {
-      return exitWithError(this.deps, opts.json, 'Domain name is required. Usage: theo domain verify <domain>', 1, 'MISSING_ARGUMENT');
+      return exitWithError(this.deps, opts.json, 'Domain name is required. Usage: loopscale domain verify <domain>', 1, 'MISSING_ARGUMENT');
     }
 
     try {
@@ -251,7 +251,7 @@ export class DomainVerifyCommand {
       if (result.status === 'verified' || result.status === 'provisioning') {
         this.deps.writeTo(`✓ DNS verified`);
         this.deps.writeTo(`⟳ TLS certificate being provisioned...\n`);
-        this.deps.writeTo(`  Check progress: theo domain status ${domain}`);
+        this.deps.writeTo(`  Check progress: loopscale domain status ${domain}`);
         return 0;
       }
 
@@ -288,10 +288,10 @@ export class DomainStatusCommand {
 
   async execute(domain: string, opts: DomainStatusOptions = {}): Promise<number> {
     if (!this.deps.getToken()) {
-      return exitWithError(this.deps, opts.json, 'Not authenticated. Run: theo login', 4, 'AUTH_REQUIRED');
+      return exitWithError(this.deps, opts.json, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
     if (!domain || domain.trim() === '') {
-      return exitWithError(this.deps, opts.json, 'Domain name is required. Usage: theo domain status <domain>', 1, 'MISSING_ARGUMENT');
+      return exitWithError(this.deps, opts.json, 'Domain name is required. Usage: loopscale domain status <domain>', 1, 'MISSING_ARGUMENT');
     }
 
     try {
@@ -357,7 +357,7 @@ export class DomainListCommand {
 
   async execute(opts: DomainListOptions = {}): Promise<number> {
     if (!this.deps.getToken()) {
-      return exitWithError(this.deps, opts.json, 'Not authenticated. Run: theo login', 4, 'AUTH_REQUIRED');
+      return exitWithError(this.deps, opts.json, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
     try {
@@ -407,10 +407,10 @@ export class DomainRemoveCommand {
 
   async execute(domain: string, opts: DomainRemoveOptions = {}): Promise<number> {
     if (!this.deps.getToken()) {
-      return exitWithError(this.deps, opts.json, 'Not authenticated. Run: theo login', 4, 'AUTH_REQUIRED');
+      return exitWithError(this.deps, opts.json, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
     if (!domain || domain.trim() === '') {
-      return exitWithError(this.deps, opts.json, 'Domain name is required. Usage: theo domain remove <domain> --yes', 1, 'MISSING_ARGUMENT');
+      return exitWithError(this.deps, opts.json, 'Domain name is required. Usage: loopscale domain remove <domain> --yes', 1, 'MISSING_ARGUMENT');
     }
 
     // Safety: require --yes to confirm destructive action
@@ -442,7 +442,7 @@ export class DomainRemoveCommand {
 }
 
 // ============================================================
-// DomainDNSCommand — theo domain dns <domain>
+// DomainDNSCommand — loopscale domain dns <domain>
 // ============================================================
 
 export interface DomainDNSOptions {
@@ -454,10 +454,10 @@ export class DomainDNSCommand {
 
   async execute(domain: string, opts: DomainDNSOptions = {}): Promise<number> {
     if (!this.deps.getToken()) {
-      return exitWithError(this.deps, opts.json, 'Not authenticated. Run: theo login', 4, 'AUTH_REQUIRED');
+      return exitWithError(this.deps, opts.json, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
     if (!domain || domain.trim() === '') {
-      return exitWithError(this.deps, opts.json, 'Domain name is required. Usage: theo domain dns <domain>', 1, 'MISSING_ARGUMENT');
+      return exitWithError(this.deps, opts.json, 'Domain name is required. Usage: loopscale domain dns <domain>', 1, 'MISSING_ARGUMENT');
     }
 
     if (!this.deps.listDNSRecords) {

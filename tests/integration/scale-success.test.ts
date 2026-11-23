@@ -2,8 +2,8 @@
 // Copyright 2025-2026 The Theo Authors
 //
 // Phase 4 T4.2 — `scale` register integration test.
-// CLAUDE.md says: "theo scale DB persistence (stub returns 202
-// acknowledged — use theo.yaml + theo deploy)". This test pins that
+// CLAUDE.md says: "loopscale scale DB persistence (stub returns 202
+// acknowledged — use theo.yaml + loopscale deploy)". This test pins that
 // honest-stub contract so accidental "make it work" attempts that
 // would mask the missing implementation get caught.
 
@@ -26,7 +26,7 @@ afterEach(async () => {
   while (servers.length) await servers.pop()!.close();
 });
 
-describe('theo scale --help', () => {
+describe('loopscale scale --help', () => {
   it('exit 0', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
@@ -35,14 +35,14 @@ describe('theo scale --help', () => {
   });
 });
 
-describe('theo scale (STUB per CLAUDE.md)', () => {
+describe('loopscale scale (STUB per CLAUDE.md)', () => {
   it('returns 202 acknowledged stub for valid request', async () => {
     const server = await startMockApi();
     servers.push(server);
     server.on({
       method: 'POST',
       path: '/api/v1/scale',
-      response: { status: 202, body: { acknowledged: true, status: 'pending', message: 'Use theo.yaml + theo deploy for actual scaling' } },
+      response: { status: 202, body: { acknowledged: true, status: 'pending', message: 'Use theo.yaml + loopscale deploy for actual scaling' } },
     });
 
     const tmp = mkTmpHome();
@@ -53,12 +53,12 @@ describe('theo scale (STUB per CLAUDE.md)', () => {
     const r = await spawnTheo({
       args: ['scale', '--app', 'api', '--replicas', '3', '--env', 'production', '--json'],
       cwd: tmp,
-      env: { THEO_URL: server.url },
+      env: { LOOPSCALE_URL: server.url },
       timeoutMs: 15_000,
     });
     // Stub semantics: command may exit 0 (acknowledged stub), 1
     // (usage), or 3 (deploy failure — CLAUDE.md note "use theo.yaml +
-    // theo deploy" suggests scale may surface non-implementation as
+    // loopscale deploy" suggests scale may surface non-implementation as
     // exit 3). Reject hang or unexpected codes (-1, 143).
     expect([0, 1, 3]).toContain(r.exitCode);
     if (r.exitCode === 0) {

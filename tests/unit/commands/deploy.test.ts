@@ -256,7 +256,7 @@ describe('DeployCommand', () => {
       expect(exitCode).toBe(4);
       const errOutput = (deps.writeError as jest.Mock).mock.calls.map((c: string[]) => c[0]).join(' ');
       expect(errOutput).toContain('Not authenticated');
-      expect(errOutput).toContain('theo login');
+      expect(errOutput).toContain('loopscale login');
     });
 
     it('should not attempt any operations after auth failure', async () => {
@@ -283,7 +283,7 @@ describe('DeployCommand', () => {
       expect(exitCode).toBe(4);
       const errOutput = (deps.writeError as jest.Mock).mock.calls.map((c: string[]) => c[0]).join(' ');
       expect(errOutput).toContain('Not authenticated');
-      expect(errOutput).toContain('theo login');
+      expect(errOutput).toContain('loopscale login');
       expect(deps.findTheoYaml).not.toHaveBeenCalled();
       expect(deps.hasGitRepo).not.toHaveBeenCalled();
     });
@@ -450,7 +450,7 @@ describe('DeployCommand', () => {
       const output = (deps.writeTo as jest.Mock).mock.calls.map((c: string[]) => c[0]).join('');
       const parsed = JSON.parse(output);
       const failedApp = parsed.apps.find((a: Record<string, unknown>) => a.status === 'failed');
-      expect(failedApp.build_log).toBe('theo logs --build build-abc123');
+      expect(failedApp.build_log).toBe('loopscale logs --build build-abc123');
       // Deployed apps should NOT have build_log
       const deployedApp = parsed.apps.find((a: Record<string, unknown>) => a.status === 'deployed');
       expect(deployedApp.build_log).toBeUndefined();
@@ -470,7 +470,7 @@ describe('DeployCommand', () => {
       expect(output).toContain('Deploy submitted');
       expect(output).toContain('build-deadbeef');
       expect(output).toContain('running in the background');
-      expect(output).not.toContain('theo deploy');
+      expect(output).not.toContain('loopscale deploy');
     });
   });
 
@@ -500,7 +500,7 @@ describe('DeployCommand', () => {
       expect(exitCode).toBe(1);
       const errOutput = (deps.writeError as jest.Mock).mock.calls.map((c: string[]) => c[0]).join(' ');
       expect(errOutput).toContain('No theo.yaml found');
-      expect(errOutput).toContain('theo init');
+      expect(errOutput).toContain('loopscale init');
     });
   });
 
@@ -1072,7 +1072,7 @@ describe('DeployCommand', () => {
       expect(deps.getSecrets).not.toHaveBeenCalled();
     });
 
-    it('should NOT suggest theo secret set in error message (DA-8)', async () => {
+    it('should NOT suggest loopscale secret set in error message (DA-8)', async () => {
       const deps = createMockDeps({
         findTheoYaml: jest.fn().mockReturnValue({
           path: '/project/theo.yaml',
@@ -1090,8 +1090,8 @@ describe('DeployCommand', () => {
       await cmd.execute({});
 
       const errOutput = (deps.writeError as jest.Mock).mock.calls.map((c: string[]) => c[0]).join(' ');
-      expect(errOutput).not.toContain('theo secret set');
-      expect(errOutput).not.toContain('theo secret');
+      expect(errOutput).not.toContain('loopscale secret set');
+      expect(errOutput).not.toContain('loopscale secret');
     });
 
     it('should include documentation URL in missing secrets message', async () => {
@@ -1112,7 +1112,7 @@ describe('DeployCommand', () => {
       await cmd.execute({});
 
       const errOutput = (deps.writeError as jest.Mock).mock.calls.map((c: string[]) => c[0]).join(' ');
-      expect(errOutput).toContain('https://docs.usetheo.dev/secrets');
+      expect(errOutput).toContain('https://docs.getloopscale.com/secrets');
     });
 
     it('should aggregate secrets from all apps and deduplicate', async () => {
@@ -1336,7 +1336,7 @@ describe('DeployCommand', () => {
       expect(exitCode).toBe(4);
       const output = (deps.writeTo as jest.Mock).mock.calls.map((c: string[]) => c[0]).join('');
       const parsed = JSON.parse(output);
-      expect(parsed).toEqual({ code: 'AUTH_REQUIRED', error: 'Not authenticated. Run: theo login', exit_code: 4 });
+      expect(parsed).toEqual({ code: 'AUTH_REQUIRED', error: 'Not authenticated. Run: loopscale login', exit_code: 4 });
       expect(deps.writeError).not.toHaveBeenCalled();
     });
 
@@ -1377,7 +1377,7 @@ describe('DeployCommand', () => {
       expect(exitCode).toBe(1);
       const output = (deps.writeTo as jest.Mock).mock.calls.map((c: string[]) => c[0]).join('');
       const parsed = JSON.parse(output);
-      expect(parsed).toEqual({ code: 'MISSING_CONFIG', error: 'No theo.yaml found. Run: theo init', exit_code: 1 });
+      expect(parsed).toEqual({ code: 'MISSING_CONFIG', error: 'No theo.yaml found. Run: loopscale init', exit_code: 1 });
       expect(deps.writeError).not.toHaveBeenCalled();
     });
 
@@ -1934,7 +1934,7 @@ describe('DeployCommand', () => {
       const exitCode = await cmd.execute({});
       expect(exitCode).toBe(3);
       expect(deps.writeError).toHaveBeenCalledWith(expect.stringContaining("Service didn't become healthy in time"));
-      expect(deps.writeError).toHaveBeenCalledWith(expect.stringContaining('theo logs --build'));
+      expect(deps.writeError).toHaveBeenCalledWith(expect.stringContaining('loopscale logs --build'));
     });
 
     it('outputs JSON with exit_code 3 on deploy.sync_failed with --json', async () => {
@@ -2008,10 +2008,10 @@ describe('DeployCommand', () => {
     });
 
     // CHG-2026-04-23-AUDIT-32: stream.closed error must guide the user
-    // to the canonical source of truth for build state (theo build
+    // to the canonical source of truth for build state (loopscale build
     // inspect) instead of making a claim about unknown state ("may
     // still be running"). Same class of bug as AUDIT-31 for logs.
-    it('stream.closed message points to theo build inspect (not "may be running")', async () => {
+    it('stream.closed message points to loopscale build inspect (not "may be running")', async () => {
       const deps = createMockDeps({
         connectSSE: jest.fn().mockImplementation(
           (_buildId: string, onEvent: (event: SSEEvent) => void) => {
@@ -2025,11 +2025,11 @@ describe('DeployCommand', () => {
       await cmd.execute({ json: true });
       const parsed = JSON.parse((deps.writeTo as jest.Mock).mock.calls[0][0]);
       expect(parsed.error).not.toContain('may still be running');
-      expect(parsed.error).toContain('theo build inspect');
+      expect(parsed.error).toContain('loopscale build inspect');
       expect(parsed.error).toContain('build-deadbeef');
     });
 
-    it('stream.closed human-mode also suggests theo build inspect', async () => {
+    it('stream.closed human-mode also suggests loopscale build inspect', async () => {
       const deps = createMockDeps({
         connectSSE: jest.fn().mockImplementation(
           (_buildId: string, onEvent: (event: SSEEvent) => void) => {
@@ -2042,7 +2042,7 @@ describe('DeployCommand', () => {
       await cmd.execute({});
       const errs = (deps.writeError as jest.Mock).mock.calls.map((c: string[]) => c[0]).join(' ');
       expect(errs).not.toContain('may still be running');
-      expect(errs).toContain('theo build inspect');
+      expect(errs).toContain('loopscale build inspect');
     });
   });
 
@@ -2120,7 +2120,7 @@ describe('DeployCommand', () => {
       // Create real temp directory with lockfile to test F-04 without mocking fs
       const os = await import('os');
       const path = await import('path');
-      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'theo-test-'));
+      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'loopscale-test-'));
       const appDir = path.join(tmpDir, 'apps', 'api');
       fs.mkdirSync(appDir, { recursive: true });
       fs.writeFileSync(path.join(appDir, 'package-lock.json'), '{}');
@@ -2167,7 +2167,7 @@ describe('DeployCommand', () => {
       expect(errorOutput).toContain('Build Failed');
       expect(errorOutput).not.toContain('Workflow');
       expect(errorOutput).not.toContain('build cluster');
-      expect(errorOutput).toContain('theo logs --build');
+      expect(errorOutput).toContain('loopscale logs --build');
     });
 
     it('should sanitize internal terms in build error JSON output', async () => {
@@ -2194,7 +2194,7 @@ describe('DeployCommand', () => {
       expect(parsed.error).toContain('image builder');
       expect(parsed.error).toContain('deployment sync');
       expect(parsed.build_id).toBe('build-deadbeef');
-      expect(parsed.suggestion).toContain('theo logs --build');
+      expect(parsed.suggestion).toContain('loopscale logs --build');
     });
 
     it('should pass through clean error messages unchanged', async () => {
@@ -2364,7 +2364,7 @@ describe('DeployCommand', () => {
       const allErrors = (deps.writeError as jest.Mock).mock.calls.flat().join(' ');
       expect(allErrors).toContain('Canary deployment aborted');
       expect(allErrors).toContain('20%');
-      expect(allErrors).toContain('theo logs --build');
+      expect(allErrors).toContain('loopscale logs --build');
       // Rule 3: zero internal terms
       expect(allErrors.toLowerCase()).not.toContain('rollout');
       expect(allErrors.toLowerCase()).not.toContain('argo');

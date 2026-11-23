@@ -53,11 +53,11 @@ export function formatErrorMessage(
  * Prior behavior: each command's handleError generated its own ad-hoc
  * message for network failures ("Failed to list: fetch failed. Try again."),
  * and every branch used `code: "UNEXPECTED_ERROR"` regardless of whether
- * the cause was a wrong THEO_URL or a real 5xx on the server.
+ * the cause was a wrong LOOPSCALE_URL or a real 5xx on the server.
  *
  * Operators lost a diagnostic signal: scripts couldn't distinguish a
  * temporary retry situation from a permanent config error, and the hint
- * didn't point users at the most likely fix (Check THEO_URL).
+ * didn't point users at the most likely fix (Check LOOPSCALE_URL).
  *
  * This helper centralizes the heuristic. Pair with code=`API_UNREACHABLE`
  * at the call site (the helper is classifier-only; exit code + code label
@@ -72,7 +72,7 @@ export interface NetworkErrorClassification {
   isNetwork: boolean;
   /**
    * User-facing message. Only populated when isNetwork=true. Always ends
-   * with ". Check THEO_URL." so scripts can rely on the suffix.
+   * with ". Check LOOPSCALE_URL." so scripts can rely on the suffix.
    */
   message: string;
 }
@@ -99,6 +99,6 @@ export function classifyNetworkError(err: unknown): NetworkErrorClassification {
   // Reuse formatErrorMessage to keep punctuation policy in one place.
   return {
     isNetwork: true,
-    message: formatErrorMessage('Cannot reach API', raw, 'Check THEO_URL'),
+    message: formatErrorMessage('Cannot reach API', raw, 'Check LOOPSCALE_URL'),
   };
 }

@@ -3,8 +3,8 @@
 //
 // CHG-2026-04-30-INFRA-NORMALIZE / Phase 4 T4.1 — spawn helper for
 // integration tests. Wraps `child_process.spawnSync` against the real
-// `cli/bin/theo` binary so tests exercise the full plumbing
-// (Commander → execute → bin/theo exit-code wiring) instead of mocked
+// `cli/bin/loopscale` binary so tests exercise the full plumbing
+// (Commander → execute → bin/loopscale exit-code wiring) instead of mocked
 // objects in isolation.
 //
 // Pattern matches existing tests/integration/exit-code-contract.test.ts.
@@ -18,7 +18,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
 
-export const BIN_PATH = path.resolve(__dirname, '../../../bin/theo');
+export const BIN_PATH = path.resolve(__dirname, '../../../bin/loopscale');
 
 export interface SpawnTheoOptions {
   /** Subcommand args, e.g. ['status', '--json']. */
@@ -59,7 +59,7 @@ function isolatedParentEnv(): NodeJS.ProcessEnv {
 }
 
 /**
- * Run `node bin/theo <args>` with isolated env + cwd. Returns exit code,
+ * Run `node bin/loopscale <args>` with isolated env + cwd. Returns exit code,
  * stdout, stderr.
  *
  * **Async, NOT sync.** Critical for tests using `mock-api-server.ts`:
@@ -72,7 +72,7 @@ function isolatedParentEnv(): NodeJS.ProcessEnv {
  * Defaults that prevent flake:
  *   - HOME = fresh tmpHome (config + cache scoped to test)
  *   - NO_COLOR = "1" (defeat ansi)
- *   - THEO_URL = http://127.0.0.1:1 unless caller overrides
+ *   - LOOPSCALE_URL = http://127.0.0.1:1 unless caller overrides
  *   - THEO_TELEMETRY_DISABLED = "1"
  *   - CI = "true"
  */
@@ -83,7 +83,7 @@ export function spawnTheo(opts: SpawnTheoOptions): Promise<SpawnTheoResult> {
     HOME: tmpHome,
     NO_COLOR: '1',
     // Default to unreachable. Tests using mock-api-server.ts override this.
-    THEO_URL: 'http://127.0.0.1:1',
+    LOOPSCALE_URL: 'http://127.0.0.1:1',
     THEO_TELEMETRY_DISABLED: '1',
     CI: 'true',
     ...opts.env,
@@ -157,7 +157,7 @@ export function spawnTheoSync(opts: SpawnTheoOptions): SpawnTheoResult {
     ...isolatedParentEnv(),
     HOME: tmpHome,
     NO_COLOR: '1',
-    THEO_URL: 'http://127.0.0.1:1',
+    LOOPSCALE_URL: 'http://127.0.0.1:1',
     THEO_TELEMETRY_DISABLED: '1',
     CI: 'true',
     ...opts.env,

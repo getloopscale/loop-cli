@@ -20,7 +20,7 @@ afterEach(async () => {
   while (servers.length) await servers.pop()!.close();
 });
 
-describe('theo preview --help', () => {
+describe('loopscale preview --help', () => {
   it('exit 0 + lists subcommands', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
@@ -32,7 +32,7 @@ describe('theo preview --help', () => {
   });
 });
 
-describe('theo preview list', () => {
+describe('loopscale preview list', () => {
   it('exit 4 without auth', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
@@ -60,7 +60,7 @@ describe('theo preview list', () => {
     const r = await spawnTheo({
       args: ['preview', 'list', '--json'],
       cwd: tmp,
-      env: { THEO_URL: server.url },
+      env: { LOOPSCALE_URL: server.url },
       timeoutMs: 15_000,
     });
     expect(r.exitCode).not.toBe(143);

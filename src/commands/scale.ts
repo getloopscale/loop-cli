@@ -46,8 +46,8 @@ export interface ScaleOptions {
  * ScaleCommand adjusts replica count or autoscaling for a service.
  *
  * Usage:
- *   theo scale --app api --replicas 3
- *   theo scale --app api --min 2 --max 10 --cpu 80
+ *   loopscale scale --app api --replicas 3
+ *   loopscale scale --app api --min 2 --max 10 --cpu 80
  *
  * Exit codes:
  *   0 — success
@@ -67,12 +67,12 @@ export class ScaleCommand {
 
     // 1. Auth check
     if (!this.deps.getToken()) {
-      return this.exitWithError(opts, 'Not authenticated. Run: theo login', 4, 'AUTH_REQUIRED');
+      return this.exitWithError(opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
     // 2. Validate --app is provided
     if (!opts.app || opts.app.trim() === '') {
-      return this.exitWithError(opts, 'App name is required. Usage: theo scale --app <name> --replicas <n>', 1, 'MISSING_ARGUMENT');
+      return this.exitWithError(opts, 'App name is required. Usage: loopscale scale --app <name> --replicas <n>', 1, 'MISSING_ARGUMENT');
     }
 
     // 3. Validate at least one scaling parameter
@@ -123,7 +123,7 @@ export class ScaleCommand {
     // 6. Find theo.yaml
     const yamlResult = this.deps.findTheoYaml();
     if (!yamlResult) {
-      return this.exitWithError(opts, 'No theo.yaml found. Run: theo init', 1, 'MISSING_CONFIG');
+      return this.exitWithError(opts, 'No theo.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
     }
 
     if (yamlResult.parseError) {
@@ -190,7 +190,7 @@ export class ScaleCommand {
       default:
         // Legacy "acknowledged" path.
         this.deps.writeTo('Scaling configuration acknowledged. Changes take effect on the next deploy.');
-        this.deps.writeTo('Update autoscaling in theo.yaml, then run `theo deploy`.');
+        this.deps.writeTo('Update autoscaling in theo.yaml, then run `loopscale deploy`.');
     }
 
     return 0;
@@ -210,7 +210,7 @@ export class ScaleCommand {
   private handleError(opts: { json?: boolean }, err: unknown): number {
     if (err instanceof ApiError) {
       if (err.exitCode === 4) {
-        return this.exitWithError(opts, 'Authentication failed. Run: theo login', 4, 'AUTH_REQUIRED');
+        return this.exitWithError(opts, 'Authentication failed. Run: loopscale login', 4, 'AUTH_REQUIRED');
       }
       if (err.statusCode === 404) {
         // CHG-2026-04-23-AUDIT-27: differentiate "feature not deployed"

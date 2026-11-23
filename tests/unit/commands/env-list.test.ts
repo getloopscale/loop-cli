@@ -102,7 +102,7 @@ describe('EnvListCommand', () => {
       const cmd = new EnvListCommand(makeDeps({ getToken: () => null }));
       await cmd.execute();
       expect(errors[0]).toContain('Not authenticated');
-      expect(errors[0]).toContain('theo login');
+      expect(errors[0]).toContain('loopscale login');
     });
   });
 

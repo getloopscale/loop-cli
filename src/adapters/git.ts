@@ -141,14 +141,14 @@ export async function createSourceBundle(): Promise<string> {
 
 /** Creates a git bundle from HEAD. */
 export async function createGitBundle(): Promise<string> {
-  const tmpFile = path.join(os.tmpdir(), `theo-bundle-${Date.now()}.bundle`);
+  const tmpFile = path.join(os.tmpdir(), `loopscale-bundle-${Date.now()}.bundle`);
   await execFileAsync('git', ['bundle', 'create', tmpFile, 'HEAD']);
   return tmpFile;
 }
 
 /** Creates a tar.gz bundle of the current directory, respecting ignore patterns. */
 export async function createTarBundle(): Promise<string> {
-  const tmpFile = path.join(os.tmpdir(), `theo-bundle-${Date.now()}.tar.gz`);
+  const tmpFile = path.join(os.tmpdir(), `loopscale-bundle-${Date.now()}.tar.gz`);
   const dir = process.cwd();
   const ig = loadIgnorePatterns(dir);
   const files = collectFiles(dir, dir, ig);

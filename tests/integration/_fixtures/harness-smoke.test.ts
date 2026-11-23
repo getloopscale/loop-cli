@@ -31,7 +31,7 @@ afterEach(async () => {
 });
 
 describe('harness: spawnTheo', () => {
-  it('runs `theo --version` and exits 0', async () => {
+  it('runs `loopscale --version` and exits 0', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
     const r = await spawnTheo({ args: ['--version'], cwd: tmp });
@@ -40,7 +40,7 @@ describe('harness: spawnTheo', () => {
     expect(r.stdout.trim().length).toBeGreaterThan(0);
   });
 
-  it('runs `theo --help` and exits 0', async () => {
+  it('runs `loopscale --help` and exits 0', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
     const r = await spawnTheo({ args: ['--help'], cwd: tmp });
@@ -151,7 +151,7 @@ describe('harness: tmpHome isolation from the caller environment', () => {
     const r = await spawnTheo({
       args: ['whoami', '--json'],
       cwd: tmp,
-      env: { THEO_URL: server.url },
+      env: { LOOPSCALE_URL: server.url },
       timeoutMs: 25_000,
     });
 

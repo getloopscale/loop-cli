@@ -41,7 +41,7 @@ describe('DoctorCommand', () => {
   });
 
   describe('not logged in', () => {
-    it('reports auth fail + suggests theo login', async () => {
+    it('reports auth fail + suggests loopscale login', async () => {
       const lines: string[] = [];
       const cmd = new DoctorCommand(makeDeps({
         getToken: () => null,
@@ -50,7 +50,7 @@ describe('DoctorCommand', () => {
       const exitCode = await cmd.execute({});
       expect(exitCode).toBe(1);
       expect(lines.some(l => l.includes('Not logged in'))).toBe(true);
-      expect(lines.some(l => l.includes('theo login'))).toBe(true);
+      expect(lines.some(l => l.includes('loopscale login'))).toBe(true);
     });
   });
 
@@ -86,14 +86,14 @@ describe('DoctorCommand', () => {
       expect(exitCode).toBe(0); // warn doesn't fail
     });
 
-    it('suggests theo init', async () => {
+    it('suggests loopscale init', async () => {
       const lines: string[] = [];
       const cmd = new DoctorCommand(makeDeps({
         readProjectConfig: () => ({ exists: false, valid: false }),
         writeTo: (m) => { lines.push(m); },
       }));
       await cmd.execute({});
-      expect(lines.some(l => l.includes('theo init'))).toBe(true);
+      expect(lines.some(l => l.includes('loopscale init'))).toBe(true);
     });
   });
 

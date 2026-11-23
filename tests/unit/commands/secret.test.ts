@@ -142,7 +142,7 @@ describe('SecretDeleteCommand', () => {
     expect(await cmd.execute({ name: 'KEY' })).toBe(4);
   });
 
-  // #164 — paridade com o fix do #161 (`theo promote`). Sem --yes e com stdin nao-interativo
+  // #164 — paridade com o fix do #161 (`loopscale promote`). Sem --yes e com stdin nao-interativo
   // (pipe, redirect, harness), a guarda anterior so cobria `isCI || opts.json`: um pipe sem a
   // variavel CI caia no prompt, travava ate o withTimeout de 40s e a mensagem culpava a REDE
   // ("Secret delete timed out. Check your connection"). O operador perdia o secret de vista

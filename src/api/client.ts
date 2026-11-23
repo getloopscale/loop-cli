@@ -52,7 +52,7 @@ export class ApiError extends Error {
 
   /**
    * Plan v1.2 T5.1 (M4) — preserve the underlying error chain so verbose
-   * mode (`THEO_DEBUG=1`) can render the root cause without losing
+   * mode (`LOOPSCALE_DEBUG=1`) can render the root cause without losing
    * stack/context. Mirrors the Error.cause shape introduced in Node 16.9.
    */
   constructor(message: string, exitCode: number, statusCode: number, code?: string, cause?: unknown) {
@@ -70,7 +70,7 @@ export class ApiError extends Error {
   static fromHttpStatus(status: number, serverMessage?: string | null, serverCode?: string): ApiError {
     if (status === 401) {
       return new ApiError(
-        serverMessage || 'Not authenticated. Run: theo login',
+        serverMessage || 'Not authenticated. Run: loopscale login',
         4, status, serverCode ?? 'AUTH_REQUIRED',
       );
     }
@@ -113,7 +113,7 @@ export class ApiError extends Error {
       // operator's message verbatim so users understand the planned downtime.
       if (serverCode === 'MAINTENANCE_MODE') {
         return new ApiError(
-          serverMessage || 'Theo is in maintenance mode. Mutations are temporarily disabled.',
+          serverMessage || 'LoopScale is in maintenance mode. Mutations are temporarily disabled.',
           3, status, 'MAINTENANCE_MODE',
         );
       }
@@ -136,7 +136,7 @@ export class ApiError extends Error {
 }
 
 /**
- * ApiClient — low-level HTTP client used by all Theo CLI commands.
+ * ApiClient — low-level HTTP client used by all LoopScale CLI commands.
  *
  * Retry policy (T-06 from docs/plans/50k-immediate-focus.md):
  *   - HTTP 429 (CELL_AT_CAPACITY backpressure from admission gate)
@@ -203,7 +203,7 @@ export class ApiClient {
   ): Promise<T> {
     const headers: Record<string, string> = {
       'Correlation-ID': randomUUID(),
-      'User-Agent': `theo-cli/${CLI_VERSION}`,
+      'User-Agent': `loopscale-cli/${CLI_VERSION}`,
       ...extraHeaders,
     };
 

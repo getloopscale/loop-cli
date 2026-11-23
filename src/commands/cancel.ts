@@ -40,12 +40,12 @@ export class CancelCommand {
   async execute(buildId: string, opts: CancelOptions = {}): Promise<number> {
     // 1. Auth check
     if (!this.deps.getToken()) {
-      return this.exitWithError(opts, 'Not authenticated. Run: theo login', 4, 'AUTH_REQUIRED');
+      return this.exitWithError(opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
     // 2. Build ID required
     if (!buildId || buildId.trim() === '') {
-      return this.exitWithError(opts, 'Build ID is required. Usage: theo cancel <build-id>', 1, 'MISSING_ARGUMENT');
+      return this.exitWithError(opts, 'Build ID is required. Usage: loopscale cancel <build-id>', 1, 'MISSING_ARGUMENT');
     }
 
     // 3. Call API
@@ -80,7 +80,7 @@ export class CancelCommand {
   private handleError(opts: CancelOptions, err: unknown, buildId: string): number {
     if (err instanceof ApiError) {
       if (err.exitCode === 4 || err.statusCode === 401) {
-        return this.exitWithError(opts, 'Authentication failed. Run: theo login', 4, 'AUTH_REQUIRED');
+        return this.exitWithError(opts, 'Authentication failed. Run: loopscale login', 4, 'AUTH_REQUIRED');
       }
       if (err.statusCode === 404) {
         return this.exitWithError(opts, `Build ${buildId} not found.`, 3, 'BUILD_NOT_FOUND');

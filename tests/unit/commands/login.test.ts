@@ -271,7 +271,7 @@ describe('LoginCommand', () => {
   });
 
   // Plan J-05 — explicit --device-flow flag. Sponsor caught LIVE 2026-06-05:
-  // running `theo login --device-flow` returned `error: unknown option`. The
+  // running `loopscale login --device-flow` returned `error: unknown option`. The
   // DoD references that exact invocation. The implicit "no --token + non-CI"
   // device-flow path is preserved; the explicit flag adds discoverability
   // and works in CI when an operator deliberately opts in.

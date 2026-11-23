@@ -41,7 +41,7 @@ describe('AuditCommand', () => {
     }));
     const code = await cmd.run({});
     expect(code).toBe(4);
-    expect(errs.join('\n')).toContain('theo login');
+    expect(errs.join('\n')).toContain('loopscale login');
   });
 
   it('returns 4 as JSON on 401 with AUTH_REQUIRED code', async () => {
@@ -77,11 +77,11 @@ describe('AuditCommand', () => {
     expect(code).toBe(1);
   });
 
-  // CHG-2026-04-23-AUDIT-23: every error branch of `theo audit --json` must
+  // CHG-2026-04-23-AUDIT-23: every error branch of `loopscale audit --json` must
   // emit machine-parseable JSON on stdout (Rule 5 / J5.1 stability contract).
   // Previously only the initial "not authenticated" branch honored --json;
   // network / 403 / null-data branches wrote plain text via writeError,
-  // breaking `theo audit --json 2>&1 | jq`.
+  // breaking `loopscale audit --json 2>&1 | jq`.
   describe('JSON contract (AUDIT-23)', () => {
     it('network error in --json produces JSON on stdout (not text on stderr)', async () => {
       const out: string[] = [];

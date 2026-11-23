@@ -39,17 +39,17 @@ export class TeamRoleCommand {
   async execute(username: string, role: string, opts: TeamRoleOptions = {}): Promise<number> {
     // 1. Auth check
     if (!this.deps.getToken()) {
-      return this.exitWithError(opts, 'Not authenticated. Run: theo login', 4, 'AUTH_REQUIRED');
+      return this.exitWithError(opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
     // 2. Username required
     if (!username || username.trim() === '') {
-      return this.exitWithError(opts, 'Username is required. Usage: theo team role <username> <role>', 1, 'MISSING_ARGUMENT');
+      return this.exitWithError(opts, 'Username is required. Usage: loopscale team role <username> <role>', 1, 'MISSING_ARGUMENT');
     }
 
     // 3. Role required
     if (!role || role.trim() === '') {
-      return this.exitWithError(opts, 'Role is required. Usage: theo team role <username> <role>', 1, 'MISSING_ARGUMENT');
+      return this.exitWithError(opts, 'Role is required. Usage: loopscale team role <username> <role>', 1, 'MISSING_ARGUMENT');
     }
 
     // 4. Validate role
@@ -93,7 +93,7 @@ export class TeamRoleCommand {
   private handleError(opts: TeamRoleOptions, err: unknown, username: string): number {
     if (err instanceof ApiError) {
       if (err.exitCode === 4 || err.statusCode === 401) {
-        return this.exitWithError(opts, 'Authentication failed. Run: theo login', 4, 'AUTH_REQUIRED');
+        return this.exitWithError(opts, 'Authentication failed. Run: loopscale login', 4, 'AUTH_REQUIRED');
       }
       if (err.statusCode === 403) {
         return this.exitWithError(

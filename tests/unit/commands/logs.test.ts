@@ -162,7 +162,7 @@ describe('LogsCommand', () => {
 
       expect(exitCode).toBe(4);
       const errorOutput = (deps.writeError as jest.Mock).mock.calls.map((c: string[]) => c[0]).join('\n');
-      expect(errorOutput).toContain('theo login');
+      expect(errorOutput).toContain('loopscale login');
     });
   });
 
@@ -219,7 +219,7 @@ describe('LogsCommand', () => {
 
       expect(exitCode).toBe(4);
       const errorOutput = (deps.writeError as jest.Mock).mock.calls.map((c: string[]) => c[0]).join('\n');
-      expect(errorOutput).toContain('theo login');
+      expect(errorOutput).toContain('loopscale login');
     });
   });
 
@@ -273,7 +273,7 @@ describe('LogsCommand', () => {
     // CHG-2026-04-23-AUDIT-37: stream error must produce exit 3, not 0.
     // Previously the error handler printed to stderr and the close
     // handler blindly resolved 0, masking failures from scripts like
-    // `theo logs --follow --build X | tee log.txt || alert`.
+    // `loopscale logs --follow --build X | tee log.txt || alert`.
     it('returns exit 3 when stream errors before close', async () => {
       const deps = createMockDeps({
         streamLogs: (_buildID, _onLine, onError, onClose) => {
@@ -446,9 +446,9 @@ describe('LogsCommand', () => {
     });
 
     // Red Team theo-cloud#160 — infer via listBuilds (same source as
-    // `theo build list`) NOT via getProjectStatus.last_build. Pre-fix scenario:
+    // `loopscale build list`) NOT via getProjectStatus.last_build. Pre-fix scenario:
     // preview env with 2 recent builds (CANCELLED + SUCCEEDED) shown by
-    // `theo build list`, but /status.last_build null because no active release
+    // `loopscale build list`, but /status.last_build null because no active release
     // binds them yet → CLI said "No builds found" and exited despite builds
     // existing. Post-fix: CLI hits /builds endpoint and picks the most recent.
     it('should infer via listBuilds when getProjectStatus.last_build is null (Red Team #160)', async () => {
@@ -487,7 +487,7 @@ describe('LogsCommand', () => {
 
     // Red Team #160 preference invariant — listBuilds is the SoT. Even if
     // getProjectStatus.last_build offers a different id, CLI must use the
-    // listBuilds one (which matches `theo build list`).
+    // listBuilds one (which matches `loopscale build list`).
     it('should prefer listBuilds over getProjectStatus (Red Team #160)', async () => {
       const deps = createMockDeps({
         listBuilds: jest.fn().mockResolvedValue({

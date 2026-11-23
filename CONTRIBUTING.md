@@ -1,4 +1,4 @@
-# Contributing to Theo CLI (`@usetheo/cli`)
+# Contributing to LoopScale CLI (`@getloopscale/cli`)
 
 Notes for human contributors and downstream maintainers. The full cycle-based
 engineering contract lives in [`CLAUDE.md`](./CLAUDE.md). This file documents
@@ -7,8 +7,8 @@ only what a contributor needs hands-on.
 ## Setup
 
 ```bash
-git clone https://github.com/usetheoai/theo-cli.git
-cd theo-cli
+git clone https://github.com/getloopscale/cli.git
+cd cli
 npm ci          # Node >= 20
 npm run build   # tsc
 npm test        # jest (unit + integration + contract)
@@ -17,7 +17,7 @@ npm run lint    # eslint
 
 ## The one rule that matters: the dependency direction
 
-`theo-cli` is a **thin HTTP client** over the engine's `/api/v1`. It shares
+The CLI is a **thin HTTP client** over the engine's `/api/v1`. It shares
 **zero** Go/engine code — the only coupling is the HTTP/OpenAPI contract.
 
 - **Never** add a `theo-*` package to `package.json`. Production dependencies

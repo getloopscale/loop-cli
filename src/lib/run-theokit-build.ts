@@ -153,7 +153,7 @@ export function runTheokitBuild(opts: RunTheokitBuildOpts): Promise<void> {
       // concurrent `pnpm install`).
       if (err.code === 'ENOENT') {
         reject(new TheokitBinaryNotFoundError(
-          `theokit binary at ${opts.theokitBin} disappeared between resolution and spawn — likely a concurrent npm/pnpm install; re-run \`theo deploy\`.`,
+          `theokit binary at ${opts.theokitBin} disappeared between resolution and spawn — likely a concurrent npm/pnpm install; re-run \`loopscale deploy\`.`,
         ));
         return;
       }

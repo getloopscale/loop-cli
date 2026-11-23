@@ -27,11 +27,11 @@ export interface EnvDeleteOptions {
   json?: boolean;
   /**
    * M2 v1.2 T6.1 expanded (2026-06-08): symmetric `--project` flag with
-   * `theo env create`. Required for non-legacy envs (every env created
+   * `loopscale env create`. Required for non-legacy envs (every env created
    * post-M2 lives at an explicit (project, env) tuple); the legacy
    * production env still resolves without it.
    *
-   * LIVE catch 2026-06-08: `theo env delete staging` (no flag) returned
+   * LIVE catch 2026-06-08: `loopscale env delete staging` (no flag) returned
    * 404 ENV_NOT_FOUND because the CLI sent DELETE without ?project=,
    * so the backend's tuple lookup failed. This flag closes that gap.
    */
@@ -59,12 +59,12 @@ export class EnvDeleteCommand {
   async execute(name: string, opts: EnvDeleteOptions = {}): Promise<number> {
     // 1. Auth check
     if (!this.deps.getToken()) {
-      return this.exitWithError(opts, 'Not authenticated. Run: theo login', 4, 'AUTH_REQUIRED');
+      return this.exitWithError(opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
     // 2. Name required
     if (!name || name.trim() === '') {
-      return this.exitWithError(opts, 'Environment name is required. Usage: theo env delete <name> --confirm <name>', 1, 'MISSING_ARGUMENT');
+      return this.exitWithError(opts, 'Environment name is required. Usage: loopscale env delete <name> --confirm <name>', 1, 'MISSING_ARGUMENT');
     }
 
     // 3. Production guard — NEVER deletable
@@ -82,7 +82,7 @@ export class EnvDeleteCommand {
     if (!opts.yes && !opts.confirm) {
       return this.exitWithError(
         opts,
-        `Confirmation required. Run: theo env delete ${name} --yes   (or --confirm ${name} for extra safety)`,
+        `Confirmation required. Run: loopscale env delete ${name} --yes   (or --confirm ${name} for extra safety)`,
         1,
         'CONFIRMATION_REQUIRED',
       );
@@ -92,7 +92,7 @@ export class EnvDeleteCommand {
     if (opts.confirm && opts.confirm !== name) {
       return this.exitWithError(
         opts,
-        `Confirmation name "${opts.confirm}" does not match "${name}". Run: theo env delete ${name} --confirm ${name}`,
+        `Confirmation name "${opts.confirm}" does not match "${name}". Run: loopscale env delete ${name} --confirm ${name}`,
         1,
         'CONFIRMATION_MISMATCH',
       );
@@ -138,7 +138,7 @@ export class EnvDeleteCommand {
   private handleError(opts: EnvDeleteOptions, err: unknown, name: string): number {
     if (err instanceof ApiError) {
       if (err.exitCode === 4 || err.statusCode === 401) {
-        return this.exitWithError(opts, 'Authentication failed. Run: theo login', 4, 'AUTH_REQUIRED');
+        return this.exitWithError(opts, 'Authentication failed. Run: loopscale login', 4, 'AUTH_REQUIRED');
       }
       if (err.statusCode === 404) {
         return this.exitWithError(opts, `Environment "${name}" not found.`, 1, 'ENV_NOT_FOUND');

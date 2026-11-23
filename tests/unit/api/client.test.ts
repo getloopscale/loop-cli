@@ -93,7 +93,7 @@ describe('ApiClient', () => {
       expect(fetchFn.lastUrl).toBe('http://api.example.com/tenants');
     });
 
-    it('should default to THEO_API_URL env var', () => {
+    it('should still default to the legacy THEO_API_URL env var', () => {
       const original = process.env.THEO_API_URL;
       process.env.THEO_API_URL = 'http://custom-api:8080';
 
@@ -109,9 +109,9 @@ describe('ApiClient', () => {
 
     it('should fallback to localhost:8080 when no env var', () => {
       const original = process.env.THEO_API_URL;
-      const originalUrl = process.env.THEO_URL;
+      const originalUrl = process.env.LOOPSCALE_URL;
       delete process.env.THEO_API_URL;
-      delete process.env.THEO_URL;
+      delete process.env.LOOPSCALE_URL;
 
       const client = new ApiClient({ fetchFn: fakeFetch(200) });
       expect((client as unknown as { baseURL: string }).baseURL).toBe('http://localhost:8080');
@@ -120,7 +120,7 @@ describe('ApiClient', () => {
         process.env.THEO_API_URL = original;
       }
       if (originalUrl !== undefined) {
-        process.env.THEO_URL = originalUrl;
+        process.env.LOOPSCALE_URL = originalUrl;
       }
     });
   });
@@ -175,7 +175,7 @@ describe('ApiClient', () => {
       }
     });
 
-    it('401 with empty body → generic fallback prompts theo login', async () => {
+    it('401 with empty body → generic fallback prompts loopscale login', async () => {
       const fetchFn = fakeFetch(401, {});
       const client = new ApiClient({ baseURL, token: null, fetchFn });
       try {
@@ -184,7 +184,7 @@ describe('ApiClient', () => {
       } catch (err) {
         const apiErr = err as ApiError;
         expect(apiErr.exitCode).toBe(4);
-        expect(apiErr.message).toContain('theo login');
+        expect(apiErr.message).toContain('loopscale login');
       }
     });
 

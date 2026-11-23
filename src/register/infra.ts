@@ -115,11 +115,11 @@ export function registerInfraCommands(deps: CommandDeps): void {
       process.exitCode = exitCode;
     });
 
-  // CHG-2026-04-23-AUDIT-30: `theo build cancel <id>` alias for
+  // CHG-2026-04-23-AUDIT-30: `loopscale build cancel <id>` alias for
   // discoverability. Modern CLIs use `<resource> <verb>`; users
-  // exploring `theo build --help` expect `cancel` under the build
+  // exploring `loopscale build --help` expect `cancel` under the build
   // namespace alongside `list` and `inspect`. Top-level
-  // `theo cancel <id>` (in register/deploy.ts) is preserved for
+  // `loopscale cancel <id>` (in register/deploy.ts) is preserved for
   // script compatibility.
   buildCmd
     .command('cancel <build-id>')

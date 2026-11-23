@@ -110,7 +110,7 @@ describe('ProjectListCommand', () => {
       const cmd = new ProjectListCommand(makeDeps({ getToken: () => null }));
       await cmd.execute();
       expect(errors[0]).toContain('Not authenticated');
-      expect(errors[0]).toContain('theo login');
+      expect(errors[0]).toContain('loopscale login');
     });
   });
 
@@ -150,7 +150,7 @@ describe('ProjectListCommand', () => {
 
   // CHG-2026-04-23-AUDIT-24: same rationale as team-list.
   describe('API unreachable (AUDIT-24)', () => {
-    it('network error produces API_UNREACHABLE code + Check THEO_URL hint', async () => {
+    it('network error produces API_UNREACHABLE code + Check LOOPSCALE_URL hint', async () => {
       const cmd = new ProjectListCommand(makeDeps({
         listProjects: async () => { throw new Error('fetch failed'); },
       }));
@@ -159,7 +159,7 @@ describe('ProjectListCommand', () => {
       const parsed = JSON.parse(output[0]);
       expect(parsed.code).toBe('API_UNREACHABLE');
       expect(parsed.error).toContain('Cannot reach API');
-      expect(parsed.error).toContain('Check THEO_URL');
+      expect(parsed.error).toContain('Check LOOPSCALE_URL');
     });
 
     it('non-network Error keeps UNEXPECTED_ERROR code', async () => {

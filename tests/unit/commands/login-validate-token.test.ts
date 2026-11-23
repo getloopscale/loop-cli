@@ -9,7 +9,7 @@
  * private email fallback (F-13).
  *
  * We test by importing createProgram, extracting the login action, and
- * simulating the ApiClient behavior via THEO_API_URL + fetch mock.
+ * simulating the ApiClient behavior via LOOPSCALE_API_URL + fetch mock.
  */
 
 import { ApiError } from '../../../src/api/client';

@@ -55,19 +55,19 @@ describe('formatErrorMessage', () => {
 // all list/inspect commands. Without this helper each command wrote its
 // own ad-hoc string matching ("fetch failed" vs "ECONNREFUSED" vs
 // "network down"), leading to inconsistent UX — some commands hinted
-// "Check THEO_URL", others said the generic "Try again later".
+// "Check LOOPSCALE_URL", others said the generic "Try again later".
 describe('classifyNetworkError', () => {
   it('detects "fetch failed" (undici/Node fetch)', () => {
     const result = classifyNetworkError(new Error('fetch failed'));
     expect(result.isNetwork).toBe(true);
-    expect(result.message).toBe('Cannot reach API: fetch failed. Check THEO_URL.');
+    expect(result.message).toBe('Cannot reach API: fetch failed. Check LOOPSCALE_URL.');
   });
 
   it('detects ECONNREFUSED', () => {
     const result = classifyNetworkError(new Error('connect ECONNREFUSED 127.0.0.1:8080'));
     expect(result.isNetwork).toBe(true);
     expect(result.message).toContain('ECONNREFUSED');
-    expect(result.message).toContain('Check THEO_URL');
+    expect(result.message).toContain('Check LOOPSCALE_URL');
   });
 
   it('detects ENOTFOUND (DNS failure)', () => {
@@ -95,7 +95,7 @@ describe('classifyNetworkError', () => {
 
   it('message ends with single period (no double)', () => {
     const result = classifyNetworkError(new Error('fetch failed.'));
-    expect(result.message).toBe('Cannot reach API: fetch failed. Check THEO_URL.');
+    expect(result.message).toBe('Cannot reach API: fetch failed. Check LOOPSCALE_URL.');
     expect(result.message).not.toContain('..');
   });
 });

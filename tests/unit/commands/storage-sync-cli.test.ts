@@ -78,7 +78,7 @@ describe('storage-sync T3.1 — CLI output contract', () => {
   });
 
   it('syncErrorMessage is actionable per status and uses product language (F-cli-2)', () => {
-    expect(syncErrorMessage(403)).toMatch(/theo login|access/i);
+    expect(syncErrorMessage(403)).toMatch(/loopscale login|access/i);
     expect(syncErrorMessage(402)).toMatch(/plan|upgrade|limit/i);
     expect(syncErrorMessage(413)).toMatch(/larger|too large|remove/i);
     expect(syncErrorMessage(404)).toMatch(/--prefix|not found/i);

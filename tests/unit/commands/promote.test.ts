@@ -92,7 +92,7 @@ describe('PromoteCommand', () => {
 
       expect(exitCode).toBe(4);
       const errorOutput = (deps.writeError as jest.Mock).mock.calls.map((c: string[]) => c[0]).join('\n');
-      expect(errorOutput).toContain('theo login');
+      expect(errorOutput).toContain('loopscale login');
     });
   });
 
@@ -105,7 +105,7 @@ describe('PromoteCommand', () => {
 
       expect(exitCode).toBe(1);
       const errorOutput = (deps.writeError as jest.Mock).mock.calls.map((c: string[]) => c[0]).join('\n');
-      expect(errorOutput).toContain('theo init');
+      expect(errorOutput).toContain('loopscale init');
     });
 
     it('should return exit code 1 when theo.yaml has parse error', async () => {
