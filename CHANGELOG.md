@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `loopscale rollback` prints the id of the rollback and returns it as `rollback_id` in `--json`, on success and on failure. The id names the rollback's record, which the console lists under Deployments (getloopscale/loopzero#128)
 
 ### Fixed
+- `loopscale deploy --json` prints one outcome for a deploy whose service never becomes healthy. It printed a `CANARY_ABORTED` document and then a `DEPLOY_FAILED` one, because the two events the API sends for that failure were handled at the same time (#29)
 - `loopscale rollback` waits for the rollback to end. The API answers the request with 202 and finishes in the background, and the command printed "Rollback completed" and exited 0 on that answer. It now follows the project status and exits 0 only when the target release is active; it exits 3 with `ROLLBACK_FAILED` when the previous release stays active, `ROLLBACK_SUPERSEDED` when another release took over, and `ROLLBACK_NOT_CONFIRMED` after 16 minutes without an answer. With `--json` the final line carries that state (#26)
 
 ## [0.1.1] - 2026-11-23

@@ -557,6 +557,12 @@ export class DeployCommand {
       // Start the activity-based timeout
       resetTimeout();
 
+      // Events are handled one at a time, in the order they arrived. A handler
+      // may await before it reports (the failure branches fetch recent logs),
+      // and a second terminal event handled in that gap reported a second
+      // outcome for the same deploy.
+      let handling: Promise<void> = Promise.resolve();
+
       sseConnection = this.deps.connectSSE(buildResult.build_id, (event: SSEEvent) => {
         if (resolved) {
           return;
@@ -571,7 +577,8 @@ export class DeployCommand {
         // promise and let it resolve in the background. The activity
         // timeout is reset above so the auto-tail's 5s window doesn't
         // trigger a false timeout.
-        void this.handleSSEEvent(event, opts, buildResult, selectedApps, deployStartTime, renderer, finish)
+        handling = handling
+          .then(() => (resolved ? true : this.handleSSEEvent(event, opts, buildResult, selectedApps, deployStartTime, renderer, finish)))
           .then((handled) => {
             if (!handled) {
               // Render intermediate progress events via DeployRenderer
