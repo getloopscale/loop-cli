@@ -9,7 +9,7 @@ import { DeployCommand } from '../commands/deploy';
 import { ValidateCommand } from '../commands/validate';
 import { StatusCommand } from '../commands/status';
 import { LogsCommand } from '../commands/logs';
-import { RollbackCommand } from '../commands/rollback';
+import { RollbackCommand, ROLLBACK_DEADLINE_MS } from '../commands/rollback';
 import { PromoteCommand } from '../commands/promote';
 import { CancelCommand } from '../commands/cancel';
 import { API_REQUEST_TIMEOUT_MS, DEPLOY_TIMEOUT_MS } from '../config/constants';
@@ -438,6 +438,8 @@ export function registerDeployCommands(deps: CommandDeps): void {
     .option('--env <name>', 'Target environment', 'production')
     .option('--to <release-id>', 'Rollback to a specific release')
     .option('--yes', 'Skip confirmation prompt')
+    .option('--wait', 'Wait for the rollback to complete', true)
+    .option('--no-wait', 'Return right after the rollback is accepted')
     .action(async (cmdOpts) => {
       const globalOpts = getGlobalOpts();
       const apiClient = new ApiClient({ baseURL: apiUrl, token: configStore.getToken() ?? undefined, onUnauthorized: handleUnauthorized });
@@ -456,6 +458,12 @@ export function registerDeployCommands(deps: CommandDeps): void {
             body,
           );
         },
+        getActiveReleaseId: async (project: string, environment: string) => {
+          const status = await apiClient.get<{ active_release?: { id?: string } | null }>(
+            `/api/v1/projects/${encodeURIComponent(project)}/status?env=${encodeURIComponent(environment)}`,
+          );
+          return status.active_release?.id ?? null;
+        },
         // #164 — este era o ULTIMO `readline` inline sem handler de `close`: em EOF a Promise
         // nunca resolvia e o `withTimeout` abaixo surgia como "timed out. Check your connection".
         confirm: promptConfirm,
@@ -466,8 +474,10 @@ export function registerDeployCommands(deps: CommandDeps): void {
       });
 
       const exitCode = await withTimeout(
-        rollbackCmd.execute({ env: cmdOpts.env, to: cmdOpts.to, json: globalOpts.json, yes: cmdOpts.yes }),
-        API_REQUEST_TIMEOUT_MS + 10_000,
+        rollbackCmd.execute({ env: cmdOpts.env, to: cmdOpts.to, json: globalOpts.json, yes: cmdOpts.yes, wait: cmdOpts.wait }),
+        // Waiting follows the rollback to the API's own deadline; without it the
+        // command is one request.
+        cmdOpts.wait === false ? API_REQUEST_TIMEOUT_MS + 10_000 : ROLLBACK_DEADLINE_MS + API_REQUEST_TIMEOUT_MS + 10_000,
         'Rollback timed out. Check your connection and try again.',
       ).catch((err: Error) => {
         if (globalOpts.json) {

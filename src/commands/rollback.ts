@@ -14,6 +14,13 @@ export interface RollbackDeps {
   getToken: () => string | null;
   findTheoYaml: () => TheoYamlResult | null;
   rollback: (project: string, environment: string, toReleaseId?: string) => Promise<RollbackApiResponse>;
+  /**
+   * The id of the environment's ACTIVE release, or null when it has none, which
+   * is the state while a rollback runs. Read from `GET /projects/{name}/status`.
+   */
+  getActiveReleaseId?: (project: string, environment: string) => Promise<string | null>;
+  sleep?: (ms: number) => Promise<void>;
+  now?: () => number;
   confirm?: (message: string) => Promise<boolean>;
   writeTo: (msg: string) => void;
   writeError: (msg: string) => void;
@@ -30,7 +37,22 @@ export interface RollbackOptions {
   to?: string;
   json?: boolean;
   yes?: boolean;
+  /** False returns right after the API accepted the rollback. Defaults to true. */
+  wait?: boolean;
 }
+
+/**
+ * The API gives a rollback's background work 15 minutes and then up to 30
+ * seconds for each state change that settles the release
+ * (getloopscale/loopzero#118). One extra minute covers those.
+ */
+export const ROLLBACK_DEADLINE_MS = 16 * 60 * 1000;
+const ROLLBACK_POLL_INTERVAL_MS = 5000;
+
+type RollbackEnd =
+  | { state: 'completed' }
+  | { state: 'failed' | 'superseded'; activeReleaseId: string }
+  | { state: 'not_confirmed'; lastReadError?: Error };
 
 export class RollbackCommand {
   private readonly deps: RollbackDeps;
@@ -89,19 +111,48 @@ export class RollbackCommand {
     }
 
     // 4. Call API
-    const startTime = Date.now();
+    const startTime = this.now();
     let response: RollbackApiResponse;
     try {
       response = await this.deps.rollback(project, environment, opts.to);
     } catch (err) {
       return this.handleError(opts, err);
     }
-    const durationSeconds = Math.round((Date.now() - startTime) / 1000);
+    // 5. The API answers 202 `in_progress` and finishes in the background
+    // (getloopscale/loopzero#118): the rollback is accepted, not done.
+    const inProgress = response.status === 'in_progress';
+    if (inProgress && opts.wait === false) {
+      if (opts.json) {
+        this.deps.writeTo(JSON.stringify({
+          status: 'in_progress',
+          rolled_back_release: response.rolled_back_release,
+          target_release: response.reactivated_release,
+          environment: response.environment,
+          url: response.url,
+        }));
+      } else {
+        this.deps.writeTo(`Rollback started for ${environment}: ${response.rolled_back_release} -> ${response.reactivated_release}.`);
+        this.deps.writeTo('It runs in the background. Check it with: loopscale status');
+      }
+      return 0;
+    }
 
-    // 5. Display result
+    if (inProgress) {
+      if (!opts.json) {
+        this.deps.writeTo(`Rollback started for ${environment}: ${response.rolled_back_release} -> ${response.reactivated_release}.`);
+        this.deps.writeTo('Waiting for the target release to become active...');
+      }
+      const end = await this.followRollback(project, environment, response);
+      if (end.state !== 'completed') {
+        return this.reportUnfinished(opts, environment, response, end);
+      }
+    }
+    const durationSeconds = Math.round((this.now() - startTime) / 1000);
+
+    // 6. Display result
     if (opts.json) {
       this.deps.writeTo(JSON.stringify({
-        status: response.status,
+        status: inProgress ? 'completed' : response.status,
         rolled_back_release: response.rolled_back_release,
         active_release: response.reactivated_release,
         environment: response.environment,
@@ -111,7 +162,9 @@ export class RollbackCommand {
       return 0;
     }
 
-    this.deps.writeTo(`Rolling back ${environment}...`);
+    if (!inProgress) {
+      this.deps.writeTo(`Rolling back ${environment}...`);
+    }
     this.deps.writeTo('');
     this.deps.writeTo(`  Rolled back: ${response.rolled_back_release}`);
     this.deps.writeTo(`  Reactivated: ${response.reactivated_release}`);
@@ -123,6 +176,55 @@ export class RollbackCommand {
     }
 
     return 0;
+  }
+
+  private now(): number {
+    return this.deps.now ? this.deps.now() : Date.now();
+  }
+
+  /**
+   * Polls the environment's active release until it shows how the rollback
+   * ended, or the deadline passes. A status read that fails says nothing about
+   * the rollback, which runs on the server; the loop keeps the error and tries
+   * again, and the deadline carries it.
+   */
+  private async followRollback(project: string, environment: string, accepted: RollbackApiResponse): Promise<RollbackEnd> {
+    const read = this.deps.getActiveReleaseId;
+    if (!read) {
+      return { state: 'not_confirmed', lastReadError: new Error('this build of the CLI cannot read the project status') };
+    }
+    const sleep = this.deps.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
+    const startedAt = this.now();
+    let lastReadError: Error | undefined;
+    for (;;) {
+      try {
+        const activeReleaseId = await read(project, environment);
+        lastReadError = undefined;
+        if (activeReleaseId === accepted.reactivated_release) return { state: 'completed' };
+        if (activeReleaseId === accepted.rolled_back_release) return { state: 'failed', activeReleaseId };
+        if (activeReleaseId) return { state: 'superseded', activeReleaseId };
+      } catch (err) {
+        lastReadError = err instanceof Error ? err : new Error(String(err));
+      }
+      if (this.now() - startedAt >= ROLLBACK_DEADLINE_MS) {
+        return { state: 'not_confirmed', lastReadError };
+      }
+      await sleep(ROLLBACK_POLL_INTERVAL_MS);
+    }
+  }
+
+  private reportUnfinished(opts: RollbackOptions, environment: string, accepted: RollbackApiResponse, end: Exclude<RollbackEnd, { state: 'completed' }>): number {
+    const target = accepted.reactivated_release;
+    switch (end.state) {
+      case 'failed':
+        return this.exitWithError(opts, `Rollback to ${target} did not complete. Release ${end.activeReleaseId} stays active in ${environment}.`, 3, 'ROLLBACK_FAILED');
+      case 'superseded':
+        return this.exitWithError(opts, `Rollback to ${target} did not complete: release ${end.activeReleaseId} became active in ${environment} while it ran.`, 3, 'ROLLBACK_SUPERSEDED');
+      case 'not_confirmed': {
+        const why = end.lastReadError ? ` (${end.lastReadError.message})` : '';
+        return this.exitWithError(opts, `Rollback to ${target} was accepted, but ${environment} showed no active release after ${ROLLBACK_DEADLINE_MS / 60_000} minutes${why}. Check it with: loopscale status`, 3, 'ROLLBACK_NOT_CONFIRMED');
+      }
+    }
   }
 
   private exitWithError(opts: RollbackOptions, message: string, exitCode: number, code?: string): number {
