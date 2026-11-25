@@ -331,4 +331,49 @@ describe('RollbackCommand, when the API accepts the rollback with 202', () => {
     const payload = JSON.parse((deps.writeTo as jest.Mock).mock.calls.at(-1)[0]);
     expect(payload).toMatchObject({ status: 'completed', active_release: 'rel-old', rolled_back_release: 'rel-new' });
   });
+
+  // The API records each rollback (getloopscale/loopzero#128) and names the
+  // record in the 202. The id is what finds it later in the console.
+  describe('with the id of the rollback record', () => {
+    const recorded = { ...accepted, rollback_id: 'rb-0011223344556677' };
+
+    it('carries the id in the JSON of a completed rollback and of one left in progress', async () => {
+      const done = inProgressDeps(['rel-old'], { rollback: jest.fn().mockResolvedValue(recorded) });
+      await new RollbackCommand(done).execute({ yes: true, json: true });
+      expect(JSON.parse((done.writeTo as jest.Mock).mock.calls.at(-1)[0]).rollback_id).toBe('rb-0011223344556677');
+
+      const started = inProgressDeps([null], { rollback: jest.fn().mockResolvedValue(recorded) });
+      await new RollbackCommand(started).execute({ yes: true, json: true, wait: false });
+      expect(JSON.parse((started.writeTo as jest.Mock).mock.calls.at(-1)[0]).rollback_id).toBe('rb-0011223344556677');
+    });
+
+    it('carries the id in the JSON of a rollback that failed', async () => {
+      const deps = inProgressDeps(['rel-new'], { rollback: jest.fn().mockResolvedValue(recorded) });
+
+      const exitCode = await new RollbackCommand(deps).execute({ yes: true, json: true });
+
+      expect(exitCode).toBe(3);
+      const payload = JSON.parse((deps.writeTo as jest.Mock).mock.calls.at(-1)[0]);
+      expect(payload).toMatchObject({ code: 'ROLLBACK_FAILED', rollback_id: 'rb-0011223344556677' });
+    });
+
+    it('prints the id when the rollback starts', async () => {
+      const deps = inProgressDeps(['rel-old'], { rollback: jest.fn().mockResolvedValue(recorded) });
+
+      await new RollbackCommand(deps).execute({ yes: true });
+
+      expect(output(deps)).toContain('Rollback id: rb-0011223344556677');
+    });
+
+    it('leaves the id out when an older API does not send one', async () => {
+      const deps = inProgressDeps(['rel-old']);
+
+      await new RollbackCommand(deps).execute({ yes: true, json: true });
+
+      expect(JSON.parse((deps.writeTo as jest.Mock).mock.calls.at(-1)[0])).not.toHaveProperty('rollback_id');
+      const text = inProgressDeps(['rel-old']);
+      await new RollbackCommand(text).execute({ yes: true });
+      expect(output(text)).not.toContain('Rollback id');
+    });
+  });
 });
