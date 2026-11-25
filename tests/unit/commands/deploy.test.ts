@@ -1918,6 +1918,40 @@ describe('DeployCommand', () => {
   });
 
   describe('deploy.sync_failed SSE event', () => {
+    // The API sends two events for a sync that timed out: deploy.sync_failed and
+    // rollout.aborted. The first one fetches recent logs before it reports, and
+    // the second was reported in that gap, so --json printed two documents.
+    it('reports one outcome when rollout.aborted follows deploy.sync_failed', async () => {
+      const deps = createMockDeps({
+        fetchRecentBuildLogs: jest.fn().mockImplementation(
+          () => new Promise((resolve) => setTimeout(() => resolve([]), 20)),
+        ),
+        connectSSE: jest.fn().mockImplementation(
+          (_buildId: string, onEvent: (event: SSEEvent) => void) => {
+            onEvent({
+              type: 'deploy.sync_failed',
+              data: { deploy_id: 'd-1234', status: 'failed', reason: 'Sync timeout: service did not become healthy within the time limit' },
+            });
+            onEvent({
+              type: 'rollout.aborted',
+              data: { reason: 'pod-unhealthy', message: 'Sync timeout: service did not become healthy within the time limit', weight: 0 },
+            });
+            return { close: jest.fn() };
+          }
+        ),
+      });
+      const cmd = new DeployCommand(deps);
+
+      const exitCode = await cmd.execute({ json: true });
+      await new Promise((resolve) => setTimeout(resolve, 60));
+
+      expect(exitCode).toBe(3);
+      const outcomes = (deps.writeTo as jest.Mock).mock.calls
+        .map((c: string[]) => { try { return JSON.parse(c[0]); } catch { return null; } })
+        .filter((o: { exit_code?: number } | null) => o && o.exit_code !== undefined);
+      expect(outcomes.map((o: { code: string }) => o.code)).toEqual(['DEPLOY_FAILED']);
+    });
+
     it('exits with code 3 when deploy.sync_failed received', async () => {
       const deps = createMockDeps({
         connectSSE: jest.fn().mockImplementation(
