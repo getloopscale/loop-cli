@@ -4,6 +4,8 @@ import { classifyNetworkError } from '../output/error-message';
 
 interface RollbackApiResponse {
   status: string;
+  /** The id of the rollback's record in the project history. Absent from an older API. */
+  rollback_id?: string;
   rolled_back_release: string;
   reactivated_release: string;
   environment: string;
@@ -125,6 +127,7 @@ export class RollbackCommand {
       if (opts.json) {
         this.deps.writeTo(JSON.stringify({
           status: 'in_progress',
+          ...(response.rollback_id ? { rollback_id: response.rollback_id } : {}),
           rolled_back_release: response.rolled_back_release,
           target_release: response.reactivated_release,
           environment: response.environment,
@@ -132,6 +135,7 @@ export class RollbackCommand {
         }));
       } else {
         this.deps.writeTo(`Rollback started for ${environment}: ${response.rolled_back_release} -> ${response.reactivated_release}.`);
+        this.writeRollbackId(response);
         this.deps.writeTo('It runs in the background. Check it with: loopscale status');
       }
       return 0;
@@ -140,6 +144,7 @@ export class RollbackCommand {
     if (inProgress) {
       if (!opts.json) {
         this.deps.writeTo(`Rollback started for ${environment}: ${response.rolled_back_release} -> ${response.reactivated_release}.`);
+        this.writeRollbackId(response);
         this.deps.writeTo('Waiting for the target release to become active...');
       }
       const end = await this.followRollback(project, environment, response);
@@ -153,6 +158,7 @@ export class RollbackCommand {
     if (opts.json) {
       this.deps.writeTo(JSON.stringify({
         status: inProgress ? 'completed' : response.status,
+        ...(response.rollback_id ? { rollback_id: response.rollback_id } : {}),
         rolled_back_release: response.rolled_back_release,
         active_release: response.reactivated_release,
         environment: response.environment,
@@ -176,6 +182,13 @@ export class RollbackCommand {
     }
 
     return 0;
+  }
+
+  /** Names the rollback's record, which the console lists under Deployments. */
+  private writeRollbackId(accepted: RollbackApiResponse): void {
+    if (accepted.rollback_id) {
+      this.deps.writeTo(`Rollback id: ${accepted.rollback_id}`);
+    }
   }
 
   private now(): number {
@@ -215,21 +228,22 @@ export class RollbackCommand {
 
   private reportUnfinished(opts: RollbackOptions, environment: string, accepted: RollbackApiResponse, end: Exclude<RollbackEnd, { state: 'completed' }>): number {
     const target = accepted.reactivated_release;
+    const extra = accepted.rollback_id ? { rollback_id: accepted.rollback_id } : undefined;
     switch (end.state) {
       case 'failed':
-        return this.exitWithError(opts, `Rollback to ${target} did not complete. Release ${end.activeReleaseId} stays active in ${environment}.`, 3, 'ROLLBACK_FAILED');
+        return this.exitWithError(opts, `Rollback to ${target} did not complete. Release ${end.activeReleaseId} stays active in ${environment}.`, 3, 'ROLLBACK_FAILED', extra);
       case 'superseded':
-        return this.exitWithError(opts, `Rollback to ${target} did not complete: release ${end.activeReleaseId} became active in ${environment} while it ran.`, 3, 'ROLLBACK_SUPERSEDED');
+        return this.exitWithError(opts, `Rollback to ${target} did not complete: release ${end.activeReleaseId} became active in ${environment} while it ran.`, 3, 'ROLLBACK_SUPERSEDED', extra);
       case 'not_confirmed': {
         const why = end.lastReadError ? ` (${end.lastReadError.message})` : '';
-        return this.exitWithError(opts, `Rollback to ${target} was accepted, but ${environment} showed no active release after ${ROLLBACK_DEADLINE_MS / 60_000} minutes${why}. Check it with: loopscale status`, 3, 'ROLLBACK_NOT_CONFIRMED');
+        return this.exitWithError(opts, `Rollback to ${target} was accepted, but ${environment} showed no active release after ${ROLLBACK_DEADLINE_MS / 60_000} minutes${why}. Check it with: loopscale status`, 3, 'ROLLBACK_NOT_CONFIRMED', extra);
       }
     }
   }
 
-  private exitWithError(opts: RollbackOptions, message: string, exitCode: number, code?: string): number {
+  private exitWithError(opts: RollbackOptions, message: string, exitCode: number, code?: string, extra?: Record<string, unknown>): number {
     if (opts.json) {
-      const payload: Record<string, unknown> = { error: message, exit_code: exitCode };
+      const payload: Record<string, unknown> = { error: message, exit_code: exitCode, ...extra };
       if (code) {
         payload.code = code;
       }
