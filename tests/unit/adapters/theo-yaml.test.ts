@@ -349,4 +349,9 @@ describe('parseTheoYaml', () => {
     expect(result.apps.api.autoscaling).toBeDefined();
     expect(result.apps.api.autoscaling!.cooldown).toBeUndefined();
   });
+
+  it('keeps the runtime and the start command of an app', () => {
+    const result = parseTheoYaml('project: hello\napps:\n  web:\n    path: .\n    port: 8080\n    runtime: node\n    start: node server.js\n');
+    expect(result.apps.web).toMatchObject({ runtime: 'node', start: 'node server.js', port: 8080 });
+  });
 });
