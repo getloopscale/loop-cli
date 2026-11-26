@@ -14,7 +14,7 @@ Apache-2.0.
 [![Tests](https://img.shields.io/badge/tests-1%2C300%2B%20passing-brightgreen?style=flat-square)](#testing)
 [![Node](https://img.shields.io/badge/node-%E2%89%A520-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org)
 [![Commander](https://img.shields.io/badge/Commander.js-12-555?style=flat-square)](https://github.com/tj/commander.js)
-[![npm](https://img.shields.io/badge/npm-%40getloopscale%2Fcli-CB3837?style=flat-square&logo=npm&logoColor=white)](https://www.npmjs.com/package/@getloopscale/cli)
+[![npm](https://img.shields.io/badge/npm-%40getloopscale%2Fcli-CB3837?style=flat-square&logo=npm&logoColor=white)](https://www.npmjs.com/package/@getloopscale/loop-cli)
 [![Status](https://img.shields.io/badge/status-pre--release-orange?style=flat-square)](#status)
 
 [Quickstart](#quickstart) · [Why](#why-loopscale-cli) · [Commands](#commands) · [CI/CD](#cicd) · [Contracts](#contracts) · [Architecture](#architecture) · [Comparison](#comparison) · [Roadmap](#roadmap) · [Contributing](#contributing)
@@ -79,7 +79,7 @@ npm you can run it from source.
 
 ```bash
 # From source
-git clone https://github.com/getloopscale/cli.git
+git clone https://github.com/getloopscale/loop-cli.git
 cd cli
 npm ci
 npm run build
@@ -88,10 +88,10 @@ node bin/loopscale --help
 
 ```bash
 # Once published (pinned in your project — recommended)
-npm install --save-dev @getloopscale/cli
+npm install --save-dev @getloopscale/loop-cli
 
 # Or globally
-npm install -g @getloopscale/cli
+npm install -g @getloopscale/loop-cli
 ```
 
 You also need [LoopZero](https://github.com/getloopscale/loopzero) so `loopscale deploy` can
@@ -111,7 +111,7 @@ loopscale rollback                 # restore the previous release
 The legacy two-step flow still works:
 
 ```bash
-loopzero build --target loopscale-console   # explicit build
+loopzero build --target loop-console   # explicit build
 loopscale deploy --prebuilt              # upload only — skip auto-build
 ```
 
@@ -198,7 +198,7 @@ end-user CLI.)
 local directory (conflict-safe, `--dry-run`, `--exclude` globs). Wire it to Claude
 Code's `SessionStart`/`SessionEnd` hooks to pull your shared `.claude/` on session
 start and push edits on end — see
-[`integrations/claude-code/`](https://github.com/getloopscale/cli/tree/develop/integrations/claude-code)
+[`integrations/claude-code/`](https://github.com/getloopscale/loop-cli/tree/develop/integrations/claude-code)
 for the example `settings.json` and the safety notes (executable config is fenced
 out of the sync by default).
 
@@ -235,7 +235,7 @@ jobs:
   build:
     steps:
       - run: npm ci
-      - run: npx loopzero build --target loopscale-console
+      - run: npx loopzero build --target loop-console
       - uses: actions/upload-artifact@v4
         with: { path: .loopscale/services.json }
   deploy:
@@ -243,7 +243,7 @@ jobs:
     steps:
       - run: npm ci
       - uses: actions/download-artifact@v4
-      - run: npx @getloopscale/cli deploy --prebuilt
+      - run: npx @getloopscale/loop-cli deploy --prebuilt
         env:
           LOOPSCALE_TOKEN: ${{ secrets.LOOPSCALE_TOKEN }}
 ```
@@ -367,7 +367,7 @@ the platform decomposition and now ships as a standalone repo.
 | Consumer-driven engine contract test (+ Pact) | **Shipped** |
 | OpenTelemetry tracing | **Shipped** |
 | Scope CLI to end-user experience (platform/operator tooling removed) | **Shipped** |
-| Publish `@getloopscale/cli` to npm | Planned |
+| Publish `@getloopscale/loop-cli` to npm | Planned |
 | TS import-boundary lint (enforce HTTP-only mechanically) | Planned |
 
 ## Status
@@ -382,7 +382,7 @@ the platform decomposition and now ships as a standalone repo.
 ## Contributing
 
 ```bash
-git clone https://github.com/getloopscale/cli.git
+git clone https://github.com/getloopscale/loop-cli.git
 cd cli
 npm ci
 npm test
@@ -398,7 +398,7 @@ never import engine code).
 
 <div align="center">
 
-**If LoopScale CLI is useful to you, [give it a ⭐](https://github.com/getloopscale/cli) — it's the signal that keeps the project moving.**
+**If LoopScale CLI is useful to you, [give it a ⭐](https://github.com/getloopscale/loop-cli) — it's the signal that keeps the project moving.**
 
 
 **Part of [LoopScale](https://getloopscale.com).**

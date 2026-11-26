@@ -311,7 +311,7 @@ export function registerDeployCommands(deps: CommandDeps): void {
           const path = `/api/v1/builds/${encodeURIComponent(buildID)}/logs${query ? `?${query}` : ''}`;
           return apiClient.get(path);
         },
-        // Red Team console#160: PRIMARY build inference source — same
+        // Red Team loop-console#160: PRIMARY build inference source — same
         // endpoint `loopscale build list` uses. Fixes "No builds found" silent lie
         // when builds exist but no active release binds them yet.
         listBuilds: async (project: string, env?: string, limit?: number) => {

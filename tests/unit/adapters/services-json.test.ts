@@ -115,7 +115,7 @@ describe('findServicesJson — --services-json override (EC-4)', () => {
 });
 
 // The LoopZero framework writes its manifest to .loopzero/services.json, and the walk-up
-// finds it without a `--services-json` override (console#29).
+// finds it without a `--services-json` override (loop-console#29).
 //
 // EC-1 absorbed: test placed at tests/unit/adapters/ to match jest.config.js roots: ['<rootDir>/tests'].
 function writeLoopZeroServicesJson(dir: string, content = '{}'): string {

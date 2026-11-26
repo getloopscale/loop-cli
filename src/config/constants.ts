@@ -111,7 +111,7 @@ export const SSE_MAX_RETRIES = 15;
 
 /** Total deploy timeout (ms). Override: LOOPSCALE_DEPLOY_TIMEOUT.
  *
- * Sprint 8 plan qa-sprint8-cleanup-2026-06-25 T3.1 (closes console#38):
+ * Sprint 8 plan qa-sprint8-cleanup-2026-06-25 T3.1 (closes loop-console#38):
  * bumped from 10min → 30min. The canonical loopzero-example build observed
  * by the QA Red Team took 615s (10min 15s) — 15s above the previous 10min
  * default — making a SUCCEEDED deploy report DEPLOY_TIMEOUT. Cold-start

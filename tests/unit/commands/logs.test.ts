@@ -445,7 +445,7 @@ describe('LogsCommand', () => {
       expect(output).toContain('NO_BUILDS');
     });
 
-    // Red Team console#160 — infer via listBuilds (same source as
+    // Red Team loop-console#160 — infer via listBuilds (same source as
     // `loopscale build list`) NOT via getProjectStatus.last_build. Pre-fix scenario:
     // preview env with 2 recent builds (CANCELLED + SUCCEEDED) shown by
     // `loopscale build list`, but /status.last_build null because no active release
@@ -468,7 +468,7 @@ describe('LogsCommand', () => {
       expect(deps.getLogs).toHaveBeenCalledWith('build-listbuilds-160', expect.any(Object));
     });
 
-    // Red Team console#160 negative case — when listBuilds itself confirms
+    // Red Team loop-console#160 negative case — when listBuilds itself confirms
     // zero builds AND getProjectStatus.last_build is null, still surface
     // NO_BUILDS honestly (never silently succeed with rc 0).
     it('should return rc 1 with NO_BUILDS when listBuilds is empty (Red Team #160)', async () => {

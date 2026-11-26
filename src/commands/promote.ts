@@ -21,7 +21,7 @@ export interface PromoteDeps {
   writeError: (msg: string) => void;
   isCI?: boolean;
   /**
-   * Red Team console#161: true when stdin has no TTY (e.g., pipes /
+   * Red Team loop-console#161: true when stdin has no TTY (e.g., pipes /
    * redirects / harnesses). Without this, `loopscale promote --from X --to Y`
    * without `--yes` hung on the [y/N] prompt reading a stdin that would
    * never produce input, and the outer withTimeout wrapper eventually

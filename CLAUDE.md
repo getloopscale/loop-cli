@@ -1,6 +1,6 @@
 # LoopScale CLI
 
-Standalone `@getloopscale/cli`, the CLI-first client for LoopScale (TypeScript + Commander).
+Standalone `@getloopscale/loop-cli`, the CLI-first client for LoopScale (TypeScript + Commander).
 Extracted from the `loopscale` monorepo at M2 of the decomposition (history preserved).
 
 ## What it is
@@ -44,11 +44,11 @@ npm run lint        # eslint
 
 ## Publishing
 
-`@getloopscale/cli`. `publish.yml` publishes on a
+`@getloopscale/loop-cli`. `publish.yml` publishes on a
 `v*` tag once `NPM_TOKEN` is set (owner-gated).
 
 ## Provenance
 
-Extracted at M2 (`loopscale-console/.claude/knowledge-base/plans/m2-extract-loopscale-cli-plan.md`),
+Extracted at M2 (`loop-console/.claude/knowledge-base/plans/m2-extract-loopscale-cli-plan.md`),
 history preserved via `git filter-repo`. Part of the decomposition:
-`loopscale-contracts ◄── loopscale (engine) + loopscale-console + loopscale-cli`.
+`loopscale-contracts ◄── loopscale (engine) + loop-console + loopscale-cli`.

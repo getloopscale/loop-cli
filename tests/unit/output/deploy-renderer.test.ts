@@ -386,12 +386,12 @@ describe('DeployRenderer', () => {
     // JSON output is tested in deploy.test.ts where the inline JSON rendering happens
   });
 
-  // Red Team console#84 regression-protectors. The CLI summary
+  // Red Team loop-console#84 regression-protectors. The CLI summary
   // line "Deploy completed in Xs" was rendering only `duration_seconds`
   // (post-build phase), undercounting by ~7x when build took 718s and
   // verify took 104s. formatDeployTotal surfaces the build duration
   // when known and humanizes >= 60s into "Xm Ys".
-  describe('Red Team console#84 — formatDeployTotal', () => {
+  describe('Red Team loop-console#84 — formatDeployTotal', () => {
     it('renders the verbatim Red Team observation correctly (build 718s + verify 104s)', () => {
       const result: DeployResult = {
         deploy_id: 'd-1',

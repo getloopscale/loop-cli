@@ -98,7 +98,7 @@ describe('CLI config/constants', () => {
       delete process.env.LOOPSCALE_DEPLOY_TIMEOUT;
       const constants = loadConstants();
       // Sprint 8 plan qa-sprint8-cleanup-2026-06-25 T3.1 (closes
-      // console#38): bumped default 10min → 30min so canonical builds
+      // loop-console#38): bumped default 10min → 30min so canonical builds
       // (loopzero-example took 615s) don't false-report DEPLOY_TIMEOUT.
       expect(constants.DEPLOY_TIMEOUT_MS).toBe(30 * 60 * 1000);
     });

@@ -1563,7 +1563,7 @@ describe('DeployCommand', () => {
       expect(exitCode).toBe(0);
       const output = (deps.writeTo as jest.Mock).mock.calls.map((c: string[]) => c[0]).join('\n');
       // O intento deste teste (F-04) continua: o numero exibido tem de vir do SERVIDOR, nao do
-      // relogio de parede. O que mudou foi a FORMA, em `41fbae1` (fecho do console#84): o total
+      // relogio de parede. O que mudou foi a FORMA, em `41fbae1` (fecho do loop-console#84): o total
       // passou a ser pos-build + build, com o build repetido entre parenteses, porque
       // `duration_seconds` mede so a fase pos-build e sozinho subestimava o custo em ate 7x.
       //

@@ -4,7 +4,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-// npm trusts getloopscale/cli's publish.yml through OIDC (trusted publishing), so the
+// npm trusts getloopscale/loop-cli's publish.yml through OIDC (trusted publishing), so the
 // release job publishes with a short-lived credential instead of a long-lived token.
 describe('publish workflow', () => {
   const workflow = fs.readFileSync(path.resolve(__dirname, '../../.github/workflows/publish.yml'), 'utf-8');

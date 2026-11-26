@@ -223,7 +223,7 @@ describe('PromoteCommand', () => {
       expect(deps.promote).not.toHaveBeenCalled();
     });
 
-    // Red Team console#161 — non-TTY stdin (pipes/redirects/harnesses)
+    // Red Team loop-console#161 — non-TTY stdin (pipes/redirects/harnesses)
     // must fail-fast with the same CONFIRMATION_REQUIRED contract used in CI
     // mode. Pre-fix: the prompt hung on stdin EOF and the outer withTimeout
     // wrapper eventually mis-blamed "Promotion timed out. Check your

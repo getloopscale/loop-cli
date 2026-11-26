@@ -56,7 +56,7 @@ export type StreamRuntimeLogsFn = (
  * BuildListResponse — canonical shape returned by /api/v1/projects/{name}/builds
  * (same as build-list.ts). Kept structurally compatible so LogsCommand can call
  * the SAME source of truth `loopscale build list` uses when inferring the last build.
- * Red Team console#160: previously the CLI only had getProjectStatus (whose
+ * Red Team loop-console#160: previously the CLI only had getProjectStatus (whose
  * last_build reflects the release-active build, not the "most recent build in
  * env"), which returned null in valid scenarios (e.g., preview env with recent
  * CANCELLED + SUCCEEDED builds) → "No builds found" silent lie.
@@ -168,7 +168,7 @@ export class LogsCommand {
         }
         projectName = yaml.content.project;
       }
-      // Red Team console#160: prefer listBuilds (same SoT as `loopscale build list`)
+      // Red Team loop-console#160: prefer listBuilds (same SoT as `loopscale build list`)
       // over getProjectStatus.last_build. The latter reflects the ACTIVE release's
       // build (release-bound view), NOT the most recent build in env (build-history
       // view). The two diverge in real scenarios (e.g., preview env with a recent
