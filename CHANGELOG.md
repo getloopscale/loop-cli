@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-26
+
 ### Added
 - `loopscale rollback --no-wait` returns right after the API accepts the rollback (#26)
 - `loopscale rollback` prints the id of the rollback and returns it as `rollback_id` in `--json`, on success and on failure. The id names the rollback's record, which the console lists under Deployments (getloopscale/loopzero#128)
