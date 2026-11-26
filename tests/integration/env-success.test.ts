@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 //
 // Phase 4 T4.2 — `env` register integration test.
 // Closes T0.3 audit gap "env register has 0 dedicated tests".
 
 import { describe, it, expect, afterEach } from '@jest/globals';
 import {
-  spawnTheo,
+  spawnLoopScale,
   mkTmpHome,
   cleanupTmpHome,
   writeFakeAuthConfig,
-  writeFakeTheoYaml,
+  writeFakeLoopScaleYaml,
 } from './_fixtures/spawn-helper';
 import { startMockApi, MockApiServer } from './_fixtures/mock-api-server';
 
@@ -26,7 +26,7 @@ describe('loopscale env --help', () => {
   it('exit 0 + lists subcommands', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
-    const r = await spawnTheo({ args: ['env', '--help'], cwd: tmp });
+    const r = await spawnLoopScale({ args: ['env', '--help'], cwd: tmp });
     expect(r.exitCode).toBe(0);
     expect(r.stdout).toMatch(/list/);
     expect(r.stdout).toMatch(/create/);
@@ -36,10 +36,10 @@ describe('loopscale env --help', () => {
 });
 
 describe('loopscale env list', () => {
-  it('exit non-zero without auth + theo.yaml', async () => {
+  it('exit non-zero without auth + loopscale.yaml', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
-    const r = await spawnTheo({
+    const r = await spawnLoopScale({
       args: ['env', 'list', '--json'],
       cwd: tmp,
       timeoutMs: 10_000,
@@ -47,7 +47,7 @@ describe('loopscale env list', () => {
     expect(r.exitCode).not.toBe(0);
   });
 
-  it('exit 0 against mock API with auth + theo.yaml', async () => {
+  it('exit 0 against mock API with auth + loopscale.yaml', async () => {
     const server = await startMockApi();
     servers.push(server);
     server.on({
@@ -58,10 +58,10 @@ describe('loopscale env list', () => {
 
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
-    writeFakeAuthConfig(tmp, { theoUrl: server.url });
-    writeFakeTheoYaml(tmp, { project: 'test-project' });
+    writeFakeAuthConfig(tmp, { loopscaleUrl: server.url });
+    writeFakeLoopScaleYaml(tmp, { project: 'test-project' });
 
-    const r = await spawnTheo({
+    const r = await spawnLoopScale({
       args: ['env', 'list', '--json'],
       cwd: tmp,
       env: { LOOPSCALE_URL: server.url },

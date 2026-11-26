@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { ApiClient } from '../api/client';
 import {
@@ -12,7 +12,7 @@ import {
 } from '../commands/preview';
 import { API_REQUEST_TIMEOUT_MS } from '../config/constants';
 import { getGitRoot } from '../adapters/git';
-import { findTheoYaml } from '../adapters/theo-yaml';
+import { findLoopScaleYaml } from '../adapters/loopscale-yaml';
 import { promptConfirm } from '../output/prompt-confirm';
 import { CommandDeps } from './types';
 
@@ -113,9 +113,9 @@ function createPreviewDeps(
 ) {
   return {
     getToken: () => configStore.getToken(),
-    findTheoYaml: () => {
+    findLoopScaleYaml: () => {
       const gitRoot = getGitRoot() ?? process.cwd();
-      return findTheoYaml(process.cwd(), gitRoot);
+      return findLoopScaleYaml(process.cwd(), gitRoot);
     },
     listPreviews: async (project: string) => {
       return apiClient.get<PreviewListApiResponse>(`/api/v1/projects/${encodeURIComponent(project)}/previews`);

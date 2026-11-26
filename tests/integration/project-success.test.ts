@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 //
 // Phase 4 T4.2 — `project` register integration test.
 
 import { describe, it, expect, afterEach } from '@jest/globals';
 import {
-  spawnTheo,
+  spawnLoopScale,
   mkTmpHome,
   cleanupTmpHome,
   writeFakeAuthConfig,
@@ -25,7 +25,7 @@ describe('loopscale project --help', () => {
   it('exit 0 + lists subcommands', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
-    const r = await spawnTheo({ args: ['project', '--help'], cwd: tmp });
+    const r = await spawnLoopScale({ args: ['project', '--help'], cwd: tmp });
     expect(r.exitCode).toBe(0);
     expect(r.stdout).toMatch(/list/);
     expect(r.stdout).toMatch(/create/);
@@ -48,9 +48,9 @@ describe('loopscale project list', () => {
 
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
-    writeFakeAuthConfig(tmp, { theoUrl: server.url });
+    writeFakeAuthConfig(tmp, { loopscaleUrl: server.url });
 
-    const r = await spawnTheo({
+    const r = await spawnLoopScale({
       args: ['project', 'list', '--json'],
       cwd: tmp,
       env: { LOOPSCALE_URL: server.url },
@@ -65,7 +65,7 @@ describe('loopscale project list', () => {
   it('exit 4 without auth', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
-    const r = await spawnTheo({
+    const r = await spawnLoopScale({
       args: ['project', 'list', '--json'],
       cwd: tmp,
       timeoutMs: 10_000,

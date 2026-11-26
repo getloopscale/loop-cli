@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { randomUUID } from 'crypto';
 import { getDashboardUrl, getDefaultApiUrl, API_REQUEST_TIMEOUT_MS } from '../config/constants';

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 //
 // Smoke test for the integration test harness itself. Validates:
-//   • spawnTheo() runs the real binary
+//   • spawnLoopScale() runs the real binary
 //   • mock API serves canned responses
-//   • spawnTheo's HTTP client reaches the mock
+//   • spawnLoopScale's HTTP client reaches the mock
 //   • tmpHome isolation works (no leak between tests)
 //
 // If this file goes RED, every register integration test below is suspect.
@@ -14,7 +14,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import {
-  spawnTheo,
+  spawnLoopScale,
   mkTmpHome,
   cleanupTmpHome,
   writeFakeAuthConfig,
@@ -30,11 +30,11 @@ afterEach(async () => {
   while (servers.length) await servers.pop()!.close();
 });
 
-describe('harness: spawnTheo', () => {
+describe('harness: spawnLoopScale', () => {
   it('runs `loopscale --version` and exits 0', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
-    const r = await spawnTheo({ args: ['--version'], cwd: tmp });
+    const r = await spawnLoopScale({ args: ['--version'], cwd: tmp });
     expect(r.exitCode).toBe(0);
     // version is emitted to stdout
     expect(r.stdout.trim().length).toBeGreaterThan(0);
@@ -43,7 +43,7 @@ describe('harness: spawnTheo', () => {
   it('runs `loopscale --help` and exits 0', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
-    const r = await spawnTheo({ args: ['--help'], cwd: tmp });
+    const r = await spawnLoopScale({ args: ['--help'], cwd: tmp });
     expect(r.exitCode).toBe(0);
     expect(r.stdout).toContain('Usage:');
   });
@@ -51,7 +51,7 @@ describe('harness: spawnTheo', () => {
   it('exits 1 on unknown command', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
-    const r = await spawnTheo({ args: ['this-command-does-not-exist'], cwd: tmp });
+    const r = await spawnLoopScale({ args: ['this-command-does-not-exist'], cwd: tmp });
     expect(r.exitCode).toBe(1);
   });
 
@@ -146,9 +146,9 @@ describe('harness: tmpHome isolation from the caller environment', () => {
     });
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
-    writeFakeAuthConfig(tmp, { theoUrl: server.url });
+    writeFakeAuthConfig(tmp, { loopscaleUrl: server.url });
 
-    const r = await spawnTheo({
+    const r = await spawnLoopScale({
       args: ['whoami', '--json'],
       cwd: tmp,
       env: { LOOPSCALE_URL: server.url },

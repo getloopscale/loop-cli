@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { debugError } from '../../../src/lib/debug';
 
@@ -23,17 +23,6 @@ describe('debugError', () => {
   it('is silent when LOOPSCALE_DEBUG is unset', () => {
     delete process.env.LOOPSCALE_DEBUG;
     debugError('scope', new Error('boom'));
-    expect(writeSpy).not.toHaveBeenCalled();
-  });
-
-  it('ignores THEO_DEBUG', () => {
-    delete process.env.LOOPSCALE_DEBUG;
-    process.env.THEO_DEBUG = '1';
-    try {
-      debugError('scope', new Error('boom'));
-    } finally {
-      delete process.env.THEO_DEBUG;
-    }
     expect(writeSpy).not.toHaveBeenCalled();
   });
 

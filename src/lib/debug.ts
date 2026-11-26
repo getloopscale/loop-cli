@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 /**
  * Opt-in diagnostic logging gated by the LOOPSCALE_DEBUG env var.

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import {
   DomainAddCommand,
@@ -26,7 +26,7 @@ function makeDeps(overrides: Partial<DomainDeps> = {}): DomainDeps {
       environment: 'production',
       status: 'pending_verification',
       verification: { txt_name: '_loopscale-verify.api.mycompany.com', txt_value: 'loopscale-verify=abc123' },
-      cname_target: 'cname.dev.usetheo.dev',
+      cname_target: 'cname.dev.getloopscale.com',
     }),
     verifyDomain: jest.fn().mockResolvedValue({
       domain: 'api.mycompany.com',
@@ -42,7 +42,7 @@ function makeDeps(overrides: Partial<DomainDeps> = {}): DomainDeps {
       environment: 'production',
       status: 'active',
       tls: { status: 'issued', expires_at: '2026-07-04T00:00:00Z' },
-      cname_target: 'cname.dev.usetheo.dev',
+      cname_target: 'cname.dev.getloopscale.com',
       created_at: '2026-04-05T12:00:00Z',
       verified_at: '2026-04-05T12:05:00Z',
     }),
@@ -107,7 +107,7 @@ describe('DomainAddCommand', () => {
     const code = await cmd.execute('api.mycompany.com', { project: 'myapi', app: 'web', env: 'production' });
     expect(code).toBe(0);
     expect(getOutput(deps).some(line => line.includes('Domain registered'))).toBe(true);
-    expect(getOutput(deps).some(line => line.includes('cname.dev.usetheo.dev'))).toBe(true);
+    expect(getOutput(deps).some(line => line.includes('cname.dev.getloopscale.com'))).toBe(true);
   });
 
   it('returns exit 0 with JSON output', async () => {
@@ -119,7 +119,7 @@ describe('DomainAddCommand', () => {
     expect(json.domain).toBe('api.mycompany.com');
     expect(json.status).toBe('pending_verification');
     expect(json.verification.txt_name).toBe('_loopscale-verify.api.mycompany.com');
-    expect(json.cname_target).toBe('cname.dev.usetheo.dev');
+    expect(json.cname_target).toBe('cname.dev.getloopscale.com');
   });
 
   it('returns exit 3 on 409 conflict', async () => {

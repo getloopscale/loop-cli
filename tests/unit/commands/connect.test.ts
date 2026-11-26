@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { ConnectCommand, DisconnectCommand, parseGitHubRepo } from '../../../src/commands/connect';
 
@@ -10,9 +10,9 @@ import { ConnectCommand, DisconnectCommand, parseGitHubRepo } from '../../../src
 function createMockDeps(overrides: Partial<any> = {}) {
   return {
     getToken: jest.fn().mockReturnValue('test-token'),
-    getGitRemote: jest.fn().mockReturnValue('git@github.com:usetheodev/my-app.git'),
+    getGitRemote: jest.fn().mockReturnValue('git@github.com:getloopscale/my-app.git'),
     getProjectName: jest.fn().mockReturnValue('my-app'),
-    connectRepo: jest.fn().mockResolvedValue({ ok: true, project: 'my-app', repo: 'usetheodev/my-app', branch: 'main', auto_deploy: true }),
+    connectRepo: jest.fn().mockResolvedValue({ ok: true, project: 'my-app', repo: 'getloopscale/my-app', branch: 'main', auto_deploy: true }),
     disconnectRepo: jest.fn().mockResolvedValue({ ok: true }),
     getConnection: jest.fn().mockResolvedValue(null),
     writeTo: jest.fn(),
@@ -23,10 +23,10 @@ function createMockDeps(overrides: Partial<any> = {}) {
 
 describe('parseGitHubRepo', () => {
   it('parses SSH remote', () => {
-    expect(parseGitHubRepo('git@github.com:usetheodev/my-app.git')).toBe('usetheodev/my-app');
+    expect(parseGitHubRepo('git@github.com:getloopscale/my-app.git')).toBe('getloopscale/my-app');
   });
   it('parses HTTPS remote', () => {
-    expect(parseGitHubRepo('https://github.com/usetheodev/my-app.git')).toBe('usetheodev/my-app');
+    expect(parseGitHubRepo('https://github.com/getloopscale/my-app.git')).toBe('getloopscale/my-app');
   });
   it('parses HTTPS without .git', () => {
     expect(parseGitHubRepo('https://github.com/owner/repo')).toBe('owner/repo');
@@ -43,7 +43,7 @@ describe('ConnectCommand', () => {
     expect(await cmd.execute()).toBe(4);
   });
 
-  it('returns exit 1 when no theo.yaml', async () => {
+  it('returns exit 1 when no loopscale.yaml', async () => {
     const deps = createMockDeps({ getProjectName: jest.fn().mockReturnValue(null) });
     const cmd = new ConnectCommand(deps);
     expect(await cmd.execute()).toBe(1);
@@ -54,8 +54,8 @@ describe('ConnectCommand', () => {
     const cmd = new ConnectCommand(deps);
     const exit = await cmd.execute();
     expect(exit).toBe(0);
-    expect(deps.connectRepo).toHaveBeenCalledWith('my-app', { repo: 'usetheodev/my-app', installation_id: 0, branch: 'main' });
-    expect(deps.writeTo).toHaveBeenCalledWith(expect.stringContaining('Connected usetheodev/my-app'));
+    expect(deps.connectRepo).toHaveBeenCalledWith('my-app', { repo: 'getloopscale/my-app', installation_id: 0, branch: 'main' });
+    expect(deps.writeTo).toHaveBeenCalledWith(expect.stringContaining('Connected getloopscale/my-app'));
   });
 
   it('uses --repo flag when provided', async () => {
@@ -78,7 +78,7 @@ describe('ConnectCommand', () => {
     const output = deps.writeTo.mock.calls[0][0];
     const parsed = JSON.parse(output);
     expect(parsed.ok).toBe(true);
-    expect(parsed.repo).toBe('usetheodev/my-app');
+    expect(parsed.repo).toBe('getloopscale/my-app');
   });
 
   it('shows GitHub App install link', async () => {
@@ -86,7 +86,7 @@ describe('ConnectCommand', () => {
     const cmd = new ConnectCommand(deps);
     await cmd.execute();
     const all = deps.writeTo.mock.calls.map((c: string[]) => c[0]).join('\n');
-    expect(all).toContain('github.com/apps/theo-platform');
+    expect(all).toContain('github.com/apps/loopscale-platform');
   });
 
   // CHG-2026-04-23-AUDIT-25: network errors carry code=API_UNREACHABLE.

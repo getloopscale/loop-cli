@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { ApiError } from '../api/client';
-import type { TheoYamlResult } from '../adapters/theo-yaml';
+import type { LoopScaleYamlResult } from '../adapters/loopscale-yaml';
 import { classifyNetworkError } from '../output/error-message';
 
 export interface PreviewListItem {
@@ -37,7 +37,7 @@ export interface PreviewDeleteApiResponse {
 
 export interface PreviewDeps {
   getToken: () => string | null;
-  findTheoYaml: () => TheoYamlResult | null;
+  findLoopScaleYaml: () => LoopScaleYamlResult | null;
   listPreviews: (project: string) => Promise<PreviewListApiResponse>;
   inspectPreview: (project: string, id: string) => Promise<PreviewInspectApiResponse>;
   deletePreview: (project: string, id: string) => Promise<PreviewDeleteApiResponse>;
@@ -87,8 +87,8 @@ export class PreviewListCommand {
       return this.exitWithError(opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
-    // 2. Find theo.yaml
-    const yamlResult = this.deps.findTheoYaml();
+    // 2. Find loopscale.yaml
+    const yamlResult = this.deps.findLoopScaleYaml();
     if (!yamlResult) {
       return this.exitWithError(opts, 'No loopscale.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
     }
@@ -202,8 +202,8 @@ export class PreviewInspectCommand {
       return this.exitWithError(opts, 'Preview ID is required. Usage: loopscale preview inspect <id>', 1, 'MISSING_ARGUMENT');
     }
 
-    // 3. Find theo.yaml
-    const yamlResult = this.deps.findTheoYaml();
+    // 3. Find loopscale.yaml
+    const yamlResult = this.deps.findLoopScaleYaml();
     if (!yamlResult) {
       return this.exitWithError(opts, 'No loopscale.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
     }
@@ -304,8 +304,8 @@ export class PreviewDeleteCommand {
       return this.exitWithError(opts, 'Preview ID is required. Usage: loopscale preview delete <id>', 1, 'MISSING_ARGUMENT');
     }
 
-    // 3. Find theo.yaml
-    const yamlResult = this.deps.findTheoYaml();
+    // 3. Find loopscale.yaml
+    const yamlResult = this.deps.findLoopScaleYaml();
     if (!yamlResult) {
       return this.exitWithError(opts, 'No loopscale.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
     }

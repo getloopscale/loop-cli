@@ -1,10 +1,10 @@
 {
-  "_comment": "T2.2 of plan canonical-tests-rewrite-v2 v1.0 per ADR-2026-06-17-T3 D7 + ADR-V2-D2 (Pact broker location: theo-contracts hosts config + Pact Foundation public broker for storage; pending sponsor sign-off).",
+  "_comment": "T2.2 of plan canonical-tests-rewrite-v2 v1.0 per ADR-2026-06-17-T3 D7 + ADR-V2-D2 (Pact broker location: loopscale-contracts hosts config + Pact Foundation public broker for storage; pending sponsor sign-off).",
   "consumer": {
-    "name": "theo-cli"
+    "name": "loopscale-cli"
   },
   "provider": {
-    "name": "theo-engine"
+    "name": "loop-runtime"
   },
   "interactions": [
     {
@@ -17,8 +17,8 @@
           "Content-Type": "application/json"
         },
         "body": {
-          "email": "admin@usetheo.dev",
-          "password": "theo-dev-password"
+          "email": "admin@getloopscale.com",
+          "password": "loopscale-dev-password"
         }
       },
       "response": {
@@ -141,7 +141,7 @@
       "version": "2.0.0"
     },
     "notes": [
-      "ADR-V2-D2 broker decision: theo-contracts hosts config + Pact Foundation public broker for storage. Pending sponsor verbatim sign-off.",
+      "ADR-V2-D2 broker decision: loopscale-contracts hosts config + Pact Foundation public broker for storage. Pending sponsor verbatim sign-off.",
       "Full Pact-go library integration deferred to T2.2 follow-up. This JSON file is shape-asserted by tests/contract/pact-engine.test.ts.",
       "Field types like 'string-rfc1123' are placeholder semantic hints; full Pact JSON spec uses matchers like { matchingRules: { ... } } which will be added when library integration ships."
     ]

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 // CHG-2026-04-23-AUDIT-10: API now returns `username` (from users.username
 // column, migration 000037). Used as display fallback when email is empty —

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 // Minimal extension → MIME map for storage uploads. The server does not trust
 // this for rendering (it forces download), so a small best-effort table is fine;

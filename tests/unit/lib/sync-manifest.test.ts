@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 //
-// Plan theo-storage-sync T0.1 — manifest read/write + ContentsSHA256.
-// The manifest (`.theo/.sync-manifest.json`) is the persisted "third state"
+// Plan loopstore-sync T0.1 — manifest read/write + ContentsSHA256.
+// The manifest (`.loopscale/.sync-manifest.json`) is the persisted "third state"
 // (last-synced hash per path) that lets sync tell "local edit" from "remote
 // change" (blueprint D1 / chezmoi entrystate.go:12-27).
 
@@ -33,8 +33,8 @@ describe('sync-manifest', () => {
 
   it('readManifest throws a typed SyncManifestError on malformed JSON', async () => {
     const dir = await tmp();
-    await fs.mkdir(path.join(dir, '.theo'), { recursive: true });
-    await fs.writeFile(path.join(dir, '.theo', '.sync-manifest.json'), '{ this is not json');
+    await fs.mkdir(path.join(dir, '.loopscale'), { recursive: true });
+    await fs.writeFile(path.join(dir, '.loopscale', '.sync-manifest.json'), '{ this is not json');
     await expect(readManifest(dir)).rejects.toBeInstanceOf(SyncManifestError);
   });
 
@@ -46,12 +46,12 @@ describe('sync-manifest', () => {
     expect(back).toEqual(m);
   });
 
-  it('writeManifest writes valid JSON at .theo/.sync-manifest.json (atomic, no leftover temp)', async () => {
+  it('writeManifest writes valid JSON at .loopscale/.sync-manifest.json (atomic, no leftover temp)', async () => {
     const dir = await tmp();
     await writeManifest(dir, { version: 1, prefix: '', paths: { 'x': 'deadbeef' } });
-    const raw = await fs.readFile(path.join(dir, '.theo', '.sync-manifest.json'), 'utf-8');
+    const raw = await fs.readFile(path.join(dir, '.loopscale', '.sync-manifest.json'), 'utf-8');
     expect(() => JSON.parse(raw)).not.toThrow();
-    const entries = await fs.readdir(path.join(dir, '.theo'));
+    const entries = await fs.readdir(path.join(dir, '.loopscale'));
     expect(entries.filter((e) => e.endsWith('.tmp'))).toHaveLength(0);
   });
 });

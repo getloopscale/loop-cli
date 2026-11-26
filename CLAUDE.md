@@ -1,7 +1,7 @@
 # LoopScale CLI
 
 Standalone `@getloopscale/cli`, the CLI-first client for LoopScale (TypeScript + Commander).
-Extracted from the `theo` monorepo at M2 of the decomposition (history preserved).
+Extracted from the `loopscale` monorepo at M2 of the decomposition (history preserved).
 
 ## What it is
 
@@ -23,19 +23,19 @@ npm run lint        # eslint
 - **cli↔engine** — HTTP over `/api/v1`. The engine OpenAPI is vendored at
   `tests/contract/engine.yaml` (a snapshot); `tests/contract/engine-contract.test.ts`
   asserts every `/api/v1` path the CLI calls exists in the snapshot (consumer-driven).
-  The engine side mirrors this in `theo/api/internal/contract/cli_consumer_test.go`.
-  Run with the rest of the matrix via `cd theo && task quality:contract:cross-repo`
-  (see `theo/docs/cross-repo-contract-matrix.md`).
+  The engine side mirrors this in `loopscale/api/internal/contract/cli_consumer_test.go`.
+  Run with the rest of the matrix via `cd loopscale && task quality:contract:cross-repo`
+  (see `loopscale/docs/cross-repo-contract-matrix.md`).
 
 ## Invariants
 
-- **Dependency direction:** theo-cli imports nothing from the engine repo (HTTP only).
+- **Dependency direction:** loopscale-cli imports nothing from the engine repo (HTTP only).
   Upheld today by the HTTP-only design (production deps are commander + HTTP/telemetry,
-  zero `theo-*` packages) + the vendored OpenAPI contract test. The engine's Go
-  `theo-ops quality acyclic-graph` gate prevents the *reverse* edge (engine → cli) but
+  zero `loopscale-*` packages) + the vendored OpenAPI contract test. The engine's Go
+  `loopscale-ops quality acyclic-graph` gate prevents the *reverse* edge (engine → cli) but
   does NOT scan TypeScript, so it does not mechanically guard cli's own imports. A TS
   import-boundary check (dependency-cruiser / eslint import rule) is a follow-up — until
-  it lands, a reviewer must reject any `theo-*` dependency added to `package.json`.
+  it lands, a reviewer must reject any `loopscale-*` dependency added to `package.json`.
 - **Exit codes are a permanent contract:** `0` success, `1` usage, `2` build, `3` deploy,
   `4` auth, `5` partial. No others (130/143 only in signal handlers).
 - **`--json` is a stability contract** — field names need a major bump to change.
@@ -49,6 +49,6 @@ npm run lint        # eslint
 
 ## Provenance
 
-Extracted at M2 (`theo-cloud/.claude/knowledge-base/plans/m2-extract-theo-cli-plan.md`),
+Extracted at M2 (`loopscale-console/.claude/knowledge-base/plans/m2-extract-loopscale-cli-plan.md`),
 history preserved via `git filter-repo`. Part of the decomposition:
-`theo-contracts ◄── theo (engine) + theo-cloud + theo-cli`.
+`loopscale-contracts ◄── loopscale (engine) + loopscale-console + loopscale-cli`.

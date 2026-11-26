@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { StatusCommand, StatusDeps } from '../../../src/commands/status';
 import { ApiError } from '../../../src/api/client';
@@ -7,8 +7,8 @@ import { ApiError } from '../../../src/api/client';
 function createMockDeps(overrides: Partial<StatusDeps> = {}): StatusDeps {
   return {
     getToken: jest.fn().mockReturnValue('test-token'),
-    findTheoYaml: jest.fn().mockReturnValue({
-      path: '/project/theo.yaml',
+    findLoopScaleYaml: jest.fn().mockReturnValue({
+      path: '/project/loopscale.yaml',
       content: { project: 'my-app', apps: { web: { path: '.', framework: 'express', port: 3000 } } },
     }),
     getStatus: jest.fn().mockResolvedValue({
@@ -28,7 +28,7 @@ function createMockDeps(overrides: Partial<StatusDeps> = {}): StatusDeps {
         created_at: '2026-03-25T12:30:00Z',
       },
       sync_status: 'Synced',
-      url: 'https://my-app.dev.usetheo.dev',
+      url: 'https://my-app.dev.getloopscale.com',
     }),
     writeTo: jest.fn(),
     writeError: jest.fn(),
@@ -51,7 +51,7 @@ describe('StatusCommand', () => {
       expect(output).toContain('build-a1b2c3d4');
       expect(output).toContain('SUCCEEDED');
       expect(output).toContain('rel-e5f6g7h8');
-      expect(output).toContain('https://my-app.dev.usetheo.dev');
+      expect(output).toContain('https://my-app.dev.getloopscale.com');
     });
 
     it('should default to production environment', async () => {
@@ -177,7 +177,7 @@ describe('StatusCommand', () => {
           created_at: '2026-03-25T12:30:00Z',
         },
         sync_status: 'Synced',
-        url: 'https://my-app.dev.usetheo.dev',
+        url: 'https://my-app.dev.getloopscale.com',
       };
       const deps = createMockDeps({
         getStatus: jest.fn().mockResolvedValue(apiResponse),
@@ -193,7 +193,7 @@ describe('StatusCommand', () => {
       expect(parsed.last_build.id).toBe('build-a1b2c3d4');
       expect(parsed.active_release.id).toBe('rel-e5f6g7h8');
       expect(parsed.active_release.status).toBe('ACTIVE');
-      expect(parsed.url).toBe('https://my-app.dev.usetheo.dev');
+      expect(parsed.url).toBe('https://my-app.dev.getloopscale.com');
     });
 
     it('should output JSON for no-deploys state', async () => {
@@ -243,10 +243,10 @@ describe('StatusCommand', () => {
     });
   });
 
-  describe('missing theo.yaml', () => {
-    it('should return exit code 1 when theo.yaml not found', async () => {
+  describe('missing loopscale.yaml', () => {
+    it('should return exit code 1 when loopscale.yaml not found', async () => {
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue(null),
+        findLoopScaleYaml: jest.fn().mockReturnValue(null),
       });
       const cmd = new StatusCommand(deps);
 
@@ -258,12 +258,12 @@ describe('StatusCommand', () => {
       expect(errOutput).toContain('loopscale init');
     });
 
-    it('should return exit code 1 when theo.yaml has parse error', async () => {
+    it('should return exit code 1 when loopscale.yaml has parse error', async () => {
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue({
-          path: '/project/theo.yaml',
+        findLoopScaleYaml: jest.fn().mockReturnValue({
+          path: '/project/loopscale.yaml',
           content: { project: 'my-app', apps: {} },
-          fileName: 'theo.yaml',
+          fileName: 'loopscale.yaml',
           parseError: 'Invalid YAML syntax',
         }),
       });
@@ -273,12 +273,12 @@ describe('StatusCommand', () => {
 
       expect(exitCode).toBe(1);
       const errOutput = (deps.writeError as jest.Mock).mock.calls.map((c: string[]) => c[0]).join(' ');
-      expect(errOutput).toContain('Invalid theo.yaml');
+      expect(errOutput).toContain('Invalid loopscale.yaml');
     });
 
-    it('should return exit code 1 with JSON when theo.yaml not found', async () => {
+    it('should return exit code 1 with JSON when loopscale.yaml not found', async () => {
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue(null),
+        findLoopScaleYaml: jest.fn().mockReturnValue(null),
       });
       const cmd = new StatusCommand(deps);
 
@@ -402,7 +402,7 @@ describe('StatusCommand', () => {
 
       // Missing config scenario
       const deps4 = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue(null),
+        findLoopScaleYaml: jest.fn().mockReturnValue(null),
       });
       const cmd4 = new StatusCommand(deps4);
       await cmd4.execute({});
@@ -434,7 +434,7 @@ describe('StatusCommand', () => {
           },
           active_release: null,
           sync_status: 'unknown',
-          url: 'https://e2e-test-hello-production.theo.local',
+          url: 'https://e2e-test-hello-production.loopscale.local',
         }),
       });
       const cmd = new StatusCommand(deps);
@@ -451,7 +451,7 @@ describe('StatusCommand', () => {
           last_build: { id: 'b-1', status: 'SUCCEEDED', finished_at: '2026-04-23T14:30:31Z' },
           active_release: null,
           sync_status: 'unknown',
-          url: 'https://e2e-test-hello-production.theo.local',
+          url: 'https://e2e-test-hello-production.loopscale.local',
         }),
       });
       const cmd = new StatusCommand(deps);
@@ -472,7 +472,7 @@ describe('StatusCommand', () => {
             created_at: '2026-04-23T14:30:31Z',
           },
           sync_status: 'Synced',
-          url: 'https://app.theo.local',
+          url: 'https://app.loopscale.local',
         }),
       });
       const cmd = new StatusCommand(deps);
@@ -497,7 +497,7 @@ describe('StatusCommand', () => {
             created_at: '2026-04-23T21:00:00Z',
           },
           sync_status: 'Synced',
-          url: 'https://x.theo.local',
+          url: 'https://x.loopscale.local',
         }),
       });
       const cmd = new StatusCommand(deps);
@@ -519,7 +519,7 @@ describe('StatusCommand', () => {
           last_build: { id: 'b-1', status: 'SUCCEEDED', finished_at: '2026-04-25T10:00:00Z' },
           active_release: { id: 'rel-1', status: 'ACTIVE', git_commit: 'abc', created_at: '2026-04-25T10:00:00Z' },
           scaling: { replicas: 0, min: 0, max: 5, scaled_to_zero: true },
-          url: 'https://my-app-production.dev.usetheo.dev',
+          url: 'https://my-app-production.dev.getloopscale.com',
         }),
       });
       const cmd = new StatusCommand(deps);
@@ -538,7 +538,7 @@ describe('StatusCommand', () => {
           last_build: { id: 'b-1', status: 'SUCCEEDED', finished_at: '2026-04-25T10:00:00Z' },
           active_release: { id: 'rel-1', status: 'ACTIVE', git_commit: 'abc', created_at: '2026-04-25T10:00:00Z' },
           scaling: { replicas: 3, min: 1, max: 10, scaled_to_zero: false },
-          url: 'https://my-app-production.dev.usetheo.dev',
+          url: 'https://my-app-production.dev.getloopscale.com',
         }),
       });
       const cmd = new StatusCommand(deps);

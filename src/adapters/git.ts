@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { execSync, execFile } from 'child_process';
 import { promisify } from 'util';
 import * as fs from 'fs';
 import * as path from 'path';
-import { DESCRIPTOR_FILE_NAMES } from './theo-yaml';
+import { DESCRIPTOR_FILE_NAMES } from './loopscale-yaml';
 import * as os from 'os';
 import * as crypto from 'crypto';
 import * as tar from 'tar';
@@ -21,7 +21,7 @@ const DEFAULT_IGNORE_PATTERNS = [
 ];
 
 /** Additional patterns excluded from content hash only (not from tar bundles).
- * theo.yaml changes config, not source code — it shouldn't change the version hash. */
+ * loopscale.yaml changes config, not source code — it shouldn't change the version hash. */
 const HASH_ONLY_IGNORE_PATTERNS = [...DESCRIPTOR_FILE_NAMES];
 
 export function hasGitRepo(): boolean {
@@ -64,7 +64,7 @@ export function getSourceIdentifier(): string {
 
 /**
  * Computes a deterministic SHA256 hash of all source files in a directory.
- * Excludes node_modules, .git, .env, and patterns from .gitignore / .theoignore.
+ * Excludes node_modules, .git, .env, and patterns from .gitignore / .loopscaleignore.
  * Same files with same contents always produce the same hash.
  */
 export function computeContentHash(dir: string): string {
@@ -99,10 +99,10 @@ function collectFiles(baseDir: string, currentDir: string, ig: ReturnType<typeof
   return results;
 }
 
-/** Load ignore patterns from .gitignore, .theoignore, and defaults. */
+/** Load ignore patterns from .gitignore, .loopscaleignore, and defaults. */
 function loadIgnorePatterns(dir: string): ReturnType<typeof ignore> {
   const ig = ignore().add(DEFAULT_IGNORE_PATTERNS);
-  for (const ignoreFile of ['.gitignore', '.theoignore']) {
+  for (const ignoreFile of ['.gitignore', '.loopscaleignore']) {
     const filePath = path.join(dir, ignoreFile);
     if (fs.existsSync(filePath)) {
       ig.add(fs.readFileSync(filePath, 'utf-8'));
@@ -209,7 +209,7 @@ export function checkSensitiveFiles(): string[] {
 
 /**
  * Scans the directory for sensitive files using ignore patterns + sensitive patterns.
- * Respects .gitignore / .theoignore so node_modules etc. are skipped.
+ * Respects .gitignore / .loopscaleignore so node_modules etc. are skipped.
  */
 export function checkSensitiveFilesOnDisk(dir: string): string[] {
   const ig = loadIgnorePatterns(dir);

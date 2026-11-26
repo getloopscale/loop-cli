@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 export interface DeployEvent {
   type: string;
@@ -165,7 +165,7 @@ export class DeployRenderer {
   private renderTTYResult(result: DeployResult): string {
     const lines: string[] = [];
 
-    // Red Team theo-cloud#84 closure: result.duration_seconds measures
+    // Red Team console#84 closure: result.duration_seconds measures
     // only the post-build phase (deliver + verify), NOT the build itself.
     // For a deploy whose build took 718s and post-build verify took 104s,
     // "Deploy completed in 104s" undercounts by ~7x and misleads the user
@@ -204,7 +204,7 @@ export class DeployRenderer {
   private renderCIResult(result: DeployResult): string {
     const lines: string[] = [];
 
-    // Red Team theo-cloud#84 closure (see renderTTYResult for context).
+    // Red Team console#84 closure (see renderTTYResult for context).
     const total = formatDeployTotal(result);
     if (result.status === 'success') {
       lines.push(`Deploy completed in ${total}`);
@@ -232,7 +232,7 @@ export class DeployRenderer {
   }
 }
 
-// Red Team theo-cloud#84 closure — format the deploy total so the
+// Red Team console#84 closure — format the deploy total so the
 // number matches lived experience. Sums the max build duration across
 // apps (builds run in parallel — sum would double-count) with the
 // post-build phase. When no app reports build_duration_seconds, falls

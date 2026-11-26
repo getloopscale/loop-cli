@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 //
-// Plan v1.1 T1.2 (theo-cli-vercel-like-ux) — deploy command consumes
-// findServicesJson for the upload payload (NOT findTheoYaml).
+// Plan v1.1 T1.2 (loopscale-cli-vercel-like-ux) — deploy command consumes
+// findServicesJson for the upload payload (NOT findLoopScaleYaml).
 
 import * as fs from 'fs';
 import * as os from 'os';
@@ -18,8 +18,8 @@ interface SSEEvent {
 function createMockDeps(overrides: Partial<DeployDeps> = {}): DeployDeps {
   return {
     getToken: jest.fn().mockReturnValue('test-token'),
-    findTheoYaml: jest.fn().mockReturnValue({
-      path: '/project/theo.yaml',
+    findLoopScaleYaml: jest.fn().mockReturnValue({
+      path: '/project/loopscale.yaml',
       content: {
         project: 'my-saas',
         apps: {
@@ -27,7 +27,7 @@ function createMockDeps(overrides: Partial<DeployDeps> = {}): DeployDeps {
         },
       },
     }),
-    findServicesJson: jest.fn().mockReturnValue({ path: '/project/.theo/services.json' }),
+    findServicesJson: jest.fn().mockReturnValue({ path: '/project/.loopscale/services.json' }),
     hasGitRepo: jest.fn().mockReturnValue(false),
     hasUncommittedChanges: jest.fn().mockReturnValue(false),
     hasLockfile: jest.fn().mockReturnValue(true),
@@ -56,7 +56,7 @@ function createMockDeps(overrides: Partial<DeployDeps> = {}): DeployDeps {
 }
 
 describe('Plan v1.1 T1.2 — deploy uses findServicesJson for upload payload', () => {
-  it('passes the .theo/services.json path (NOT theo.yaml path) to uploadSource', async () => {
+  it('passes the .loopscale/services.json path (NOT loopscale.yaml path) to uploadSource', async () => {
     const uploadSource = jest.fn().mockResolvedValue({ commit_sha: 'sha', apps: ['api'] });
     const deps = createMockDeps({ uploadSource });
     const cmd = new DeployCommand(deps);
@@ -64,8 +64,8 @@ describe('Plan v1.1 T1.2 — deploy uses findServicesJson for upload payload', (
 
     expect(uploadSource).toHaveBeenCalled();
     const args = uploadSource.mock.calls[0];
-    expect(args[1]).toBe('/project/.theo/services.json');
-    expect(args[1]).not.toContain('theo.yaml');
+    expect(args[1]).toBe('/project/.loopscale/services.json');
+    expect(args[1]).not.toContain('loopscale.yaml');
   });
 
   it('builds the manifest from the descriptor when the project has no services.json', async () => {
@@ -76,7 +76,7 @@ describe('Plan v1.1 T1.2 — deploy uses findServicesJson for upload payload', (
     });
     const submitBuild = jest.fn().mockResolvedValue({ build_id: 'b1', deploy_id: 'd1', status: 'queued' });
     const deps = createMockDeps({
-      findTheoYaml: jest.fn().mockReturnValue({
+      findLoopScaleYaml: jest.fn().mockReturnValue({
         path: '/project/loopscale.yaml',
         content: { project: 'hello', apps: { web: { path: '.', port: 8080, runtime: 'node', start: 'node server.js' } } },
       }),
@@ -115,18 +115,18 @@ describe('Plan v1.1 T1.2 — deploy uses findServicesJson for upload payload', (
     expect(uploadSource).not.toHaveBeenCalled();
     const said = writeErrorMessages.join('\n');
     expect(said).toContain("App 'api' declares no runtime");
-    expect(said).not.toMatch(/theokit/i);
+    expect(said).not.toMatch(/loopzero/i);
   });
 
-  it('still reads theo.yaml for app-shape (regression — both deps coexist)', async () => {
-    const findTheoYaml = jest.fn().mockReturnValue({
-      path: '/project/theo.yaml',
+  it('still reads loopscale.yaml for app-shape (regression — both deps coexist)', async () => {
+    const findLoopScaleYaml = jest.fn().mockReturnValue({
+      path: '/project/loopscale.yaml',
       content: { project: 'my-saas', apps: { api: { path: 'apps/api', framework: 'express', type: 'server', port: 3000 } } },
     });
-    const deps = createMockDeps({ findTheoYaml });
+    const deps = createMockDeps({ findLoopScaleYaml });
     const cmd = new DeployCommand(deps);
     await cmd.execute({ env: 'production', json: true });
-    expect(findTheoYaml).toHaveBeenCalled();
+    expect(findLoopScaleYaml).toHaveBeenCalled();
   });
 
   it('forwards --services-json override to findServicesJson (EC-4)', async () => {
@@ -158,7 +158,7 @@ describe('Plan v1.1 EC-9 — findServicesJson is optional in DeployDeps', () => 
   it('compiles a DeployDeps shape without findServicesJson (promote/rollback/validate parity)', () => {
     const depsWithoutFindServicesJson: DeployDeps = {
       getToken: () => null,
-      findTheoYaml: () => null,
+      findLoopScaleYaml: () => null,
       hasGitRepo: () => false,
       hasUncommittedChanges: () => false,
       hasLockfile: () => false,
@@ -178,7 +178,7 @@ describe('Plan v1.1 EC-9 — findServicesJson is optional in DeployDeps', () => 
   });
 });
 
-// simplify-deploy-theokit-runtime-wiring T3.1a (F-dom-2) — the deploy build
+// simplify-deploy-loopzero-runtime-wiring T3.1a (F-dom-2) — the deploy build
 // payload MUST carry each app's services.json `runtime` (the API now dispatches
 // the build strategy on it). These tests use a REAL services.json on disk so the
 // enrichment block actually runs (the mocks above point at a non-existent path,
@@ -188,12 +188,12 @@ describe('T3.1a — deploy carries services.json runtime into the build payload'
   let servicesJsonPath: string;
 
   function writeServices(services: Array<{ name: string; runtime?: string }>): void {
-    fs.mkdirSync(path.join(tmpRoot, '.theo'), { recursive: true });
-    servicesJsonPath = path.join(tmpRoot, '.theo', 'services.json');
+    fs.mkdirSync(path.join(tmpRoot, '.loopscale'), { recursive: true });
+    servicesJsonPath = path.join(tmpRoot, '.loopscale', 'services.json');
     fs.writeFileSync(servicesJsonPath, JSON.stringify({ version: 2, project: 'my-saas', services }));
   }
 
-  function depsWithTheoApps(
+  function depsWithLoopScaleApps(
     apps: Record<string, { path: string; framework: string; type: string; port: number }>,
     overrides: Partial<DeployDeps> = {},
   ): DeployDeps {
@@ -201,8 +201,8 @@ describe('T3.1a — deploy carries services.json runtime into the build payload'
       // projectRoot '/project' does NOT exist on disk → skipFs=true → validateConfig
       // path-existence checks are skipped (same as the existing tests). Only the
       // services.json path below is real, so the runtime-enrichment readFileSync runs.
-      findTheoYaml: jest.fn().mockReturnValue({
-        path: '/project/theo.yaml',
+      findLoopScaleYaml: jest.fn().mockReturnValue({
+        path: '/project/loopscale.yaml',
         content: { project: 'my-saas', apps },
       }),
       findServicesJson: jest.fn().mockReturnValue({ path: servicesJsonPath }),
@@ -230,7 +230,7 @@ describe('T3.1a — deploy carries services.json runtime into the build payload'
       { name: 'web', runtime: 'node' },
     ]);
     const writeError = jest.fn();
-    const deps = depsWithTheoApps(
+    const deps = depsWithLoopScaleApps(
       {
         api: { path: 'apps/api', framework: 'fastapi', type: 'server', port: 8000 },
         web: { path: 'apps/web', framework: 'express', type: 'server', port: 3000 },
@@ -243,10 +243,10 @@ describe('T3.1a — deploy carries services.json runtime into the build payload'
     expect(warned).not.toMatch(/no services\.json runtime/i);
   });
 
-  it('warns (human mode) when a theo.yaml app has no matching services.json runtime', async () => {
+  it('warns (human mode) when a loopscale.yaml app has no matching services.json runtime', async () => {
     writeServices([{ name: 'api', runtime: 'python' }]); // 'worker' is absent
     const writeError = jest.fn();
-    const deps = depsWithTheoApps(
+    const deps = depsWithLoopScaleApps(
       {
         api: { path: 'apps/api', framework: 'fastapi', type: 'server', port: 8000 },
         worker: { path: 'apps/worker', framework: 'custom', type: 'worker', port: 0 },
@@ -263,7 +263,7 @@ describe('T3.1a — deploy carries services.json runtime into the build payload'
   it('suppresses the unmatched-app warning under --json', async () => {
     writeServices([{ name: 'api', runtime: 'python' }]);
     const writeError = jest.fn();
-    const deps = depsWithTheoApps(
+    const deps = depsWithLoopScaleApps(
       {
         api: { path: 'apps/api', framework: 'fastapi', type: 'server', port: 8000 },
         worker: { path: 'apps/worker', framework: 'custom', type: 'worker', port: 0 },

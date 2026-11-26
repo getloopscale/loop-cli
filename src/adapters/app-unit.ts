@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
-import type { TheoYamlApp, BuildStrategy } from './theo-yaml';
+import type { LoopScaleYamlApp, BuildStrategy } from './loopscale-yaml';
 
 /**
  * AppUnit is a fully resolved app — all fields required, ready for build plan generation.
@@ -21,8 +21,8 @@ export interface AppUnit {
   type: 'server' | 'worker' | 'frontend';
   path: string;
   framework: string;
-  runtime: string;                    // services.json runtime ("python" | "node") — the build-strategy key the API dispatches on (F-dom-2). Enriched from .theo/services.json at deploy time.
-  start: string;                      // services.json start command (canonical Dockerfile CMD). Enriched from .theo/services.json at deploy time.
+  runtime: string;                    // services.json runtime ("python" | "node") — the build-strategy key the API dispatches on (F-dom-2). Enriched from .loopscale/services.json at deploy time.
+  start: string;                      // services.json start command (canonical Dockerfile CMD). Enriched from .loopscale/services.json at deploy time.
   port: number | null;
   build: BuildStrategy;
   dockerfile: string | null;          // resolved Dockerfile path (relative to app path)
@@ -34,31 +34,31 @@ export interface AppUnit {
 }
 
 // Plan B v3.1 T-B.1 (2026-06-05) — `FRONTEND_FRAMEWORKS` array removed
-// post TheoKit-only cutover. Apps now declare `type` explicitly em
-// `.theo/services.json` (or via the legacy `services_json` form-field
+// post LoopZero-only cutover. Apps now declare `type` explicitly em
+// `.loopscale/services.json` (or via the legacy `services_json` form-field
 // path during transition). The framework-string heuristic no longer
 // participates em type inference; absent type defaults to "server"
 // (frontends are explicit em services manifest per ADR D5).
 
 /**
- * normalizeApp resolves a raw TheoYamlApp into a fully populated AppUnit.
+ * normalizeApp resolves a raw LoopScaleYamlApp into a fully populated AppUnit.
  *
  * Defaults applied:
  *   - type: inferred from framework (frontend frameworks → "frontend", else "server")
  *   - build: "buildpack" when framework is recognized, "custom" when framework is "custom"
  *   - dockerfile: null unless build is "dockerfile" (then defaults to "Dockerfile")
- *   - rendering: explicit from theo.yaml, or "server" as safe default (MEET-009)
+ *   - rendering: explicit from loopscale.yaml, or "server" as safe default (MEET-009)
  *   - env: {} when absent
  *   - secrets: [] when absent
  */
-export function normalizeApp(name: string, raw: TheoYamlApp): AppUnit {
+export function normalizeApp(name: string, raw: LoopScaleYamlApp): AppUnit {
   // Resolve type
   let type: AppUnit['type'];
   if (raw.type === 'worker' || raw.type === 'frontend' || raw.type === 'server') {
     type = raw.type;
   } else {
     // Plan B v3.1 T-B.1 — framework-string heuristic removed; default "server"
-    // (frontends declared explicitly em services.json post TheoKit-only cutover).
+    // (frontends declared explicitly em services.json post LoopZero-only cutover).
     type = 'server';
   }
 
@@ -121,11 +121,11 @@ export function normalizeApp(name: string, raw: TheoYamlApp): AppUnit {
 }
 
 /**
- * normalizeApps converts all apps from a TheoYaml into AppUnit[].
+ * normalizeApps converts all apps from a LoopScaleYaml into AppUnit[].
  * Optionally filters by selected app names.
  */
 export function normalizeApps(
-  apps: Record<string, TheoYamlApp>,
+  apps: Record<string, LoopScaleYamlApp>,
   selectedNames?: string[],
 ): AppUnit[] {
   const names = selectedNames ?? Object.keys(apps);

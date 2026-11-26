@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 // loopscale connect — Link a GitHub repository to a LoopScale project for auto-deploy.
 // loopscale disconnect — Unlink.
@@ -124,7 +124,7 @@ export class ConnectCommand {
       this.deps.writeTo('');
       this.deps.writeTo('  Every push to the default branch will deploy automatically.');
       this.deps.writeTo('  Make sure the LoopScale GitHub App is installed on your repository:');
-      this.deps.writeTo('    https://github.com/apps/theo-platform');
+      this.deps.writeTo('    https://github.com/apps/loopscale-platform');
       return 0;
     } catch (err) {
       if (err instanceof ApiError) {

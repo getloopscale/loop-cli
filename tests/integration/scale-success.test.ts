@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 //
 // Phase 4 T4.2 — `scale` register integration test.
 // CLAUDE.md says: "loopscale scale DB persistence (stub returns 202
-// acknowledged — use theo.yaml + loopscale deploy)". This test pins that
+// acknowledged — use loopscale.yaml + loopscale deploy)". This test pins that
 // honest-stub contract so accidental "make it work" attempts that
 // would mask the missing implementation get caught.
 
 import { describe, it, expect, afterEach } from '@jest/globals';
 import {
-  spawnTheo,
+  spawnLoopScale,
   mkTmpHome,
   cleanupTmpHome,
   writeFakeAuthConfig,
-  writeFakeTheoYaml,
+  writeFakeLoopScaleYaml,
   parseLastJsonLine,
 } from './_fixtures/spawn-helper';
 import { startMockApi, MockApiServer } from './_fixtures/mock-api-server';
@@ -30,7 +30,7 @@ describe('loopscale scale --help', () => {
   it('exit 0', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
-    const r = await spawnTheo({ args: ['scale', '--help'], cwd: tmp });
+    const r = await spawnLoopScale({ args: ['scale', '--help'], cwd: tmp });
     expect(r.exitCode).toBe(0);
   });
 });
@@ -42,22 +42,22 @@ describe('loopscale scale (STUB per CLAUDE.md)', () => {
     server.on({
       method: 'POST',
       path: '/api/v1/scale',
-      response: { status: 202, body: { acknowledged: true, status: 'pending', message: 'Use theo.yaml + loopscale deploy for actual scaling' } },
+      response: { status: 202, body: { acknowledged: true, status: 'pending', message: 'Use loopscale.yaml + loopscale deploy for actual scaling' } },
     });
 
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
-    writeFakeAuthConfig(tmp, { theoUrl: server.url });
-    writeFakeTheoYaml(tmp);
+    writeFakeAuthConfig(tmp, { loopscaleUrl: server.url });
+    writeFakeLoopScaleYaml(tmp);
 
-    const r = await spawnTheo({
+    const r = await spawnLoopScale({
       args: ['scale', '--app', 'api', '--replicas', '3', '--env', 'production', '--json'],
       cwd: tmp,
       env: { LOOPSCALE_URL: server.url },
       timeoutMs: 15_000,
     });
     // Stub semantics: command may exit 0 (acknowledged stub), 1
-    // (usage), or 3 (deploy failure — CLAUDE.md note "use theo.yaml +
+    // (usage), or 3 (deploy failure — CLAUDE.md note "use loopscale.yaml +
     // loopscale deploy" suggests scale may surface non-implementation as
     // exit 3). Reject hang or unexpected codes (-1, 143).
     expect([0, 1, 3]).toContain(r.exitCode);

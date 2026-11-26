@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { executeDeviceCodeFlow, refreshAccessToken, DeviceFlowDeps } from '../../src/auth/device-flow';
 
@@ -119,7 +119,7 @@ describe('Device Code Flow', () => {
     }
   });
 
-  // Regression: LOOPSCALE_URL=https://app-dev.usetheo.dev/engine is the canonical
+  // Regression: LOOPSCALE_URL=https://app-dev.getloopscale.com/engine is the canonical
   // dev-public value (per src/config/constants.ts) so engine REST calls
   // (everything under /api/v1) hit the cloud /engine/* proxy. But the device
   // flow endpoints live at the CLOUD root (/v1/auth/device/*), not inside the
@@ -138,7 +138,7 @@ describe('Device Code Flow', () => {
         json: async () => ({
           device_code: 'dc-strip',
           user_code: 'STRIP',
-          verification_uri: 'https://auth-dev.usetheo.dev/oauth2/device/verify',
+          verification_uri: 'https://auth-dev.getloopscale.com/oauth2/device/verify',
           expires_in: 600,
           interval: 5,
         }),
@@ -147,7 +147,7 @@ describe('Device Code Flow', () => {
 
     const deps = createMockDeps({
       fetchFn,
-      baseURL: 'https://app-dev.usetheo.dev/engine',
+      baseURL: 'https://app-dev.getloopscale.com/engine',
       sleep: jest.fn().mockImplementation(async () => {
         throw new Error('stop polling — assertion target reached');
       }),
@@ -158,7 +158,7 @@ describe('Device Code Flow', () => {
     expect(calledURLs.length).toBeGreaterThanOrEqual(1);
     const authorizeURL = new URL(calledURLs[0]);
     expect(authorizeURL.pathname).toBe('/v1/auth/device/authorize');
-    expect(authorizeURL.host).toBe('app-dev.usetheo.dev');
+    expect(authorizeURL.host).toBe('app-dev.getloopscale.com');
     expect(calledURLs[0]).not.toContain('/engine/v1/auth');
   });
 
@@ -175,7 +175,7 @@ describe('Device Code Flow', () => {
           json: async () => ({
             device_code: 'dc-poll-strip',
             user_code: 'POLLSTRIP',
-            verification_uri: 'https://auth-dev.usetheo.dev/oauth2/device/verify',
+            verification_uri: 'https://auth-dev.getloopscale.com/oauth2/device/verify',
             expires_in: 600,
             interval: 5,
           }),
@@ -195,7 +195,7 @@ describe('Device Code Flow', () => {
 
     const deps = createMockDeps({
       fetchFn,
-      baseURL: 'https://app-dev.usetheo.dev/engine',
+      baseURL: 'https://app-dev.getloopscale.com/engine',
     });
 
     await executeDeviceCodeFlow(deps);

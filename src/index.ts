@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 // Suppress Node.js ExperimentalWarning (buffer.File in Node 20 multipart uploads).
 // In Node 22+ this warning is gone. Filter instead of monkey-patching process.emit.
@@ -159,7 +159,7 @@ export function createProgram(): Command {
 
   // Register all command groups
   registerAuthCommands(deps);
-  // Plan B v3.1 T-B.2 — `theo init` removed (TheoKit-only cutover).
+  // Plan B v3.1 T-B.2 — `loopscale init` removed (LoopZero-only cutover).
   registerInitCommand(deps);
   registerDeployCommands(deps);
   registerProjectCommands(deps);
@@ -172,7 +172,7 @@ export function createProgram(): Command {
   registerScaleCommands(deps);
   registerDiagnosticsCommands(deps);
 
-  // Plan v1.1 T4.1 (theo-cli-vercel-like-ux) — zero-config delegation.
+  // Plan v1.1 T4.1 (loopscale-cli-vercel-like-ux) — zero-config delegation.
   // `loopscale` with no positional subcommand and no --help/--version routes to
   // `loopscale deploy` (Vercel-parity ergonomic). EC-8 absorbed: help/version
   // flags ALWAYS win, regardless of argv position; Commander handles them

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 //
 // Phase 4 T4.2 — `auth` register integration test.
 // Covers: loopscale whoami, loopscale logout.
@@ -8,7 +8,7 @@
 
 import { describe, it, expect, afterEach } from '@jest/globals';
 import {
-  spawnTheo,
+  spawnLoopScale,
   mkTmpHome,
   cleanupTmpHome,
   writeFakeAuthConfig,
@@ -41,9 +41,9 @@ describe('loopscale whoami', () => {
 
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
-    writeFakeAuthConfig(tmp, { theoUrl: server.url });
+    writeFakeAuthConfig(tmp, { loopscaleUrl: server.url });
 
-    const r = await spawnTheo({
+    const r = await spawnLoopScale({
       args: ['whoami', '--json'],
       cwd: tmp,
       env: { LOOPSCALE_URL: server.url },
@@ -69,7 +69,7 @@ describe('loopscale whoami', () => {
     // existing exit-code-contract.test.ts case 'whoami → 4'.
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
-    const r = await spawnTheo({
+    const r = await spawnLoopScale({
       args: ['whoami', '--json'],
       cwd: tmp,
       timeoutMs: 10_000,
@@ -85,7 +85,7 @@ describe('loopscale logout', () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
     writeFakeAuthConfig(tmp);
-    const r = await spawnTheo({
+    const r = await spawnLoopScale({
       args: ['logout', '--json'],
       cwd: tmp,
     });
@@ -96,7 +96,7 @@ describe('loopscale logout', () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
     // no auth config — F-06 fix says this prints "Already logged out." with exit 0
-    const r = await spawnTheo({
+    const r = await spawnLoopScale({
       args: ['logout'],
       cwd: tmp,
     });

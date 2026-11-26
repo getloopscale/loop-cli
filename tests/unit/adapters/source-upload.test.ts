@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { uploadSource } from '../../../src/adapters/source-upload';
 import { ApiError } from '../../../src/api/client';
@@ -26,7 +26,7 @@ function mockFsReads(): void {
   mockFs.readFileSync.mockImplementation((p: fs.PathOrFileDescriptor) => {
     const sp = String(p);
     if (sp.endsWith('.bundle')) return Buffer.from('bundle-data');
-    if (sp.endsWith('theo.yaml') || sp.endsWith('services.json')) {
+    if (sp.endsWith('loopscale.yaml') || sp.endsWith('services.json')) {
       return 'project: my-saas\napps: {}';
     }
     return '';
@@ -34,7 +34,7 @@ function mockFsReads(): void {
   mockFsPromisesReadFile.mockImplementation(async (p: fs.PathLike | fs.promises.FileHandle) => {
     const sp = String(p);
     if (sp.endsWith('.bundle')) return Buffer.from('bundle-data');
-    if (sp.endsWith('theo.yaml') || sp.endsWith('services.json')) {
+    if (sp.endsWith('loopscale.yaml') || sp.endsWith('services.json')) {
       return 'project: my-saas\napps: {}';
     }
     return Buffer.from('');
@@ -75,7 +75,7 @@ describe('uploadSource', () => {
         jsonResponse(200, { commit_sha: 'abc123', apps: ['api'] })
       );
 
-      await uploadSource('http://localhost:3001', 'token', '/tmp/b.bundle', '/proj/theo.yaml');
+      await uploadSource('http://localhost:3001', 'token', '/tmp/b.bundle', '/proj/loopscale.yaml');
 
       const callArgs = fetchSpy.mock.calls[0];
       const init = callArgs[1] as RequestInit;
@@ -87,11 +87,11 @@ describe('uploadSource', () => {
       jest.spyOn(globalThis, 'fetch').mockRejectedValue(timeoutError);
 
       await expect(
-        uploadSource('http://localhost:3001', 'token', '/tmp/b.bundle', '/proj/theo.yaml')
+        uploadSource('http://localhost:3001', 'token', '/tmp/b.bundle', '/proj/loopscale.yaml')
       ).rejects.toThrow(ApiError);
 
       try {
-        await uploadSource('http://localhost:3001', 'token', '/tmp/b.bundle', '/proj/theo.yaml');
+        await uploadSource('http://localhost:3001', 'token', '/tmp/b.bundle', '/proj/loopscale.yaml');
       } catch (err) {
         expect(err).toBeInstanceOf(ApiError);
         expect((err as ApiError).exitCode).toBe(3);
@@ -105,11 +105,11 @@ describe('uploadSource', () => {
       jest.spyOn(globalThis, 'fetch').mockRejectedValue(connError);
 
       await expect(
-        uploadSource('http://localhost:3001', 'token', '/tmp/b.bundle', '/proj/theo.yaml')
+        uploadSource('http://localhost:3001', 'token', '/tmp/b.bundle', '/proj/loopscale.yaml')
       ).rejects.toThrow(ApiError);
 
       try {
-        await uploadSource('http://localhost:3001', 'token', '/tmp/b.bundle', '/proj/theo.yaml');
+        await uploadSource('http://localhost:3001', 'token', '/tmp/b.bundle', '/proj/loopscale.yaml');
       } catch (err) {
         expect(err).toBeInstanceOf(ApiError);
         expect((err as ApiError).exitCode).toBe(3);
@@ -121,11 +121,11 @@ describe('uploadSource', () => {
       jest.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network error'));
 
       await expect(
-        uploadSource('http://localhost:3001', 'token', '/tmp/b.bundle', '/proj/theo.yaml')
+        uploadSource('http://localhost:3001', 'token', '/tmp/b.bundle', '/proj/loopscale.yaml')
       ).rejects.toThrow(ApiError);
 
       try {
-        await uploadSource('http://localhost:3001', 'token', '/tmp/b.bundle', '/proj/theo.yaml');
+        await uploadSource('http://localhost:3001', 'token', '/tmp/b.bundle', '/proj/loopscale.yaml');
       } catch (err) {
         expect(err).toBeInstanceOf(ApiError);
         expect((err as ApiError).exitCode).toBe(3);
@@ -143,7 +143,7 @@ describe('uploadSource', () => {
       );
 
       try {
-        await uploadSource('http://localhost:3001', 'token', '/tmp/b.bundle', '/proj/theo.yaml');
+        await uploadSource('http://localhost:3001', 'token', '/tmp/b.bundle', '/proj/loopscale.yaml');
         fail('Should have thrown');
       } catch (err) {
         expect(err).toBeInstanceOf(ApiError);
@@ -166,7 +166,7 @@ describe('uploadSource', () => {
       );
 
       try {
-        await uploadSource('http://localhost:3001', 'token', '/tmp/b.bundle', '/proj/theo.yaml');
+        await uploadSource('http://localhost:3001', 'token', '/tmp/b.bundle', '/proj/loopscale.yaml');
         fail('Should have thrown');
       } catch (err) {
         expect(err).toBeInstanceOf(ApiError);
@@ -183,7 +183,7 @@ describe('uploadSource', () => {
       );
 
       try {
-        await uploadSource('http://localhost:3001', 'token', '/tmp/b.bundle', '/proj/theo.yaml');
+        await uploadSource('http://localhost:3001', 'token', '/tmp/b.bundle', '/proj/loopscale.yaml');
         fail('Should have thrown');
       } catch (err) {
         expect(err).toBeInstanceOf(ApiError);
@@ -202,7 +202,7 @@ describe('uploadSource', () => {
       );
 
       try {
-        await uploadSource('http://localhost:3001', 'token', '/tmp/b.bundle', '/proj/theo.yaml');
+        await uploadSource('http://localhost:3001', 'token', '/tmp/b.bundle', '/proj/loopscale.yaml');
         fail('Should have thrown');
       } catch (err) {
         expect(err).toBeInstanceOf(ApiError);
@@ -219,7 +219,7 @@ describe('uploadSource', () => {
       );
 
       try {
-        await uploadSource('http://localhost:3001', 'token', '/tmp/b.bundle', '/proj/theo.yaml');
+        await uploadSource('http://localhost:3001', 'token', '/tmp/b.bundle', '/proj/loopscale.yaml');
         fail('Should have thrown');
       } catch (err) {
         expect(err).toBeInstanceOf(ApiError);
@@ -237,7 +237,7 @@ describe('uploadSource', () => {
       );
 
       try {
-        await uploadSource('http://localhost:3001', 'token', '/tmp/b.bundle', '/proj/theo.yaml');
+        await uploadSource('http://localhost:3001', 'token', '/tmp/b.bundle', '/proj/loopscale.yaml');
         fail('Should have thrown');
       } catch (err) {
         expect(err).toBeInstanceOf(ApiError);
@@ -257,7 +257,7 @@ describe('uploadSource', () => {
       );
 
       const result = await uploadSource(
-        'http://localhost:3001', 'token', '/tmp/b.bundle', '/proj/theo.yaml'
+        'http://localhost:3001', 'token', '/tmp/b.bundle', '/proj/loopscale.yaml'
       );
 
       expect(result).toEqual({ commit_sha: 'abc123', apps: ['api', 'web'] });
@@ -271,7 +271,7 @@ describe('uploadSource', () => {
       const originalErr = Object.assign(new Error('aborted'), { name: 'TimeoutError' });
       jest.spyOn(globalThis, 'fetch').mockRejectedValue(originalErr);
       try {
-        await uploadSource('http://x', 't', '/tmp/b.bundle', '/proj/theo.yaml');
+        await uploadSource('http://x', 't', '/tmp/b.bundle', '/proj/loopscale.yaml');
         fail('expected throw');
       } catch (err) {
         expect(err).toBeInstanceOf(ApiError);
@@ -286,7 +286,7 @@ describe('uploadSource', () => {
       });
       jest.spyOn(globalThis, 'fetch').mockRejectedValue(originalErr);
       try {
-        await uploadSource('http://x', 't', '/tmp/b.bundle', '/proj/theo.yaml');
+        await uploadSource('http://x', 't', '/tmp/b.bundle', '/proj/loopscale.yaml');
         fail('expected throw');
       } catch (err) {
         expect(err).toBeInstanceOf(ApiError);
@@ -299,7 +299,7 @@ describe('uploadSource', () => {
       const originalErr = new Error('something exploded');
       jest.spyOn(globalThis, 'fetch').mockRejectedValue(originalErr);
       try {
-        await uploadSource('http://x', 't', '/tmp/b.bundle', '/proj/theo.yaml');
+        await uploadSource('http://x', 't', '/tmp/b.bundle', '/proj/loopscale.yaml');
         fail('expected throw');
       } catch (err) {
         expect(err).toBeInstanceOf(ApiError);

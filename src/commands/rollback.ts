@@ -1,5 +1,5 @@
 import { ApiError } from '../api/client';
-import type { TheoYamlResult } from '../adapters/theo-yaml';
+import type { LoopScaleYamlResult } from '../adapters/loopscale-yaml';
 import { classifyNetworkError } from '../output/error-message';
 
 interface RollbackApiResponse {
@@ -14,7 +14,7 @@ interface RollbackApiResponse {
 
 export interface RollbackDeps {
   getToken: () => string | null;
-  findTheoYaml: () => TheoYamlResult | null;
+  findLoopScaleYaml: () => LoopScaleYamlResult | null;
   rollback: (project: string, environment: string, toReleaseId?: string) => Promise<RollbackApiResponse>;
   /**
    * The id of the environment's ACTIVE release, or null when it has none, which
@@ -46,7 +46,7 @@ export interface RollbackOptions {
 /**
  * The API gives a rollback's background work 15 minutes and then up to 30
  * seconds for each state change that settles the release
- * (getloopscale/loopzero#118). One extra minute covers those.
+ * (getloopscale/loop-runtime#118). One extra minute covers those.
  */
 export const ROLLBACK_DEADLINE_MS = 16 * 60 * 1000;
 const ROLLBACK_POLL_INTERVAL_MS = 5000;
@@ -71,8 +71,8 @@ export class RollbackCommand {
       return this.exitWithError(opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
-    // 2. Find theo.yaml
-    const yamlResult = this.deps.findTheoYaml();
+    // 2. Find loopscale.yaml
+    const yamlResult = this.deps.findLoopScaleYaml();
     if (!yamlResult) {
       return this.exitWithError(opts, 'No loopscale.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
     }
@@ -121,7 +121,7 @@ export class RollbackCommand {
       return this.handleError(opts, err);
     }
     // 5. The API answers 202 `in_progress` and finishes in the background
-    // (getloopscale/loopzero#118): the rollback is accepted, not done.
+    // (getloopscale/loop-runtime#118): the rollback is accepted, not done.
     const inProgress = response.status === 'in_progress';
     if (inProgress && opts.wait === false) {
       if (opts.json) {

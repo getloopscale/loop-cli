@@ -4,8 +4,8 @@ import { ApiError } from '../../../src/api/client';
 function createMockDeps(overrides: Partial<PromoteDeps> = {}): PromoteDeps {
   return {
     getToken: jest.fn().mockReturnValue('test-token'),
-    findTheoYaml: jest.fn().mockReturnValue({
-      path: '/project/theo.yaml',
+    findLoopScaleYaml: jest.fn().mockReturnValue({
+      path: '/project/loopscale.yaml',
       content: { project: 'my-app', apps: { web: { path: '.', framework: 'express', port: 3000 } } },
     }),
     promote: jest.fn().mockResolvedValue({
@@ -15,7 +15,7 @@ function createMockDeps(overrides: Partial<PromoteDeps> = {}): PromoteDeps {
       new_release: 'rel-new-001',
       from: 'staging',
       to: 'production',
-      url: 'https://my-app-production.dev.usetheo.dev',
+      url: 'https://my-app-production.dev.getloopscale.com',
     }),
     writeTo: jest.fn(),
     writeError: jest.fn(),
@@ -36,7 +36,7 @@ describe('PromoteCommand', () => {
       const output = (deps.writeTo as jest.Mock).mock.calls.map((c: string[]) => c[0]).join('\n');
       expect(output).toContain('rel-src-001');
       expect(output).toContain('rel-new-001');
-      expect(output).toContain('https://my-app-production.dev.usetheo.dev');
+      expect(output).toContain('https://my-app-production.dev.getloopscale.com');
     });
 
     it('should default to staging -> production', async () => {
@@ -65,7 +65,7 @@ describe('PromoteCommand', () => {
       expect(parsed.new_release).toBe('rel-new-001');
       expect(parsed.from).toBe('staging');
       expect(parsed.to).toBe('production');
-      expect(parsed.url).toBe('https://my-app-production.dev.usetheo.dev');
+      expect(parsed.url).toBe('https://my-app-production.dev.getloopscale.com');
       expect(typeof parsed.duration_seconds).toBe('number');
     });
   });
@@ -97,8 +97,8 @@ describe('PromoteCommand', () => {
   });
 
   describe('missing config', () => {
-    it('should return exit code 1 when theo.yaml is missing', async () => {
-      const deps = createMockDeps({ findTheoYaml: jest.fn().mockReturnValue(null) });
+    it('should return exit code 1 when loopscale.yaml is missing', async () => {
+      const deps = createMockDeps({ findLoopScaleYaml: jest.fn().mockReturnValue(null) });
       const cmd = new PromoteCommand(deps);
 
       const exitCode = await cmd.execute({});
@@ -108,12 +108,12 @@ describe('PromoteCommand', () => {
       expect(errorOutput).toContain('loopscale init');
     });
 
-    it('should return exit code 1 when theo.yaml has parse error', async () => {
+    it('should return exit code 1 when loopscale.yaml has parse error', async () => {
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue({
-          path: '/project/theo.yaml',
+        findLoopScaleYaml: jest.fn().mockReturnValue({
+          path: '/project/loopscale.yaml',
           content: {},
-          fileName: 'theo.yaml',
+          fileName: 'loopscale.yaml',
           parseError: 'bad yaml',
         }),
       });
@@ -223,7 +223,7 @@ describe('PromoteCommand', () => {
       expect(deps.promote).not.toHaveBeenCalled();
     });
 
-    // Red Team theo-cloud#161 — non-TTY stdin (pipes/redirects/harnesses)
+    // Red Team console#161 — non-TTY stdin (pipes/redirects/harnesses)
     // must fail-fast with the same CONFIRMATION_REQUIRED contract used in CI
     // mode. Pre-fix: the prompt hung on stdin EOF and the outer withTimeout
     // wrapper eventually mis-blamed "Promotion timed out. Check your

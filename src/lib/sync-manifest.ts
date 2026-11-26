@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 //
-// Plan theo-storage-sync T0.1 (ADR D1) — the persisted "third state" of sync.
+// Plan loopstore-sync T0.1 (ADR D1) — the persisted "third state" of sync.
 //
-// `.theo/.sync-manifest.json` maps each synced path -> its ContentsSHA256 at the
+// `.loopscale/.sync-manifest.json` maps each synced path -> its ContentsSHA256 at the
 // last successful sync. Comparing (local-now, remote-now, manifest=last-synced)
 // is what lets sync distinguish "the user edited this locally" from "the remote
 // changed" (blueprint D1; mirrors chezmoi's per-entry ContentsSHA256).
@@ -13,7 +13,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 
 /** The reserved control directory inside a synced local dir. Never synced (EC-2). */
-export const THEO_CONTROL_DIR = '.theo';
+export const LOOPSCALE_CONTROL_DIR = '.loopscale';
 const MANIFEST_FILE = '.sync-manifest.json';
 
 /** Last-synced fingerprint map: path (relative to prefix) -> ContentsSHA256 (hex). */
@@ -37,7 +37,7 @@ export function hashBytes(buf: Buffer): string {
 }
 
 function manifestPath(dir: string): string {
-  return path.join(dir, THEO_CONTROL_DIR, MANIFEST_FILE);
+  return path.join(dir, LOOPSCALE_CONTROL_DIR, MANIFEST_FILE);
 }
 
 /**
@@ -68,7 +68,7 @@ export async function readManifest(dir: string): Promise<Manifest> {
  * target, so a crash mid-write never leaves a truncated manifest (Drawback #4).
  */
 export async function writeManifest(dir: string, m: Manifest): Promise<void> {
-  const controlDir = path.join(dir, THEO_CONTROL_DIR);
+  const controlDir = path.join(dir, LOOPSCALE_CONTROL_DIR);
   await fs.mkdir(controlDir, { recursive: true });
   const target = path.join(controlDir, MANIFEST_FILE);
   const tmp = `${target}.${process.pid}.tmp`;

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { ApiError } from '../api/client';
 import { classifyNetworkError } from '../output/error-message';
@@ -21,7 +21,7 @@ const VALID_ROLES = ['member', 'admin'];
 /**
  * TeamRoleCommand changes a team member's role.
  *
- * Does NOT require theo.yaml.
+ * Does NOT require loopscale.yaml.
  *
  * Exit codes:
  *   0 — role changed

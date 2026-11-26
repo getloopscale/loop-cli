@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 /**
  * Centralized constants for the LoopScale CLI.
@@ -28,14 +28,10 @@ function envInt(name: string, defaultValue: number): number {
  *
  * Priority: LOOPSCALE_URL > fallback.
  * Local dev: port 8080 matches the Traefik-less direct API server.
- * Dev-public cluster: set LOOPSCALE_URL=https://app-dev.usetheo.dev/engine
- * (engine REST is proxied under /engine/* on the dashboard host;
- * canonical per the QA test-scenarios doc 2026-06-21 LIVE close).
+ * Staging: set LOOPSCALE_URL=https://app.staging.getloopscale.com/engine
+ * (the engine's REST API is proxied under /engine/* on the dashboard host).
  * Standalone-multi local: set LOOPSCALE_URL=http://localhost:13001 or
  * whatever canonical local port the helmfile overlay exposes.
- *
- * Stale value `https://api-dev.usetheo.dev` does NOT resolve in DNS
- * — issue #130 lock 2026-06-21.
  */
 export const DEFAULT_API_URL_FALLBACK = 'http://localhost:8080';
 
@@ -115,8 +111,8 @@ export const SSE_MAX_RETRIES = 15;
 
 /** Total deploy timeout (ms). Override: LOOPSCALE_DEPLOY_TIMEOUT.
  *
- * Sprint 8 plan qa-sprint8-cleanup-2026-06-25 T3.1 (closes theo-cloud#38):
- * bumped from 10min → 30min. The canonical theokit-example build observed
+ * Sprint 8 plan qa-sprint8-cleanup-2026-06-25 T3.1 (closes console#38):
+ * bumped from 10min → 30min. The canonical loopzero-example build observed
  * by the QA Red Team took 615s (10min 15s) — 15s above the previous 10min
  * default — making a SUCCEEDED deploy report DEPLOY_TIMEOUT. Cold-start
  * cosign signing + ArgoCD sync + workload pull can push canonical builds

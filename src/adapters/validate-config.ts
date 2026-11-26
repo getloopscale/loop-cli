@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import * as fs from 'fs';
 import * as path from 'path';
-import type { TheoYaml } from './theo-yaml';
+import type { LoopScaleYaml } from './loopscale-yaml';
 import { SUPPORTED_RUNTIMES } from './descriptor-manifest';
 
 export interface ValidationError {
@@ -18,7 +18,7 @@ export interface ValidateConfigOptions {
 }
 
 /**
- * Validate a parsed TheoYaml config strictly.
+ * Validate a parsed LoopScaleYaml config strictly.
  * Returns an array of errors. Empty array = valid.
  *
  * Checks:
@@ -28,7 +28,7 @@ export interface ValidateConfigOptions {
  *   - Unknown fields (warning-level, returned in warnings)
  */
 export function validateConfig(
-  config: TheoYaml,
+  config: LoopScaleYaml,
   projectRoot: string,
   opts?: ValidateConfigOptions,
 ): { errors: ValidationError[]; warnings: string[] } {
@@ -167,7 +167,7 @@ export function validateConfig(
     }
 
     // Frontend rendering validation — frontends are ALWAYS static (enforced in normalizeApp).
-    // This check catches theo.yaml files that explicitly set render: server on frontends.
+    // This check catches loopscale.yaml files that explicitly set render: server on frontends.
     if (appType === 'frontend' && app.render === 'server') {
       errors.push({
         field: `apps.${name}.render`,

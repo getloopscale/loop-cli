@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { ApiClient } from '../api/client';
 import { ScaleCommand } from '../commands/scale';
 import { API_REQUEST_TIMEOUT_MS } from '../config/constants';
 import { getGitRoot } from '../adapters/git';
-import { findTheoYaml } from '../adapters/theo-yaml';
+import { findLoopScaleYaml } from '../adapters/loopscale-yaml';
 import { CommandDeps } from './types';
 
 export function registerScaleCommands(deps: CommandDeps): void {
@@ -36,9 +36,9 @@ export function registerScaleCommands(deps: CommandDeps): void {
 
       const scaleCmd = new ScaleCommand({
         getToken: () => configStore.getToken(),
-        findTheoYaml: () => {
+        findLoopScaleYaml: () => {
           const gitRoot = getGitRoot() ?? process.cwd();
-          return findTheoYaml(process.cwd(), gitRoot);
+          return findLoopScaleYaml(process.cwd(), gitRoot);
         },
         scale: async (project: string, environment: string, app: string, config) => {
           return apiClient.post(

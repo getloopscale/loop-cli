@@ -20,7 +20,7 @@ npm run lint    # eslint
 The CLI is a **thin HTTP client** over the engine's `/api/v1`. It shares
 **zero** Go/engine code — the only coupling is the HTTP/OpenAPI contract.
 
-- **Never** add a `theo-*` package to `package.json`. Production dependencies
+- **Never** add a `loopscale-*` package to `package.json`. Production dependencies
   are `commander` + HTTP/telemetry libraries only. A reviewer will reject any
   PR that introduces an engine dependency.
 - The engine OpenAPI is vendored at `tests/contract/engine.yaml` (a snapshot).

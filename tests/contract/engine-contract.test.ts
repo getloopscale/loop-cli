@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 //
-// M2 (plan m2-extract-theo-cli) — cli ↔ engine consumer-driven contract, TS side.
+// M2 (plan m2-extract-loopscale-cli) — cli ↔ engine consumer-driven contract, TS side.
 //
-// This is the TS counterpart of the Go engine-side test (theo/api/internal/
+// This is the TS counterpart of the Go engine-side test (loopscale/api/internal/
 // contract/cli_consumer_test.go). It lives in the CLI so that after extraction
-// the consumer drift guard travels WITH theo-cli (M1-review F-4 / M2 D3/D4): the
+// the consumer drift guard travels WITH loopscale-cli (M1-review F-4 / M2 D3/D4): the
 // CLI is the consumer; it asserts every /api/v1 path it actually calls exists in
 // the vendored engine OpenAPI snapshot. EC-1: the path extractor + normalizer is
 // implemented in TS here (the Go normalizer is not reusable from TS).

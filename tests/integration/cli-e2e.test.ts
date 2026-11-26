@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 //
 // Audit gap M01 #22 (active-execution-plan §6.E.1): these live-API smoke tests
 // implement real bodies and gate the staging-API-dependent ones via the
@@ -13,13 +13,13 @@
 //
 // Note: the former local-only `init: detect monorepo` test was removed together
 // with the `loopscale init` command and the `src/detection/monorepo` module
-// (TheoKit-only cutover — apps emit `.theo/services.json` via `theokit build`).
+// (LoopZero-only cutover — apps emit `.loopscale/services.json` via `loopzero build`).
 //
 // Operator runbook to enable the live tests:
-//   1. `task setup`            — bootstraps k3d-theo-mgmt + build + workload
-//   2. `task dev:up`           — starts API at https://theo-local.usetheo.dev
-//   3. `CLI_E2E_LIVE=1 CLI_E2E_API_URL=https://theo-local.usetheo.dev \
-//       CLI_E2E_TOKEN=$(cat ~/.theo/local-dogfood-token.txt) \
+//   1. `task setup`            — bootstraps k3d-loopscale-mgmt + build + workload
+//   2. `task dev:up`           — starts API at https://loopscale-local.getloopscale.com
+//   3. `CLI_E2E_LIVE=1 CLI_E2E_API_URL=https://loopscale-local.getloopscale.com \
+//       CLI_E2E_TOKEN=$(cat ~/.loopscale/local-dogfood-token.txt) \
 //       npm test -- cli-e2e`
 
 const liveMode = process.env.CLI_E2E_LIVE === '1';

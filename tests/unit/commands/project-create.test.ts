@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { ProjectCreateCommand, ProjectCreateDeps } from '../../../src/commands/project-create';
 
@@ -13,7 +13,7 @@ describe('ProjectCreateCommand', () => {
       createProject: async (name: string) => ({
         id: 'p-1',
         name,
-        team: 'tn-usetheo',
+        team: 'tn-getloopscale',
         created_at: '2026-03-01T00:00:00Z',
       }),
       writeTo: (msg: string) => output.push(msg),
@@ -162,7 +162,7 @@ describe('ProjectCreateCommand', () => {
       const parsed = JSON.parse(output[0]);
       expect(parsed.name).toBe('my-new-api');
       expect(parsed.status).toBe('created');
-      expect(parsed.team).toBe('tn-usetheo');
+      expect(parsed.team).toBe('tn-getloopscale');
     });
 
     it('outputs JSON on 409 with status already_exists', async () => {

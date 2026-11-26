@@ -1,23 +1,23 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 //
-// Plan v1.1 T1.1 (theo-cli-vercel-like-ux): discovery of `.theo/services.json`
-// for the deploy upload payload. Replaces the misdirected `findTheoYaml`
+// Plan v1.1 T1.1 (loopscale-cli-vercel-like-ux): discovery of `.loopscale/services.json`
+// for the deploy upload payload. Replaces the misdirected `findLoopScaleYaml`
 // usage at the upload boundary (which was silently shipping YAML bytes inside
 // the `services_json` form field per Plan B v3.1 cutover gap).
 //
 // EC-4 absorbed: --services-json <path> override for users with custom
-// `distDir` in `theo.config.ts` (e.g. distDir: 'out' → out/services.json).
+// `distDir` in `loopscale.config.ts` (e.g. distDir: 'out' → out/services.json).
 
 import * as fs from 'fs';
 import * as path from 'path';
-import type { TheoYamlApp, TheoYamlResult } from './theo-yaml';
+import type { LoopScaleYamlApp, LoopScaleYamlResult } from './loopscale-yaml';
 
 /**
- * Where a manifest may be, relative to a directory, in lookup order. `.loopzero/` is what
- * the LoopZero framework writes; the other two are the names older builds used.
+ * Where a manifest may be, relative to a directory. `.loopzero/` is what the LoopZero
+ * framework writes.
  */
-const SERVICES_JSON_RELATIVES: readonly string[] = ['.loopzero', '.theo', '.theokit'].map((dir) =>
+const SERVICES_JSON_RELATIVES: readonly string[] = ['.loopzero'].map((dir) =>
   path.join(dir, 'services.json'),
 );
 
@@ -38,7 +38,7 @@ export class ServicesJsonOverrideError extends Error {
 }
 
 /**
- * Walk up from `cwd` to `gitRoot` looking for `.theo/services.json`. Returns
+ * Walk up from `cwd` to `gitRoot` looking for `.loopscale/services.json`. Returns
  * the path to the first match or `null` when none found before the boundary.
  *
  * EC-4 absorbed: when `overridePath` is supplied, the walk-up is bypassed and
@@ -77,7 +77,7 @@ export function findServicesJson(
 
 /**
  * parseServicesRuntimes maps each services.json service `name` → its declared
- * `runtime` (python|node). simplify-deploy-theokit-runtime-wiring T3.1a (F-dom-2):
+ * `runtime` (python|node). simplify-deploy-loopzero-runtime-wiring T3.1a (F-dom-2):
  * the build pipeline dispatches the build strategy on `runtime`, so the deploy
  * payload must carry it. A malformed services.json yields an empty map (callers
  * treat enrichment as best-effort; the API re-validates on upload and an empty
@@ -103,7 +103,7 @@ export function parseServicesRuntimes(jsonContent: string): Record<string, strin
 /**
  * parseServicesStarts mirrors parseServicesRuntimes but extracts the `start`
  * command per service. The canonical Dockerfile generator on the API side
- * requires it (no heuristic CMD fallback per simplify-deploy-theokit-only v2.0).
+ * requires it (no heuristic CMD fallback per simplify-deploy-loopzero-only v2.0).
  * Without this the build step `generate-dockerfile` fails with
  * `app "X" has no declared start command`.
  */
@@ -125,24 +125,24 @@ export function parseServicesStarts(jsonContent: string): Record<string, string>
 }
 
 /**
- * theoYamlFromServicesJson — converte um `.theo/services.json` v2 no `TheoYamlResult` que os
+ * loopscaleYamlFromServicesJson — converte um `.loopscale/services.json` v2 no `LoopScaleYamlResult` que os
  * comandos consomem.
  *
- * POR QUE EXISTE (theo#165). `loopscale secret` (set/list/delete) resolvia o projeto SO pelo
- * `theo.yaml` legado e reprovava com "No theo.yaml found. Run: loopscale init" num projeto que tem
- * apenas o manifesto moderno — o formato que o proprio theokit gera. Como `deploy`, `status` e
+ * POR QUE EXISTE (loopscale#165). `loopscale secret` (set/list/delete) resolvia o projeto SO pelo
+ * `loopscale.yaml` legado e reprovava com "No loopscale.yaml found. Run: loopscale init" num projeto que tem
+ * apenas o manifesto moderno — o formato que o proprio loopzero gera. Como `deploy`, `status` e
  * `logs` ja liam o v2, um projeto v2-puro conseguia DEPLOYAR e nao conseguia gerenciar secrets,
  * e nao havia `--project` para contornar.
  *
  * A conversao vive no adaptador de proposito. Os comandos continuam dependendo de UM
- * `TheoYamlResult` (DIP) e a raiz de composicao escolhe a fonte; ensinar cada comando a ler dois
+ * `LoopScaleYamlResult` (DIP) e a raiz de composicao escolhe a fonte; ensinar cada comando a ler dois
  * formatos multiplicaria a mesma decisao por comando — que foi como `secret` ficou para tras.
  *
  * Devolve `null` — nunca um resultado meio-vazio — quando o arquivo nao existe, nao e JSON, ou
  * nao declara `project`. Um `project: ''` chegaria a API como `project=` e o erro apareceria uma
  * camada adiante, como 404 sem relacao aparente com o manifesto.
  */
-export function theoYamlFromServicesJson(servicesJsonPath: string): TheoYamlResult | null {
+export function loopscaleYamlFromServicesJson(servicesJsonPath: string): LoopScaleYamlResult | null {
   let parsed: {
     project?: string;
     services?: Array<{ name?: string; runtime?: string; type?: string; port?: number | null }>;
@@ -156,7 +156,7 @@ export function theoYamlFromServicesJson(servicesJsonPath: string): TheoYamlResu
     return null;
   }
 
-  const apps: Record<string, TheoYamlApp> = {};
+  const apps: Record<string, LoopScaleYamlApp> = {};
   for (const service of parsed.services ?? []) {
     if (!service.name) continue;
     apps[service.name] = {

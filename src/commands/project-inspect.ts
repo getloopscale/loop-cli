@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { ApiError } from '../api/client';
 import { classifyNetworkError } from '../output/error-message';
@@ -29,7 +29,7 @@ export interface ProjectInspectOptions {
 /**
  * ProjectInspectCommand shows detailed information about a single project.
  *
- * Does NOT require theo.yaml — the project name is sufficient.
+ * Does NOT require loopscale.yaml — the project name is sufficient.
  *
  * Exit codes:
  *   0 — success

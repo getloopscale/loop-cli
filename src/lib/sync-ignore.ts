@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 //
-// Plan theo-storage-sync — .theoignore support. A gitignore-style ignore file at
+// Plan loopstore-sync — .loopscaleignore support. A gitignore-style ignore file at
 // the sync root scopes what `loopscale storage sync` walks/pushes/pulls. This keeps a
 // large or sensitive subtree (e.g. `knowledge-base/`, `*.local.*`) out of the sync
 // declaratively — the same familiar model as .dockerignore / .npmignore — instead
@@ -18,10 +18,10 @@ import path from 'path';
 import ignore from 'ignore';
 
 /** Ignore files read at the sync root, in precedence order (both optional). */
-export const SYNC_IGNORE_FILES = ['.theoignore', '.gitignore'] as const;
+export const SYNC_IGNORE_FILES = ['.loopscaleignore', '.gitignore'] as const;
 
 /**
- * Build a gitignore-style predicate for the sync root by reading `.theoignore`
+ * Build a gitignore-style predicate for the sync root by reading `.loopscaleignore`
  * then `.gitignore` (both optional). Returns `(rel) => boolean` over
  * prefix-relative POSIX paths. When no ignore file exists, the predicate matches
  * nothing (identity — the sync behaves exactly as before this feature).

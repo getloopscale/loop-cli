@@ -25,8 +25,8 @@ const sampleBuilds = [
 function createMockDeps(overrides: Partial<BuildListDeps> = {}): BuildListDeps {
   return {
     getToken: jest.fn().mockReturnValue('test-token'),
-    findTheoYaml: jest.fn().mockReturnValue({
-      path: '/app/theo.yaml',
+    findLoopScaleYaml: jest.fn().mockReturnValue({
+      path: '/app/loopscale.yaml',
       content: { project: 'my-project', apps: {} },
     }),
     listBuilds: jest.fn().mockResolvedValue({ builds: sampleBuilds, total: 2 }),
@@ -261,9 +261,9 @@ describe('BuildListCommand', () => {
     });
   });
 
-  describe('no theo.yaml', () => {
-    it('should return exit code 1 when no theo.yaml found', async () => {
-      const deps = createMockDeps({ findTheoYaml: jest.fn().mockReturnValue(null) });
+  describe('no loopscale.yaml', () => {
+    it('should return exit code 1 when no loopscale.yaml found', async () => {
+      const deps = createMockDeps({ findLoopScaleYaml: jest.fn().mockReturnValue(null) });
       const cmd = new BuildListCommand(deps);
 
       const exitCode = await cmd.execute();
@@ -273,24 +273,24 @@ describe('BuildListCommand', () => {
       expect(deps.listBuilds).not.toHaveBeenCalled();
     });
 
-    // Plan T2.3 D6 — --project flag overrides theo.yaml lookup.
+    // Plan T2.3 D6 — --project flag overrides loopscale.yaml lookup.
     it('test_build_list_with_project_flag_filters', async () => {
-      const deps = createMockDeps({ findTheoYaml: jest.fn().mockReturnValue(null) });
+      const deps = createMockDeps({ findLoopScaleYaml: jest.fn().mockReturnValue(null) });
       const cmd = new BuildListCommand(deps);
 
       const exitCode = await cmd.execute({ project: 'override-project' });
 
       expect(exitCode).toBe(0);
-      expect(deps.findTheoYaml).not.toHaveBeenCalled(); // --project bypasses yaml lookup
+      expect(deps.findLoopScaleYaml).not.toHaveBeenCalled(); // --project bypasses yaml lookup
       expect(deps.listBuilds).toHaveBeenCalledWith('override-project', undefined, undefined);
     });
 
-    it('should return exit code 1 when theo.yaml has parse error', async () => {
+    it('should return exit code 1 when loopscale.yaml has parse error', async () => {
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue({
-          path: '/app/theo.yaml',
+        findLoopScaleYaml: jest.fn().mockReturnValue({
+          path: '/app/loopscale.yaml',
           content: { project: 'test', apps: {} },
-          fileName: 'theo.yaml',
+          fileName: 'loopscale.yaml',
           parseError: 'bad yaml',
         }),
       });
@@ -299,7 +299,7 @@ describe('BuildListCommand', () => {
       const exitCode = await cmd.execute();
 
       expect(exitCode).toBe(1);
-      expect(deps.writeError).toHaveBeenCalledWith('Invalid theo.yaml: bad yaml');
+      expect(deps.writeError).toHaveBeenCalledWith('Invalid loopscale.yaml: bad yaml');
     });
   });
 

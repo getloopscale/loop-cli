@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 //
 // CHG-2026-04-30-INFRA-NORMALIZE / Phase 4 T4.1 — in-process mock API
 // server. Pure node http (no Express dep) so we don't bloat package.json.
@@ -58,7 +58,7 @@ export interface MockApiServer {
  *   const server = await startMockApi();
  *   server.on({method:'GET', path:'/api/v1/users/me',
  *              response:{status:200, body:{user_id:'u1'}}});
- *   const result = spawnTheo({args:[...], env:{LOOPSCALE_URL: server.url}});
+ *   const result = spawnLoopScale({args:[...], env:{LOOPSCALE_URL: server.url}});
  *   // assertions on result + server.requests
  *   await server.close();
  */

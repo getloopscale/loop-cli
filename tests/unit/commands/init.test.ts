@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { InitCommand } from '../../../src/commands/init';
-import { parseTheoYaml } from '../../../src/adapters/theo-yaml';
+import { parseLoopScaleYaml } from '../../../src/adapters/loopscale-yaml';
 import { validateConfig } from '../../../src/adapters/validate-config';
 import { manifestFromDescriptor } from '../../../src/adapters/descriptor-manifest';
 
@@ -33,7 +33,7 @@ describe('loopscale init', () => {
 
     expect(exit).toBe(0);
     const written = fs.readFileSync(path.join(dir, 'loopscale.yaml'), 'utf-8');
-    const config = parseTheoYaml(written);
+    const config = parseLoopScaleYaml(written);
     expect(config).toEqual({
       project: 'my-shop',
       apps: { web: { path: '.', framework: 'unknown', type: 'server', port: 8080, runtime: 'node', start: 'npm start' } },
@@ -47,7 +47,7 @@ describe('loopscale init', () => {
   it('starts a Node project with no start script from its main file', () => {
     const dir = project({ 'package.json': JSON.stringify({ main: 'src/app.js' }) });
     expect(run(dir).exit).toBe(0);
-    expect(parseTheoYaml(fs.readFileSync(path.join(dir, 'loopscale.yaml'), 'utf-8')).apps.web.start).toBe('node src/app.js');
+    expect(parseLoopScaleYaml(fs.readFileSync(path.join(dir, 'loopscale.yaml'), 'utf-8')).apps.web.start).toBe('node src/app.js');
   });
 
   it('takes project, app, runtime, start and port from the flags', () => {
@@ -56,7 +56,7 @@ describe('loopscale init', () => {
     const { exit } = run(dir, { project: 'billing', app: 'api', start: 'python app.py', port: '9000' });
 
     expect(exit).toBe(0);
-    const config = parseTheoYaml(fs.readFileSync(path.join(dir, 'loopscale.yaml'), 'utf-8'));
+    const config = parseLoopScaleYaml(fs.readFileSync(path.join(dir, 'loopscale.yaml'), 'utf-8'));
     expect(config.project).toBe('billing');
     expect(config.apps.api).toMatchObject({ runtime: 'python', start: 'python app.py', port: 9000 });
   });
@@ -83,7 +83,7 @@ describe('loopscale init', () => {
     expect(err).toMatch(/unknown runtime 'ruby'/);
   });
 
-  it.each(['loopscale.yaml', 'loopzero.yaml', 'theo.yaml'])('keeps an existing %s', (existing) => {
+  it.each(['loopscale.yaml', 'loopzero.yaml', 'loopscale.yaml'])('keeps an existing %s', (existing) => {
     const dir = project({ 'package.json': '{"scripts":{"start":"node s.js"}}', [existing]: 'project: kept\napps: {}\n' });
 
     const { exit, err } = run(dir);
@@ -96,13 +96,13 @@ describe('loopscale init', () => {
   it('replaces loopscale.yaml with --force', () => {
     const dir = project({ 'package.json': '{"scripts":{"start":"node s.js"}}', 'loopscale.yaml': 'project: old\napps: {}\n' });
     expect(run(dir, { force: true }).exit).toBe(0);
-    expect(parseTheoYaml(fs.readFileSync(path.join(dir, 'loopscale.yaml'), 'utf-8')).project).toBe('my-shop');
+    expect(parseLoopScaleYaml(fs.readFileSync(path.join(dir, 'loopscale.yaml'), 'utf-8')).project).toBe('my-shop');
   });
 
   it('derives a valid project name from a directory name that is not one', () => {
     const dir = project({ 'package.json': '{"scripts":{"start":"node s.js"}}' }, 'My Shop_2');
     expect(run(dir).exit).toBe(0);
-    expect(parseTheoYaml(fs.readFileSync(path.join(dir, 'loopscale.yaml'), 'utf-8')).project).toBe('my-shop-2');
+    expect(parseLoopScaleYaml(fs.readFileSync(path.join(dir, 'loopscale.yaml'), 'utf-8')).project).toBe('my-shop-2');
   });
 
   it('prints one JSON object with --json', () => {
