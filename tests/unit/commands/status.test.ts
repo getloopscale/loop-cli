@@ -254,7 +254,7 @@ describe('StatusCommand', () => {
 
       expect(exitCode).toBe(1);
       const errOutput = (deps.writeError as jest.Mock).mock.calls.map((c: string[]) => c[0]).join(' ');
-      expect(errOutput).toContain('theo.yaml');
+      expect(errOutput).toContain('loopscale.yaml');
       expect(errOutput).toContain('loopscale init');
     });
 
@@ -263,6 +263,7 @@ describe('StatusCommand', () => {
         findTheoYaml: jest.fn().mockReturnValue({
           path: '/project/theo.yaml',
           content: { project: 'my-app', apps: {} },
+          fileName: 'theo.yaml',
           parseError: 'Invalid YAML syntax',
         }),
       });

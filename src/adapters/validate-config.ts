@@ -144,7 +144,7 @@ export function validateConfig(
       const appPathResolved = path.resolve(projectRoot, app.path);
       const dockerfilePath = path.resolve(appPathResolved, 'Dockerfile');
       if (fs.existsSync(dockerfilePath)) {
-        warnings.push(`App '${name}': Dockerfile found at ${app.path}/Dockerfile but build is '${app.build ?? 'buildpack'}'. Set 'build: dockerfile' in theo.yaml to use your custom Dockerfile, or remove it to use the auto-generated one.`);
+        warnings.push(`App '${name}': Dockerfile found at ${app.path}/Dockerfile but build is '${app.build ?? 'buildpack'}'. Set 'build: dockerfile' in loopscale.yaml to use your custom Dockerfile, or remove it to use the auto-generated one.`);
       }
     }
 

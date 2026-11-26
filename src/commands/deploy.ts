@@ -115,12 +115,12 @@ export class DeployCommand {
     // 3. Find theo.yaml
     const yamlResult = this.deps.findTheoYaml();
     if (!yamlResult) {
-      return exitWithError(this.deps, opts, 'No theo.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
+      return exitWithError(this.deps, opts, 'No loopscale.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
     }
 
     // 3b. Check for YAML parse errors
     if (yamlResult.parseError) {
-      return exitWithError(this.deps, opts, `Invalid theo.yaml: ${yamlResult.parseError}`, 1, 'INVALID_CONFIG');
+      return exitWithError(this.deps, opts, `Invalid ${yamlResult.fileName}: ${yamlResult.parseError}`, 1, 'INVALID_CONFIG');
     }
 
     const { content: config } = yamlResult;
@@ -147,7 +147,7 @@ export class DeployCommand {
     // 5. Validate apps exist
     const appNames = Object.keys(config.apps);
     if (appNames.length === 0) {
-      return exitWithError(this.deps, opts, 'No apps defined in theo.yaml. Add at least one app to deploy.', 1, 'INVALID_CONFIG');
+      return exitWithError(this.deps, opts, 'No apps defined in loopscale.yaml. Add at least one app to deploy.', 1, 'INVALID_CONFIG');
     }
 
     // 6. Validate --env (DA-10)
@@ -160,7 +160,7 @@ export class DeployCommand {
     const selectedApps = opts.app ?? appNames;
     for (const app of selectedApps) {
       if (!appNames.includes(app)) {
-        return exitWithError(this.deps, opts, `App "${app}" not found in theo.yaml. Available apps: ${appNames.join(', ')}`, 1, 'APP_NOT_FOUND');
+        return exitWithError(this.deps, opts, `App "${app}" not found in loopscale.yaml. Available apps: ${appNames.join(', ')}`, 1, 'APP_NOT_FOUND');
       }
     }
 

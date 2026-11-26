@@ -72,7 +72,7 @@ export class SecretSetCommand {
     // 2. Find theo.yaml
     const yamlResult = this.deps.findTheoYaml();
     if (!yamlResult) {
-      return this.exitWithError(opts, 'No theo.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
+      return this.exitWithError(opts, 'No loopscale.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
     }
 
     // 3. Parse name=value
@@ -157,7 +157,7 @@ export class SecretListCommand {
 
     const yamlResult = this.deps.findTheoYaml();
     if (!yamlResult) {
-      return this.exitWithError(opts, 'No theo.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
+      return this.exitWithError(opts, 'No loopscale.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
     }
 
     const env = opts.env ?? 'production';
@@ -226,7 +226,7 @@ export class SecretDeleteCommand {
 
     const yamlResult = this.deps.findTheoYaml();
     if (!yamlResult) {
-      return this.exitWithError(opts, 'No theo.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
+      return this.exitWithError(opts, 'No loopscale.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
     }
 
     if (!opts.name) {

@@ -113,6 +113,7 @@ describe('PromoteCommand', () => {
         findTheoYaml: jest.fn().mockReturnValue({
           path: '/project/theo.yaml',
           content: {},
+          fileName: 'theo.yaml',
           parseError: 'bad yaml',
         }),
       });

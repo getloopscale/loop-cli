@@ -86,7 +86,7 @@ export function mapSyncFailureReason(reason: string, buildId: string): string {
     'HEALTH_PROBE_FAILED': "Service didn't become healthy in time. Check your app's /health endpoint and that it responds 200 within 30s of startup.",
     'SYNC_TIMEOUT': 'Deploy timed out waiting for service to become available. Check service logs for startup errors or slow init paths.',
     'IMAGE_PULL_FAILED': 'Could not pull the built image. This is usually a transient registry issue — retry the deploy. If persistent, check registry credentials.',
-    'RESOURCE_QUOTA_EXCEEDED': 'Deployment exceeds your plan resource limits. Reduce CPU/memory requests in `theo.yaml` or upgrade your plan.',
+    'RESOURCE_QUOTA_EXCEEDED': 'Deployment exceeds your plan resource limits. Reduce CPU/memory requests in `loopscale.yaml` or upgrade your plan.',
     'CRASH_LOOP': 'Service keeps crashing on startup. Check your app logs for startup errors (uncaught exceptions, missing env vars, port conflicts).',
 
     // ─── Build pipeline failures ─────────────────────────────────

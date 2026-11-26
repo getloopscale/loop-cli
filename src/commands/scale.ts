@@ -123,11 +123,11 @@ export class ScaleCommand {
     // 6. Find theo.yaml
     const yamlResult = this.deps.findTheoYaml();
     if (!yamlResult) {
-      return this.exitWithError(opts, 'No theo.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
+      return this.exitWithError(opts, 'No loopscale.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
     }
 
     if (yamlResult.parseError) {
-      return this.exitWithError(opts, `Invalid theo.yaml: ${yamlResult.parseError}`, 1, 'INVALID_CONFIG');
+      return this.exitWithError(opts, `Invalid ${yamlResult.fileName}: ${yamlResult.parseError}`, 1, 'INVALID_CONFIG');
     }
 
     const project = yamlResult.content.project;
@@ -190,7 +190,7 @@ export class ScaleCommand {
       default:
         // Legacy "acknowledged" path.
         this.deps.writeTo('Scaling configuration acknowledged. Changes take effect on the next deploy.');
-        this.deps.writeTo('Update autoscaling in theo.yaml, then run `loopscale deploy`.');
+        this.deps.writeTo('Update autoscaling in loopscale.yaml, then run `loopscale deploy`.');
     }
 
     return 0;

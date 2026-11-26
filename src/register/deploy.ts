@@ -238,7 +238,7 @@ export function registerDeployCommands(deps: CommandDeps): void {
   // --- validate ---
   program
     .command('validate')
-    .description('Validate theo.yaml configuration')
+    .description('Validate loopscale.yaml configuration')
     .option('--json', 'Output in JSON format')
     .action(async (cmdOpts) => {
       const globalOpts = getGlobalOpts();
@@ -262,7 +262,7 @@ export function registerDeployCommands(deps: CommandDeps): void {
     .command('status')
     .description('Show environment status for the current project')
     .option('--env <name>', 'Target environment', 'production')
-    .option('--project <name>', 'Project name (overrides theo.yaml lookup; plan T2.3 D6)')
+    .option('--project <name>', 'Project name (overrides loopscale.yaml lookup; plan T2.3 D6)')
     .action(async (cmdOpts) => {
       const globalOpts = getGlobalOpts();
       const apiClient = new ApiClient({ baseURL: apiUrl, token: configStore.getToken() ?? undefined, onUnauthorized: handleUnauthorized });
@@ -309,7 +309,7 @@ export function registerDeployCommands(deps: CommandDeps): void {
     .option('--runtime', 'Stream runtime logs from the workload namespace instead of build logs')
     .option('--since <duration>', 'Restrict to entries newer than NOW - <duration>. Accepts "24h", "7d", "30m", or raw seconds. Default: 7d.')
     .option('-f, --follow', 'Stream logs in real-time')
-    .option('--project <name>', 'Project name (overrides theo.yaml lookup; plan T2.3 D6)')
+    .option('--project <name>', 'Project name (overrides loopscale.yaml lookup; plan T2.3 D6)')
     .action(async (cmdOpts) => {
       const globalOpts = getGlobalOpts();
       const apiClient = new ApiClient({ baseURL: apiUrl, token: configStore.getToken() ?? undefined, onUnauthorized: handleUnauthorized });

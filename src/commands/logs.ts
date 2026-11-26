@@ -164,7 +164,7 @@ export class LogsCommand {
       if (!projectName) {
         const yaml = this.deps.findTheoYaml();
         if (!yaml?.content?.project) {
-          return this.exitWithError(opts, 'No theo.yaml found. Specify --build <id>, run from a project directory, or pass --project <name>.', 1, 'MISSING_CONFIG');
+          return this.exitWithError(opts, 'No loopscale.yaml found. Specify --build <id>, run from a project directory, or pass --project <name>.', 1, 'MISSING_CONFIG');
         }
         projectName = yaml.content.project;
       }
@@ -263,7 +263,7 @@ export class LogsCommand {
     const yaml = this.deps.findTheoYaml();
     if (!yaml?.content?.project) {
       return Promise.resolve(
-        this.exitWithError(opts, 'No theo.yaml found. Run from a project directory.', 1, 'MISSING_CONFIG'),
+        this.exitWithError(opts, 'No loopscale.yaml found. Run from a project directory.', 1, 'MISSING_CONFIG'),
       );
     }
     const env = opts.env ?? 'production';
