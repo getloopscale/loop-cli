@@ -239,3 +239,33 @@ describe('theoYamlFromServicesJson (loopscale#165)', () => {
     expect(theoYamlFromServicesJson(path.join(tmp, 'ausente.json'))).toBeNull();
   });
 });
+
+describe('findServicesJson reads the LoopZero framework manifest first', () => {
+  let root: string;
+  beforeEach(() => { root = fs.mkdtempSync(path.join(os.tmpdir(), 'loopscale-manifest-lookup-')); });
+  afterEach(() => { fs.rmSync(root, { recursive: true, force: true }); });
+
+  function write(dir: string): string {
+    fs.mkdirSync(path.join(root, dir), { recursive: true });
+    const file = path.join(root, dir, 'services.json');
+    fs.writeFileSync(file, '{"version":2,"project":"p","services":[]}');
+    return file;
+  }
+
+  it('finds .loopzero/services.json', () => {
+    const file = write('.loopzero');
+    expect(findServicesJson(root, root)).toEqual({ path: file });
+  });
+
+  it('prefers .loopzero/ over the older .theo/ and .theokit/', () => {
+    write('.theo');
+    write('.theokit');
+    const file = write('.loopzero');
+    expect(findServicesJson(root, root)).toEqual({ path: file });
+  });
+
+  it('names no retired tool when the --services-json path does not exist', () => {
+    expect(() => findServicesJson(root, root, 'missing.json')).toThrow(/--services-json missing\.json: file not found\. Fix the path/);
+    expect(() => findServicesJson(root, root, 'missing.json')).not.toThrow(/theokit/i);
+  });
+});

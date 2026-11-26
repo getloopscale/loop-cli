@@ -9,8 +9,10 @@ import {
 import { normalizeApps } from '../adapters/app-unit';
 import { parseServicesRuntimes, parseServicesStarts } from '../adapters/services-json';
 import { validateConfig } from '../adapters/validate-config';
+import { DescriptorManifestError, manifestFromDescriptor } from '../adapters/descriptor-manifest';
 import { getTracer, SpanStatusCode } from '../tracing';
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 
 import type {
@@ -38,6 +40,8 @@ export type { DeployDeps, DeployOptions } from './deploy-types';
 interface PrerequisiteResult {
   config: { project: string; apps: Record<string, unknown> };
   servicesJsonPath: string;
+  /** Set when the manifest was built from the descriptor: a temporary file to remove after the upload. */
+  generatedManifestPath: string | null;
   environment: string;
   selectedApps: string[];
   appUnits: ReturnType<typeof normalizeApps>;
@@ -61,7 +65,7 @@ export class DeployCommand {
       return prereqResult;
     }
 
-    const { config, servicesJsonPath, selectedApps, appUnits } = prereqResult;
+    const { config, servicesJsonPath, generatedManifestPath, selectedApps, appUnits } = prereqResult;
 
     // Phase 2: Create source bundle and upload (traced)
     const uploadResult = await tracer.startActiveSpan('loopscale.cli.deploy.bundle', async (span) => {
@@ -75,6 +79,9 @@ export class DeployCommand {
         span.setStatus({ code: SpanStatusCode.ERROR, message: String(err) });
         throw err;
       } finally {
+        if (generatedManifestPath !== null) {
+          fs.rmSync(path.dirname(generatedManifestPath), { recursive: true, force: true });
+        }
         span.end();
       }
     });
@@ -193,39 +200,22 @@ export class DeployCommand {
     } catch (err) {
       return exitWithError(this.deps, opts, (err as Error).message, 1, 'SERVICES_JSON_OVERRIDE_INVALID');
     }
-    // Plan v1.1 T3.1 — auto-build branch. When services.json is missing AND
-    // --skip-build / --prebuilt was NOT passed AND a runTheokitBuild dep was
-    // injected (deploy registration site), invoke it and re-discover.
-    if (servicesJsonResult === null && opts.skipBuild !== true && this.deps.runTheokitBuild) {
-      if (!opts.json) {
-        this.deps.writeTo('Building project with theokit...');
-      }
-      try {
-        await this.deps.runTheokitBuild({ cwd: process.cwd(), target: 'theo-cloud' });
-      } catch (err) {
-        return handleError(this.deps, opts, err, 'theokit build failed');
-      }
-      try {
-        servicesJsonResult = this.deps.findServicesJson(opts.servicesJson);
-      } catch (err) {
-        return exitWithError(this.deps, opts, (err as Error).message, 1, 'SERVICES_JSON_OVERRIDE_INVALID');
-      }
-      // EC-10 absorbed — theokit build returned 0 but emitted nothing.
-      if (servicesJsonResult === null) {
-        return exitWithError(
-          this.deps,
-          opts,
-          'theokit build exit 0 but no .theo/services.json was written. This is a bug in theokit — file with output of: theokit doctor',
-          1,
-          'THEOKIT_BUILD_EMPTY',
-        );
-      }
-    }
+    // A project that ships no manifest gets one built from the descriptor: the API
+    // builds each app from its `runtime` and `start`, as it does on a push.
+    let generatedManifestPath: string | null = null;
     if (servicesJsonResult === null) {
-      const hint = opts.skipBuild === true
-        ? 'No `.theo/services.json` found and --skip-build/--prebuilt was passed. Run `theokit build --target theo-cloud` first.'
-        : 'No `.theo/services.json` found. Run `theokit build --target theo-cloud` first.';
-      return exitWithError(this.deps, opts, hint, 1, 'SERVICES_JSON_NOT_FOUND');
+      let manifest;
+      try {
+        manifest = manifestFromDescriptor(config, selectedApps);
+      } catch (err) {
+        if (err instanceof DescriptorManifestError) {
+          return exitWithError(this.deps, opts, err.message, 1, err.code);
+        }
+        throw err;
+      }
+      generatedManifestPath = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'loopscale-manifest-')), 'services.json');
+      fs.writeFileSync(generatedManifestPath, JSON.stringify(manifest, null, 2), { mode: 0o600 });
+      servicesJsonResult = { path: generatedManifestPath };
     }
 
     // T3.1a (F-dom-2): the build pipeline dispatches the build strategy on the
@@ -260,7 +250,7 @@ export class DeployCommand {
         this.deps.writeError(
           `Warning: no services.json runtime for app(s) [${unmatched.join(', ')}]. ` +
             `Available services: [${available}]. The build will fail unless each app ` +
-            `has a matching service in .theo/services.json (run \`theokit build\`).`,
+            `has a matching service in the manifest.`,
         );
       }
     } catch {
@@ -271,6 +261,7 @@ export class DeployCommand {
     return {
       config,
       servicesJsonPath: servicesJsonResult.path,
+      generatedManifestPath,
       environment,
       selectedApps,
       appUnits,

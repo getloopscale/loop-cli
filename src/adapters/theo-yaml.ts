@@ -20,7 +20,9 @@ export interface TheoYamlAutoscaling {
 
 export interface TheoYamlApp {
   path: string;
-  framework: string;
+  framework?: string;                // optional when `runtime` and `start` are declared
+  runtime?: string;                  // "node" | "python": the API builds the image from it and `start`
+  start?: string;                    // the command that runs the app
   type?: string;                     // "server" | "worker" | "frontend"
   port: number | null;
   build?: BuildStrategy;             // v2: how to build this app (default: "buildpack" if framework known)
@@ -148,6 +150,8 @@ export function parseTheoYaml(raw: string): TheoYaml {
         path: String(cfg.path ?? '.'),
         framework: String(cfg.framework ?? 'unknown'),
         type: cfg.type != null ? String(cfg.type) : undefined,
+        ...(cfg.runtime != null ? { runtime: String(cfg.runtime) } : {}),
+        ...(cfg.start != null ? { start: String(cfg.start) } : {}),
         port: port !== null && !isNaN(port) ? port : null,
         ...(build ? { build } : {}),
         ...(dockerfile ? { dockerfile } : {}),

@@ -68,16 +68,54 @@ describe('Plan v1.1 T1.2 — deploy uses findServicesJson for upload payload', (
     expect(args[1]).not.toContain('theo.yaml');
   });
 
-  it('exits with SERVICES_JSON_NOT_FOUND when findServicesJson returns null', async () => {
+  it('builds the manifest from the descriptor when the project has no services.json', async () => {
+    let uploaded: Record<string, unknown> | null = null;
+    const uploadSource = jest.fn().mockImplementation(async (_bundle: string, manifestPath: string) => {
+      uploaded = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
+      return { commit_sha: 'sha', apps: ['web'] };
+    });
+    const submitBuild = jest.fn().mockResolvedValue({ build_id: 'b1', deploy_id: 'd1', status: 'queued' });
+    const deps = createMockDeps({
+      findTheoYaml: jest.fn().mockReturnValue({
+        path: '/project/loopscale.yaml',
+        content: { project: 'hello', apps: { web: { path: '.', port: 8080, runtime: 'node', start: 'node server.js' } } },
+      }),
+      findServicesJson: jest.fn().mockReturnValue(null),
+      uploadSource,
+      submitBuild,
+    });
+
+    const exit = await new DeployCommand(deps).execute({ env: 'production', json: true });
+
+    expect(exit).toBe(0);
+    expect(uploaded).toMatchObject({
+      version: 2,
+      project: 'hello',
+      services: [{ name: 'web', runtime: 'node', port: 8080, start: 'node server.js' }],
+    });
+    const apps = submitBuild.mock.calls[0][0].apps;
+    expect(apps[0]).toMatchObject({ name: 'web', runtime: 'node', start: 'node server.js' });
+    // The generated file does not outlive the deploy.
+    const manifestPath = uploadSource.mock.calls[0][1] as string;
+    expect(fs.existsSync(manifestPath)).toBe(false);
+  });
+
+  it('says what the descriptor lacks when no manifest can be built from it', async () => {
     const writeErrorMessages: string[] = [];
+    const uploadSource = jest.fn();
     const deps = createMockDeps({
       findServicesJson: jest.fn().mockReturnValue(null),
+      uploadSource,
       writeError: jest.fn((msg: string) => { writeErrorMessages.push(msg); }),
     });
-    const cmd = new DeployCommand(deps);
-    const exit = await cmd.execute({ env: 'production', json: false });
+
+    const exit = await new DeployCommand(deps).execute({ env: 'production', json: false });
+
     expect(exit).toBe(1);
-    expect(writeErrorMessages.join('\n')).toContain('theokit build --target theo-cloud');
+    expect(uploadSource).not.toHaveBeenCalled();
+    const said = writeErrorMessages.join('\n');
+    expect(said).toContain("App 'api' declares no runtime");
+    expect(said).not.toMatch(/theokit/i);
   });
 
   it('still reads theo.yaml for app-shape (regression — both deps coexist)', async () => {

@@ -92,14 +92,6 @@ export interface DeployDeps {
    * CLI flag (EC-4 absorbed).
    */
   findServicesJson?: (overridePath?: string) => { path: string } | null;
-  /**
-   * Plan v1.1 T3.1 — auto-build trigger. When `.theo/services.json` is
-   * missing AND `skipBuild` is false, the deploy command invokes this to run
-   * `theokit build --target theo-cloud` as a subprocess. Optional in the
-   * interface so promote/rollback/validate registrations continue to compile
-   * without injecting it.
-   */
-  runTheokitBuild?: (opts: { cwd: string; target?: string }) => Promise<void>;
   hasGitRepo: () => boolean;
   hasUncommittedChanges: () => boolean;
   hasLockfile: () => boolean;
@@ -148,9 +140,4 @@ export interface DeployOptions {
    * a custom `distDir` (e.g. emit lands at `out/services.json`).
    */
   servicesJson?: string;
-  /**
-   * Plan v1.1 T3.1 (and Phase 5 `--prebuilt` alias). Skip the auto-build
-   * branch. Used by CI pipelines that produce the artifact in a prior stage.
-   */
-  skipBuild?: boolean;
 }

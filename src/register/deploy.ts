@@ -16,8 +16,6 @@ import { API_REQUEST_TIMEOUT_MS, DEPLOY_TIMEOUT_MS } from '../config/constants';
 import { hasGitRepo, hasUncommittedChanges, hasLockfile, getSourceIdentifier, getGitRoot, createSourceBundle, checkSensitiveFiles } from '../adapters/git';
 import { findTheoYaml } from '../adapters/theo-yaml';
 import { findServicesJson } from '../adapters/services-json';
-import { resolveTheokitBin } from '../lib/resolve-theokit-bin';
-import { runTheokitBuild } from '../lib/run-theokit-build';
 import { cleanupFile } from '../adapters/source-bundle';
 import { uploadSource } from '../adapters/source-upload';
 import { CommandDeps } from './types';
@@ -37,15 +35,7 @@ export function registerDeployCommands(deps: CommandDeps): void {
     .option('--json', 'Output in JSON format')
     .option(
       '--services-json <path>',
-      'Path to .theo/services.json artifact (override for custom distDir; Plan v1.1 EC-4)',
-    )
-    .option(
-      '--skip-build',
-      'Skip auto-build of .theo/services.json (CI prebuilt artifact mode)',
-    )
-    .option(
-      '--prebuilt',
-      'Alias for --skip-build (Vercel parity; Plan v1.1 T5.1)',
+      'Path to a services.json manifest to upload in place of the one built from loopscale.yaml',
     )
     .action(async (cmdOpts) => {
       const globalOpts = getGlobalOpts();
@@ -73,13 +63,6 @@ export function registerDeployCommands(deps: CommandDeps): void {
         findServicesJson: (overridePath?: string) => {
           const gitRoot = getGitRoot() ?? process.cwd();
           return findServicesJson(process.cwd(), gitRoot, overridePath);
-        },
-        // Plan v1.1 T3.1 — auto-build subprocess. resolveTheokitBin throws
-        // TheokitBinaryNotFoundError when no binary found; handleError in
-        // deploy.ts routes the typed error to a friendly install hint.
-        runTheokitBuild: async (buildOpts) => {
-          const bin = resolveTheokitBin(buildOpts.cwd);
-          await runTheokitBuild({ theokitBin: bin, cwd: buildOpts.cwd, target: buildOpts.target });
         },
         hasGitRepo,
         hasUncommittedChanges,
@@ -203,7 +186,6 @@ export function registerDeployCommands(deps: CommandDeps): void {
           noCache: cmdOpts.noCache ?? false,
           // Plan v1.1 T1.1 + T5.1 — forward new opts to deploy command.
           servicesJson: cmdOpts.servicesJson,
-          skipBuild: Boolean(cmdOpts.skipBuild || cmdOpts.prebuilt),
         }),
         DEPLOY_TIMEOUT_MS + 30_000,
         'Deploy command timed out waiting for completion.',

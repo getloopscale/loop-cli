@@ -13,14 +13,13 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { TheoYamlApp, TheoYamlResult } from './theo-yaml';
 
-const SERVICES_JSON_RELATIVE = path.join('.theo', 'services.json');
-
-// Sprint 4 plan qa-sprint4-cleanup-2026-06-25 T1.2 — cascade .theo/ → .theokit/
-// closes theo-cloud#29.B2. theokit v0.5.0+ writes manifests to .theokit/services.json
-// by default (was .theo/services.json pre-0.5.0). Walk-up checks BOTH at each dir level,
-// preferring .theo/ for backward compatibility with users who built via `theokit build --target theo-cloud`
-// (which still emits .theo/) or hand-crafted the manifest.
-const SERVICES_JSON_RELATIVE_FALLBACK = path.join('.theokit', 'services.json');
+/**
+ * Where a manifest may be, relative to a directory, in lookup order. `.loopzero/` is what
+ * the LoopZero framework writes; the other two are the names older builds used.
+ */
+const SERVICES_JSON_RELATIVES: readonly string[] = ['.loopzero', '.theo', '.theokit'].map((dir) =>
+  path.join(dir, 'services.json'),
+);
 
 /**
  * Thrown when `--services-json <path>` was supplied but the target file does
@@ -32,7 +31,7 @@ export class ServicesJsonOverrideError extends Error {
   constructor(suppliedPath: string) {
     super(
       `--services-json ${suppliedPath}: file not found. ` +
-        'Re-run `theokit build --target theo-cloud` or fix the path.',
+        'Fix the path, or drop the flag to have the manifest built from loopscale.yaml.',
     );
     this.name = 'ServicesJsonOverrideError';
   }
@@ -63,15 +62,11 @@ export function findServicesJson(
 
   let dir = cwd;
   while (true) {
-    // Sprint 4 T1.2 cascade: check .theo/ first (backward-compat), then .theokit/ fallback
-    // at the SAME dir level before walking up. The first match wins.
-    const candidate = path.join(dir, SERVICES_JSON_RELATIVE);
-    if (fs.existsSync(candidate)) {
-      return { path: candidate };
-    }
-    const fallbackCandidate = path.join(dir, SERVICES_JSON_RELATIVE_FALLBACK);
-    if (fs.existsSync(fallbackCandidate)) {
-      return { path: fallbackCandidate };
+    for (const relative of SERVICES_JSON_RELATIVES) {
+      const candidate = path.join(dir, relative);
+      if (fs.existsSync(candidate)) {
+        return { path: candidate };
+      }
     }
     if (dir === gitRoot || dir === path.dirname(dir)) {
       return null;

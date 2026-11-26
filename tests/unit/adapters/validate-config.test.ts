@@ -1097,4 +1097,34 @@ describe('validateConfig', () => {
       expect(w).toContain('autoscaling.bogusField');
     });
   });
+
+  it('accepts an app that declares runtime and start, with no framework and no Dockerfile', () => {
+    const dir = tmpDir();
+    const config = {
+      project: 'hello',
+      apps: { web: { path: '.', port: 8080, runtime: 'node', start: 'node server.js' } },
+    } as TheoYaml;
+    const { errors } = validateConfig(config, dir);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('refuses a runtime the platform does not build', () => {
+    const dir = tmpDir();
+    const config = {
+      project: 'hello',
+      apps: { web: { path: '.', port: 8080, runtime: 'ruby', start: 'ruby app.rb' } },
+    } as TheoYaml;
+    const { errors } = validateConfig(config, dir);
+    expect(errors.map((e) => e.message).join(' ')).toMatch(/App 'web': unknown runtime 'ruby'\. Supported: node, python/);
+  });
+
+  it('refuses a runtime with no start command', () => {
+    const dir = tmpDir();
+    const config = {
+      project: 'hello',
+      apps: { web: { path: '.', port: 8080, runtime: 'node' } },
+    } as TheoYaml;
+    const { errors } = validateConfig(config, dir);
+    expect(errors.map((e) => e.field)).toContain('apps.web.start');
+  });
 });

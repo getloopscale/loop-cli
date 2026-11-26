@@ -4,6 +4,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import type { TheoYaml } from './theo-yaml';
+import { SUPPORTED_RUNTIMES } from './descriptor-manifest';
 
 export interface ValidationError {
   field: string;
@@ -118,6 +119,23 @@ export function validateConfig(
       // Custom (user-provided Dockerfile)
       'custom',
     ];
+    // An app that declares `runtime` is built by the API from `runtime` and `start`,
+    // as on a push: no framework and no Dockerfile are needed.
+    if (app.runtime !== undefined) {
+      if (!SUPPORTED_RUNTIMES.includes(app.runtime)) {
+        errors.push({
+          field: `apps.${name}.runtime`,
+          message: `App '${name}': unknown runtime '${app.runtime}'. Supported: ${SUPPORTED_RUNTIMES.join(', ')}.`,
+        });
+      }
+      if (!app.start) {
+        errors.push({
+          field: `apps.${name}.start`,
+          message: `App '${name}': runtime '${app.runtime}' requires a start command. Add \`start\` to loopscale.yaml.`,
+        });
+      }
+      continue;
+    }
     const fw = app.framework ?? 'custom';
     if (fw !== 'unknown' && !knownFrameworks.includes(fw)) {
       errors.push({
