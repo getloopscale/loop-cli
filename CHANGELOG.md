@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `loopscale init` writes a `loopscale.yaml` for the project in the current directory. It detects a Node project from `package.json` and a Python project from `requirements.txt` or `pyproject.toml`, and takes `--project`, `--app`, `--runtime`, `--start`, `--port` and `--force`. Nineteen messages already told people to run it (#33).
+- An app in `loopscale.yaml` may declare `runtime` (`node` or `python`) and `start`. The platform builds its image from the two, so the app needs no `framework` and no Dockerfile (#34).
+- `loopscale deploy` reads a manifest from `.loopzero/services.json` before `.theo/` and `.theokit/`.
+
+### Changed
+- `loopscale deploy` no longer runs `theokit build`. A project with no `services.json` has its manifest built from `loopscale.yaml`, as a push to a connected repository does. An app with no `runtime` is refused with the lines to add (#34).
+
+### Removed
+- `loopscale deploy --skip-build` and `--prebuilt`. They skipped the local build, which is gone.
+
+### Fixed
+- `loopscale deploy` accepts the descriptor a push deploys. An app with `runtime` and `start` was refused with "framework 'custom' requires a Dockerfile" (#34).
+
 ## [0.2.0] - 2026-11-26
 
 ### Added
