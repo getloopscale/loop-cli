@@ -139,7 +139,7 @@ export class DoctorCommand {
     if (!projectConfig.exists) {
       result.checks.push({
         name: 'project_config',
-        description: 'Project configuration (theo.yaml)',
+        description: 'Project configuration (loopscale.yaml)',
         status: 'warn',
         detail: 'Not in a LoopScale project directory',
         suggested_action: 'cd into a project, or run `loopscale init` to create a new project',
@@ -147,17 +147,17 @@ export class DoctorCommand {
     } else if (!projectConfig.valid) {
       result.checks.push({
         name: 'project_config',
-        description: 'Project configuration (theo.yaml)',
+        description: 'Project configuration (loopscale.yaml)',
         status: 'fail',
-        detail: projectConfig.error || 'theo.yaml has invalid syntax or fields',
-        suggested_action: 'Fix theo.yaml syntax; run `loopscale deploy --dry-run` to validate',
+        detail: projectConfig.error || 'loopscale.yaml has invalid syntax or fields',
+        suggested_action: 'Fix loopscale.yaml syntax; run `loopscale deploy --dry-run` to validate',
       });
     } else {
       result.checks.push({
         name: 'project_config',
-        description: 'Project configuration (theo.yaml)',
+        description: 'Project configuration (loopscale.yaml)',
         status: 'ok',
-        detail: 'theo.yaml present and valid',
+        detail: 'loopscale.yaml present and valid',
       });
     }
 

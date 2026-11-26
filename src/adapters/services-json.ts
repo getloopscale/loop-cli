@@ -176,5 +176,5 @@ export function theoYamlFromServicesJson(servicesJsonPath: string): TheoYamlResu
     };
   }
 
-  return { path: servicesJsonPath, content: { project: parsed.project, apps } };
+  return { path: servicesJsonPath, fileName: path.basename(servicesJsonPath), content: { project: parsed.project, apps } };
 }

@@ -5,6 +5,7 @@ import { execSync, execFile } from 'child_process';
 import { promisify } from 'util';
 import * as fs from 'fs';
 import * as path from 'path';
+import { DESCRIPTOR_FILE_NAMES } from './theo-yaml';
 import * as os from 'os';
 import * as crypto from 'crypto';
 import * as tar from 'tar';
@@ -21,9 +22,7 @@ const DEFAULT_IGNORE_PATTERNS = [
 
 /** Additional patterns excluded from content hash only (not from tar bundles).
  * theo.yaml changes config, not source code — it shouldn't change the version hash. */
-const HASH_ONLY_IGNORE_PATTERNS = [
-  'theo.yaml',
-];
+const HASH_ONLY_IGNORE_PATTERNS = [...DESCRIPTOR_FILE_NAMES];
 
 export function hasGitRepo(): boolean {
   try {

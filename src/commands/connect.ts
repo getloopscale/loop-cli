@@ -83,7 +83,7 @@ export class ConnectCommand {
 
     const projectName = this.deps.getProjectName();
     if (!projectName) {
-      return exitWithError(this.deps, opts.json, 'No theo.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
+      return exitWithError(this.deps, opts.json, 'No loopscale.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
     }
 
     // Detect repo from git remote if not provided
@@ -157,7 +157,7 @@ export class DisconnectCommand {
 
     const projectName = this.deps.getProjectName();
     if (!projectName) {
-      return exitWithError(this.deps, opts.json, 'No theo.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
+      return exitWithError(this.deps, opts.json, 'No loopscale.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
     }
 
     try {

@@ -499,7 +499,7 @@ describe('DeployCommand', () => {
 
       expect(exitCode).toBe(1);
       const errOutput = (deps.writeError as jest.Mock).mock.calls.map((c: string[]) => c[0]).join(' ');
-      expect(errOutput).toContain('No theo.yaml found');
+      expect(errOutput).toContain('No loopscale.yaml found');
       expect(errOutput).toContain('loopscale init');
     });
   });
@@ -643,7 +643,7 @@ describe('DeployCommand', () => {
 
       expect(exitCode).toBe(1);
       const errOutput = (deps.writeError as jest.Mock).mock.calls.map((c: string[]) => c[0]).join(' ');
-      expect(errOutput).toContain('No apps defined in theo.yaml');
+      expect(errOutput).toContain('No apps defined in loopscale.yaml');
     });
   });
 
@@ -1217,6 +1217,7 @@ describe('DeployCommand', () => {
         findTheoYaml: jest.fn().mockReturnValue({
           path: '/project/theo.yaml',
           content: { project: '', apps: {} },
+          fileName: 'theo.yaml',
           parseError: 'unexpected token at line 1',
         }),
       });
@@ -1235,6 +1236,7 @@ describe('DeployCommand', () => {
         findTheoYaml: jest.fn().mockReturnValue({
           path: '/project/theo.yaml',
           content: { project: '', apps: {} },
+          fileName: 'theo.yaml',
           parseError: 'invalid syntax',
         }),
       });
@@ -1377,7 +1379,7 @@ describe('DeployCommand', () => {
       expect(exitCode).toBe(1);
       const output = (deps.writeTo as jest.Mock).mock.calls.map((c: string[]) => c[0]).join('');
       const parsed = JSON.parse(output);
-      expect(parsed).toEqual({ code: 'MISSING_CONFIG', error: 'No theo.yaml found. Run: loopscale init', exit_code: 1 });
+      expect(parsed).toEqual({ code: 'MISSING_CONFIG', error: 'No loopscale.yaml found. Run: loopscale init', exit_code: 1 });
       expect(deps.writeError).not.toHaveBeenCalled();
     });
 

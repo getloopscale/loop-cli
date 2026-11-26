@@ -48,7 +48,7 @@ export function registerInfraCommands(deps: CommandDeps): void {
     .description('List recent builds')
     .option('--env <name>', 'Filter by environment')
     .option('--limit <n>', 'Max builds to show')
-    .option('--project <name>', 'Project name (overrides theo.yaml lookup; plan T2.3 D6)')
+    .option('--project <name>', 'Project name (overrides loopscale.yaml lookup; plan T2.3 D6)')
     .action(async (cmdOpts: { env?: string; limit?: string; project?: string }) => {
       const globalOpts = getGlobalOpts();
       const apiClient = new ApiClient({ baseURL: apiUrl, token: configStore.getToken() ?? undefined, onUnauthorized: handleUnauthorized });

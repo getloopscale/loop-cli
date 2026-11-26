@@ -269,7 +269,7 @@ describe('BuildListCommand', () => {
       const exitCode = await cmd.execute();
 
       expect(exitCode).toBe(1);
-      expect(deps.writeError).toHaveBeenCalledWith('No theo.yaml found. Run: loopscale init (or pass --project <name>)');
+      expect(deps.writeError).toHaveBeenCalledWith('No loopscale.yaml found. Run: loopscale init (or pass --project <name>)');
       expect(deps.listBuilds).not.toHaveBeenCalled();
     });
 
@@ -290,6 +290,7 @@ describe('BuildListCommand', () => {
         findTheoYaml: jest.fn().mockReturnValue({
           path: '/app/theo.yaml',
           content: { project: 'test', apps: {} },
+          fileName: 'theo.yaml',
           parseError: 'bad yaml',
         }),
       });

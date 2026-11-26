@@ -80,7 +80,7 @@ describe('parseTheoYaml', () => {
 
   it('should throw for malformed yaml', () => {
     const yaml = 'this is not valid yaml for loopscale';
-    expect(() => parseTheoYaml(yaml)).toThrow('could not parse theo.yaml');
+    expect(() => parseTheoYaml(yaml)).toThrow('could not parse loopscale.yaml');
   });
 
   it('should handle app without secrets', () => {

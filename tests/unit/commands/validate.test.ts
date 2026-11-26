@@ -31,6 +31,7 @@ describe('ValidateCommand', () => {
 
     const deps = createDeps({
       path: yamlPath,
+      fileName: 'theo.yaml',
       content: {
         version: 1,
         project: 'test',
@@ -61,6 +62,7 @@ describe('ValidateCommand', () => {
 
     const deps = createDeps({
       path: yamlPath,
+      fileName: 'theo.yaml',
       content: {
         project: 'test',
         apps: {
@@ -82,6 +84,7 @@ describe('ValidateCommand', () => {
 
     const deps = createDeps({
       path: yamlPath,
+      fileName: 'theo.yaml',
       content: {
         version: 1,
         project: 'test',
@@ -107,6 +110,7 @@ describe('ValidateCommand', () => {
 
     const deps = createDeps({
       path: yamlPath,
+      fileName: 'theo.yaml',
       content: {
         project: 'test',
         apps: {
@@ -127,6 +131,7 @@ describe('ValidateCommand', () => {
   it('should report parse errors', async () => {
     const deps = createDeps({
       path: '/tmp/theo.yaml',
+      fileName: 'theo.yaml',
       content: { project: '', apps: {} },
       parseError: 'invalid syntax on line 3',
     });

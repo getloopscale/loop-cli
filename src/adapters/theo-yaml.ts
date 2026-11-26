@@ -39,8 +39,19 @@ export interface TheoYaml {
   ignore?: string[];                 // v2: glob patterns of dirs that are NOT deployable apps
 }
 
+/** The descriptor's name. `loopscale init`-style hints and error messages use it. */
+export const DESCRIPTOR_FILE_NAME = 'loopscale.yaml';
+
+/**
+ * Every name the descriptor has had, in lookup order. The push deploy reads the same list in the
+ * same order (loopzero `api/internal/github/deploy_descriptor.go`); the two must change together.
+ */
+export const DESCRIPTOR_FILE_NAMES: readonly string[] = [DESCRIPTOR_FILE_NAME, 'loopzero.yaml', 'theo.yaml'];
+
 export interface TheoYamlResult {
   path: string;
+  /** Base name of `path`: which of DESCRIPTOR_FILE_NAMES was read. */
+  fileName: string;
   content: TheoYaml;
   parseError?: string;
 }
@@ -53,14 +64,14 @@ export function parseTheoYaml(raw: string): TheoYaml {
   const doc = YAML.load(raw) as Record<string, unknown> | null;
 
   if (!doc || typeof doc !== 'object') {
-    throw new Error('could not parse theo.yaml — check YAML syntax');
+    throw new Error('could not parse loopscale.yaml — check YAML syntax');
   }
 
   const project = String(doc.project ?? doc.name ?? '');
   const rawApps = doc.apps;
 
   if (!project && (!rawApps || typeof rawApps !== 'object')) {
-    throw new Error('could not parse theo.yaml — check YAML syntax');
+    throw new Error('could not parse loopscale.yaml — check YAML syntax');
   }
 
   // v2 fields
@@ -158,19 +169,22 @@ export function parseTheoYaml(raw: string): TheoYaml {
 }
 
 /**
- * Walk up from cwd to gitRoot looking for theo.yaml, parse it, and return the result.
+ * Walk up from cwd to gitRoot looking for the descriptor, parse it, and return the result.
+ * In each directory the names are tried in the order of DESCRIPTOR_FILE_NAMES.
  */
 export function findTheoYaml(cwd: string, gitRoot: string): TheoYamlResult | null {
   let dir = cwd;
   while (true) {
-    const candidate = path.join(dir, 'theo.yaml');
-    if (fs.existsSync(candidate)) {
+    const fileName = DESCRIPTOR_FILE_NAMES.find((name) => fs.existsSync(path.join(dir, name)));
+    if (fileName) {
+      const candidate = path.join(dir, fileName);
       const raw = fs.readFileSync(candidate, 'utf-8');
       try {
         const content = parseTheoYaml(raw);
-        return { path: candidate, content };
+        return { path: candidate, fileName, content };
       } catch (e) {
-        return { path: candidate, content: { project: '', apps: {} }, parseError: (e as Error).message };
+        const parseError = (e as Error).message.replace(DESCRIPTOR_FILE_NAME, fileName);
+        return { path: candidate, fileName, content: { project: '', apps: {} }, parseError };
       }
     }
     if (dir === gitRoot || dir === path.dirname(dir)) {

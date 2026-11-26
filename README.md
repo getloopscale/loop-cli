@@ -135,8 +135,10 @@ loopscale deploy --prebuilt              # upload only — skip auto-build
 | `LOOPSCALE_OTEL_ENDPOINT` | OTLP/HTTP traces endpoint | `http://localhost:4318/v1/traces` |
 | `LOOPSCALE_ENV` | `deployment.environment` trace attribute | `development` |
 
-Project files read by `loopscale deploy` keep the TheoKit names: `theo.yaml`,
-`.theo/services.json` and `.theoignore`.
+The project descriptor is `loopscale.yaml`. A project that still has `loopzero.yaml` or
+`theo.yaml` keeps working: the CLI reads the first of the three it finds, in that order,
+and a push deploy does the same. `.theo/services.json` and `.theoignore` keep the TheoKit
+names.
 
 ## Commands
 
@@ -168,7 +170,7 @@ end-user CLI.)
 | `loopscale rollback` | Roll back to a previous release |
 | `loopscale promote` | Promote a release from one environment to another |
 | `loopscale cancel <build-id>` | Cancel a running or queued build |
-| `loopscale validate` | Validate `theo.yaml` configuration |
+| `loopscale validate` | Validate `loopscale.yaml` configuration |
 
 </details>
 
@@ -289,7 +291,7 @@ src/
 ├── commands/             use-case orchestration (deploy, domain, env, scale, …)
 ├── api/                  HTTP client + SSE stream (the only cross-repo seam)
 ├── auth/                 device-flow OAuth, token refresh, browser opener
-├── adapters/             theo.yaml · services.json · source bundle + multipart upload · git
+├── adapters/             loopscale.yaml · services.json · source bundle + multipart upload · git
 ├── config/              ConfigStore (XDG, 0o600 tokens) + constants
 ├── output/               renderers, formatter (CI/json detection), prompts
 ├── lib/                  exit-code contract, theokit bin/build helpers

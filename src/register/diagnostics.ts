@@ -12,7 +12,7 @@ import { readFileSync, existsSync } from 'fs';
 
 import { ApiClient, ApiError } from '../api/client';
 import { DoctorCommand } from '../commands/doctor';
-import { findTheoYaml } from '../adapters/theo-yaml';
+import { DESCRIPTOR_FILE_NAMES, findTheoYaml } from '../adapters/theo-yaml';
 import { CommandDeps } from './types';
 
 function getCliVersion(): string {
@@ -76,8 +76,9 @@ export function registerDiagnosticsCommands(deps: CommandDeps): void {
           try {
             const result = findTheoYaml(cwd, gitRoot);
             if (!result) {
-              if (existsSync(resolve(cwd, 'theo.yaml'))) {
-                return { exists: true, valid: false, error: 'theo.yaml present but could not be parsed' };
+              const present = DESCRIPTOR_FILE_NAMES.find((name) => existsSync(resolve(cwd, name)));
+              if (present) {
+                return { exists: true, valid: false, error: `${present} present but could not be parsed` };
               }
               return { exists: false, valid: false };
             }
