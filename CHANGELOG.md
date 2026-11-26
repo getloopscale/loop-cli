@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `loopscale rollback` prints the id of the rollback and returns it as `rollback_id` in `--json`, on success and on failure. The id names the rollback's record, which the console lists under Deployments (getloopscale/loopzero#128)
 
 ### Changed
+- A command refused for a plan limit (HTTP 402) says where the plan is changed: `Plan limit reached: Starter allows 50 builds per month (current: 50). Upgrade your plan to continue. See https://app.getloopscale.com/billing to change your plan.` The address is the `upgrade_url` of the API, resolved against `LOOPSCALE_DASHBOARD_URL` when it is a path.
 - The project descriptor is `loopscale.yaml`. The CLI reads `loopscale.yaml`, then `loopzero.yaml`, then `theo.yaml`, and uses the first one it finds in the nearest directory, so existing projects keep working. Messages name `loopscale.yaml`, or the file that was read when one was found. `loopscale validate --json` reports that file name in `errors[].field` (getloopscale/loopzero#89)
 
 ### Fixed

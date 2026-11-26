@@ -115,8 +115,10 @@ export async function uploadSource(
   if (!resp.ok) {
     let serverMessage: string | null = null;
     let serverCode: string | undefined;
+    let upgradeUrl: string | undefined;
     try {
-      const body = (await resp.json()) as { code?: string; message?: string };
+      const body = (await resp.json()) as { code?: string; message?: string; upgrade_url?: string };
+      upgradeUrl = body.upgrade_url;
       if (body.message) {
         serverMessage = body.message;
       }
@@ -129,7 +131,7 @@ export async function uploadSource(
 
     // Reuse the same exit code mapping as ApiClient.mapError to avoid
     // divergence (previously had a duplicate mapStatusToExitCode here).
-    throw ApiError.fromHttpStatus(resp.status, serverMessage, serverCode);
+    throw ApiError.fromHttpStatus(resp.status, serverMessage, serverCode, upgradeUrl);
   }
 
   return resp.json() as Promise<UploadResult>;

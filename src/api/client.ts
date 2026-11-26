@@ -2,7 +2,7 @@
 // Copyright 2025-2026 The Theo Authors
 
 import { randomUUID } from 'crypto';
-import { getDefaultApiUrl, API_REQUEST_TIMEOUT_MS } from '../config/constants';
+import { getDashboardUrl, getDefaultApiUrl, API_REQUEST_TIMEOUT_MS } from '../config/constants';
 import { injectTraceContext } from '../tracing/propagation';
 
 type FetchFn = (url: string, init?: RequestInit) => Promise<Response>;
@@ -45,6 +45,16 @@ export interface ApiClientOptions {
   onUnauthorized?: () => Promise<string | null>;
 }
 
+/**
+ * Where a person changes plan, from the `upgrade_url` of a 402. The API sends a path of the
+ * dashboard (`/billing`) or an absolute URL; anything else falls back to the billing page.
+ */
+function planUpgradeUrl(upgradeUrl?: string | null): string {
+  if (typeof upgradeUrl === 'string' && /^https?:\/\//.test(upgradeUrl)) return upgradeUrl;
+  const path = typeof upgradeUrl === 'string' && /^\/[^/]/.test(upgradeUrl) ? upgradeUrl : '/billing';
+  return `${getDashboardUrl().replace(/\/+$/, '')}${path}`;
+}
+
 export class ApiError extends Error {
   public readonly exitCode: number;
   public readonly statusCode: number;
@@ -67,7 +77,12 @@ export class ApiError extends Error {
    * Single source of truth for HTTP status → exit code + message mapping.
    * Used by both ApiClient and source-upload adapter to avoid divergence.
    */
-  static fromHttpStatus(status: number, serverMessage?: string | null, serverCode?: string): ApiError {
+  static fromHttpStatus(
+    status: number,
+    serverMessage?: string | null,
+    serverCode?: string,
+    upgradeUrl?: string | null,
+  ): ApiError {
     if (status === 401) {
       return new ApiError(
         serverMessage || 'Not authenticated. Run: loopscale login',
@@ -81,8 +96,9 @@ export class ApiError extends Error {
       );
     }
     if (status === 402) {
+      const refusal = serverMessage || 'Plan limit reached. Upgrade your plan to continue.';
       return new ApiError(
-        serverMessage || 'Plan limit reached. Upgrade your plan to continue.',
+        `${refusal} See ${planUpgradeUrl(upgradeUrl)} to change your plan.`,
         3, status, serverCode ?? 'PLAN_LIMIT_EXCEEDED',
       );
     }
@@ -320,7 +336,7 @@ export class ApiClient {
 
   private mapError(
     status: number,
-    body?: { code?: string; message?: string; error?: string } | null,
+    body?: { code?: string; message?: string; error?: string; upgrade_url?: string } | null,
   ): ApiError {
     // Some legacy routes (e.g. /api/v1/domains) respond with {"error": "..."}
     // instead of the canonical {"code", "message"} shape. We accept either so
@@ -328,6 +344,6 @@ export class ApiClient {
     // back to "Request failed (HTTP 400). Check your command arguments." —
     // a Rule 8 (fail-clear) violation observed during dogfood iter 13.
     const message = body?.message ?? body?.error;
-    return ApiError.fromHttpStatus(status, message, body?.code);
+    return ApiError.fromHttpStatus(status, message, body?.code, body?.upgrade_url);
   }
 }
