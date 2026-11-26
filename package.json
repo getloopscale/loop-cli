@@ -1,5 +1,5 @@
 {
-  "name": "@getloopscale/cli",
+  "name": "@getloopscale/loop-cli",
   "version": "0.2.0",
   "description": "CLI-first deploys for LoopScale: one command from monorepo to running service.",
   "keywords": [
@@ -15,10 +15,10 @@
   "homepage": "https://getloopscale.com",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/getloopscale/cli.git"
+    "url": "git+https://github.com/getloopscale/loop-cli.git"
   },
   "bugs": {
-    "url": "https://github.com/getloopscale/cli/issues"
+    "url": "https://github.com/getloopscale/loop-cli/issues"
   },
   "main": "dist/index.js",
   "bin": {

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { LogsCommand, LogsDeps } from '../../../src/commands/logs';
 import { ApiError } from '../../../src/api/client';
@@ -7,8 +7,8 @@ import { ApiError } from '../../../src/api/client';
 function createMockDeps(overrides: Partial<LogsDeps> = {}): LogsDeps {
   return {
     getToken: jest.fn().mockReturnValue('test-token'),
-    findTheoYaml: jest.fn().mockReturnValue({
-      path: '/project/theo.yaml',
+    findLoopScaleYaml: jest.fn().mockReturnValue({
+      path: '/project/loopscale.yaml',
       content: { project: 'my-app', apps: { web: { path: '.', framework: 'express', port: 3000 } } },
     }),
     getLogs: jest.fn().mockResolvedValue({
@@ -167,9 +167,9 @@ describe('LogsCommand', () => {
   });
 
   describe('missing config', () => {
-    it('should succeed with --build even without theo.yaml', async () => {
+    it('should succeed with --build even without loopscale.yaml', async () => {
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue(null),
+        findLoopScaleYaml: jest.fn().mockReturnValue(null),
       });
       const cmd = new LogsCommand(deps);
 
@@ -179,21 +179,21 @@ describe('LogsCommand', () => {
       expect(deps.getLogs).toHaveBeenCalledWith('build-abc123', expect.anything());
     });
 
-    it('should fail without --build and without theo.yaml', async () => {
+    it('should fail without --build and without loopscale.yaml', async () => {
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue(null),
+        findLoopScaleYaml: jest.fn().mockReturnValue(null),
       });
       const cmd = new LogsCommand(deps);
 
       const exitCode = await cmd.execute({});
 
       expect(exitCode).toBe(1);
-      // F-03: without theo.yaml and without --build, we can't infer the build
+      // F-03: without loopscale.yaml and without --build, we can't infer the build
       const allOutput = [
         ...(deps.writeTo as jest.Mock).mock.calls.map((c: string[]) => c[0]),
         ...(deps.writeError as jest.Mock).mock.calls.map((c: string[]) => c[0]),
       ].join('\n');
-      expect(allOutput).toMatch(/theo\.yaml|--build/);
+      expect(allOutput).toMatch(/loopscale\.yaml|--build/);
     });
   });
 
@@ -445,7 +445,7 @@ describe('LogsCommand', () => {
       expect(output).toContain('NO_BUILDS');
     });
 
-    // Red Team theo-cloud#160 — infer via listBuilds (same source as
+    // Red Team loop-console#160 — infer via listBuilds (same source as
     // `loopscale build list`) NOT via getProjectStatus.last_build. Pre-fix scenario:
     // preview env with 2 recent builds (CANCELLED + SUCCEEDED) shown by
     // `loopscale build list`, but /status.last_build null because no active release
@@ -468,7 +468,7 @@ describe('LogsCommand', () => {
       expect(deps.getLogs).toHaveBeenCalledWith('build-listbuilds-160', expect.any(Object));
     });
 
-    // Red Team theo-cloud#160 negative case — when listBuilds itself confirms
+    // Red Team loop-console#160 negative case — when listBuilds itself confirms
     // zero builds AND getProjectStatus.last_build is null, still surface
     // NO_BUILDS honestly (never silently succeed with rc 0).
     it('should return rc 1 with NO_BUILDS when listBuilds is empty (Red Team #160)', async () => {
@@ -504,9 +504,9 @@ describe('LogsCommand', () => {
       expect(deps.getProjectStatus).not.toHaveBeenCalled();
     });
 
-    it('should return MISSING_CONFIG when no theo.yaml and no --build', async () => {
+    it('should return MISSING_CONFIG when no loopscale.yaml and no --build', async () => {
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue(null),
+        findLoopScaleYaml: jest.fn().mockReturnValue(null),
         getProjectStatus: jest.fn(),
       });
       const cmd = new LogsCommand(deps);
@@ -587,9 +587,9 @@ describe('LogsCommand', () => {
       expect(output).toContain('STREAM_UNAVAILABLE');
     });
 
-    it('returns MISSING_CONFIG when no theo.yaml found', async () => {
+    it('returns MISSING_CONFIG when no loopscale.yaml found', async () => {
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue(null),
+        findLoopScaleYaml: jest.fn().mockReturnValue(null),
         streamRuntimeLogs: jest.fn(),
       });
       const cmd = new LogsCommand(deps);

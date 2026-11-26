@@ -1,5 +1,5 @@
 import { ApiError } from '../api/client';
-import type { TheoYamlResult } from '../adapters/theo-yaml';
+import type { LoopScaleYamlResult } from '../adapters/loopscale-yaml';
 import { classifyNetworkError } from '../output/error-message';
 
 interface BuildItem {
@@ -19,7 +19,7 @@ interface BuildListResponse {
 
 export interface BuildListDeps {
   getToken: () => string | null;
-  findTheoYaml: () => TheoYamlResult | null;
+  findLoopScaleYaml: () => LoopScaleYamlResult | null;
   listBuilds: (project: string, env?: string, limit?: number) => Promise<BuildListResponse>;
   writeTo: (msg: string) => void;
   writeError: (msg: string) => void;
@@ -28,7 +28,7 @@ export interface BuildListDeps {
 export interface BuildListOptions {
   env?: string;
   limit?: number;
-  /** Plan T2.3 D6 — explicit project override; otherwise inferred from theo.yaml */
+  /** Plan T2.3 D6 — explicit project override; otherwise inferred from loopscale.yaml */
   project?: string;
   json?: boolean;
 }
@@ -38,7 +38,7 @@ export interface BuildListOptions {
  *
  * Exit codes:
  *   0 — success (including empty list)
- *   1 — usage error (no theo.yaml, API error)
+ *   1 — usage error (no loopscale.yaml, API error)
  *   4 — auth error
  */
 export class BuildListCommand {
@@ -54,13 +54,13 @@ export class BuildListCommand {
       return this.exitWithError(opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
-    // 2. Resolve project — explicit --project flag wins over theo.yaml.
+    // 2. Resolve project — explicit --project flag wins over loopscale.yaml.
     // Plan T2.3 D6 — cross-command consistency.
     let project: string;
     if (opts.project) {
       project = opts.project;
     } else {
-      const yamlResult = this.deps.findTheoYaml();
+      const yamlResult = this.deps.findLoopScaleYaml();
       if (!yamlResult) {
         return this.exitWithError(opts, 'No loopscale.yaml found. Run: loopscale init (or pass --project <name>)', 1, 'MISSING_CONFIG');
       }

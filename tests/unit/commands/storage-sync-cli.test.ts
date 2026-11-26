@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 //
-// Plan theo-storage-sync T3.1 — the CLI output contract (exit codes Rule 4,
+// Plan loopstore-sync T3.1 — the CLI output contract (exit codes Rule 4,
 // --json stability Rule 5, product language Rule 3). These are pure functions so
 // the whole contract is unit-testable without a live backend.
 

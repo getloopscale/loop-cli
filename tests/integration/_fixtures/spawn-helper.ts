@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 //
 // CHG-2026-04-30-INFRA-NORMALIZE / Phase 4 T4.1 — spawn helper for
 // integration tests. Wraps `child_process.spawnSync` against the real
@@ -20,7 +20,7 @@ import * as os from 'os';
 
 export const BIN_PATH = path.resolve(__dirname, '../../../bin/loopscale');
 
-export interface SpawnTheoOptions {
+export interface SpawnLoopScaleOptions {
   /** Subcommand args, e.g. ['status', '--json']. */
   args: string[];
   /** Override env. Always merged with process.env first. */
@@ -34,7 +34,7 @@ export interface SpawnTheoOptions {
   timeoutMs?: number;
 }
 
-export interface SpawnTheoResult {
+export interface SpawnLoopScaleResult {
   /** Process exit code. -1 sentinel if killed (timeout/signal). */
   exitCode: number;
   /** Stdout as string (utf-8). */
@@ -75,7 +75,7 @@ function isolatedParentEnv(): NodeJS.ProcessEnv {
  *   - LOOPSCALE_URL = http://127.0.0.1:1 unless caller overrides
  *   - CI = "true"
  */
-export function spawnTheo(opts: SpawnTheoOptions): Promise<SpawnTheoResult> {
+export function spawnLoopScale(opts: SpawnLoopScaleOptions): Promise<SpawnLoopScaleResult> {
   const tmpHome = opts.cwd ?? mkTmpHome();
   const baseEnv: NodeJS.ProcessEnv = {
     ...isolatedParentEnv(),
@@ -88,7 +88,7 @@ export function spawnTheo(opts: SpawnTheoOptions): Promise<SpawnTheoResult> {
   };
   const timeoutMs = opts.timeoutMs ?? 30_000;
 
-  return new Promise<SpawnTheoResult>((resolve) => {
+  return new Promise<SpawnLoopScaleResult>((resolve) => {
     const child = spawn('node', [BIN_PATH, ...opts.args], {
       env: baseEnv,
       cwd: opts.cwd ?? tmpHome,
@@ -137,7 +137,7 @@ export function spawnTheo(opts: SpawnTheoOptions): Promise<SpawnTheoResult> {
         stderr,
         status: code,
         signal,
-        error: killed ? new Error(`spawnTheo: timed out after ${timeoutMs}ms`) : undefined,
+        error: killed ? new Error(`spawnLoopScale: timed out after ${timeoutMs}ms`) : undefined,
       } as unknown as SpawnSyncReturns<string>;
       resolve({ exitCode, stdout, stderr, raw });
     });
@@ -147,9 +147,9 @@ export function spawnTheo(opts: SpawnTheoOptions): Promise<SpawnTheoResult> {
 /**
  * Synchronous variant — use ONLY when no in-process mock server is involved
  * (e.g., testing exit codes against unreachable URLs). Most tests should
- * prefer the async `spawnTheo()`.
+ * prefer the async `spawnLoopScale()`.
  */
-export function spawnTheoSync(opts: SpawnTheoOptions): SpawnTheoResult {
+export function spawnLoopScaleSync(opts: SpawnLoopScaleOptions): SpawnLoopScaleResult {
   const tmpHome = opts.cwd ?? mkTmpHome();
   const baseEnv: NodeJS.ProcessEnv = {
     ...isolatedParentEnv(),
@@ -181,7 +181,7 @@ export function spawnTheoSync(opts: SpawnTheoOptions): SpawnTheoResult {
  * cleanup via cleanupTmpHome() (registered in afterEach).
  */
 export function mkTmpHome(): string {
-  return fs.mkdtempSync(path.join(os.tmpdir(), 'theo-cli-itest-'));
+  return fs.mkdtempSync(path.join(os.tmpdir(), 'loopscale-cli-itest-'));
 }
 
 /**
@@ -241,28 +241,28 @@ export function parseAllJsonLines(stdout: string): Record<string, unknown>[] {
  * through to the API call (which the mock server then handles).
  *
  * Written to `~/.loopscale/config.json`, the file the CLI reads. Shape:
- * `{token, theoUrl, tenantId}`. Token is intentionally synthetic — mock API decides what
+ * `{token, loopscaleUrl, tenantId}`. Token is intentionally synthetic — mock API decides what
  * to do with it.
  */
 export function writeFakeAuthConfig(
   tmpHome: string,
-  overrides: { token?: string; theoUrl?: string; tenantId?: string } = {},
+  overrides: { token?: string; loopscaleUrl?: string; tenantId?: string } = {},
 ): void {
   const dir = path.join(tmpHome, '.loopscale');
   fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
   const cfg = {
     token: overrides.token ?? 'fake-test-token',
-    theoUrl: overrides.theoUrl ?? 'http://127.0.0.1:1',
+    loopscaleUrl: overrides.loopscaleUrl ?? 'http://127.0.0.1:1',
     tenantId: overrides.tenantId ?? 'tn-test',
   };
   fs.writeFileSync(path.join(dir, 'config.json'), JSON.stringify(cfg, null, 2), { mode: 0o600 });
 }
 
 /**
- * Write a minimal `theo.yaml` to tmpHome cwd so commands needing project
+ * Write a minimal `loopscale.yaml` to tmpHome cwd so commands needing project
  * context resolve it. Single-app, single-env starter shape.
  */
-export function writeFakeTheoYaml(
+export function writeFakeLoopScaleYaml(
   tmpHome: string,
   overrides: { project?: string; env?: string } = {},
 ): void {
@@ -280,5 +280,5 @@ environments:
   ${env}:
     plan: starter
 `;
-  fs.writeFileSync(path.join(tmpHome, 'theo.yaml'), yaml);
+  fs.writeFileSync(path.join(tmpHome, 'loopscale.yaml'), yaml);
 }

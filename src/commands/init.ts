@@ -4,7 +4,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'js-yaml';
-import { DESCRIPTOR_FILE_NAME, DESCRIPTOR_FILE_NAMES } from '../adapters/theo-yaml';
+import { DESCRIPTOR_FILE_NAME, DESCRIPTOR_FILE_NAMES } from '../adapters/loopscale-yaml';
 import { SUPPORTED_RUNTIMES } from '../adapters/descriptor-manifest';
 
 export interface InitDeps {

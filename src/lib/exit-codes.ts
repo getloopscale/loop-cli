@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 /**
  * Plan T1.2 — CLI Exit Code contract per CLAUDE.md Rule 4.

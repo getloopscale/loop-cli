@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { TeamRoleCommand, TeamRoleDeps } from '../../../src/commands/team-role';
 
@@ -82,7 +82,7 @@ describe('TeamRoleCommand', () => {
       const cmd = new TeamRoleCommand(makeDeps({
         changeRole: async () => { throw new ApiError('Owner protected', 1, 409, 'OWNER_PROTECTED'); },
       }));
-      const code = await cmd.execute('theowner', 'member');
+      const code = await cmd.execute('teamowner', 'member');
       expect(code).toBe(1);
     });
 
@@ -126,7 +126,7 @@ describe('TeamRoleCommand', () => {
       const cmd = new TeamRoleCommand(makeDeps({
         changeRole: async () => { throw new ApiError('Owner protected', 1, 409, 'OWNER_PROTECTED'); },
       }));
-      await cmd.execute('theowner', 'member');
+      await cmd.execute('teamowner', 'member');
       expect(errors[0]).toContain("Cannot change the owner's role");
       expect(errors[0]).toContain('Transfer ownership');
     });

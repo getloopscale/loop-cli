@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
-import { TheoYamlResult } from '../adapters/theo-yaml';
+import { LoopScaleYamlResult } from '../adapters/loopscale-yaml';
 import { validateConfig } from '../adapters/validate-config';
 import * as path from 'path';
 
 export interface ValidateDeps {
-  findTheoYaml: () => TheoYamlResult | null;
+  findLoopScaleYaml: () => LoopScaleYamlResult | null;
   writeTo: (msg: string) => void;
   writeError: (msg: string) => void;
 }
@@ -23,8 +23,8 @@ export class ValidateCommand {
   }
 
   async execute(opts: ValidateOptions): Promise<number> {
-    // 1. Find theo.yaml
-    const yamlResult = this.deps.findTheoYaml();
+    // 1. Find loopscale.yaml
+    const yamlResult = this.deps.findLoopScaleYaml();
     if (!yamlResult) {
       if (opts.json) {
         this.deps.writeTo(JSON.stringify({ valid: false, errors: [{ field: 'loopscale.yaml', message: 'No loopscale.yaml found. Run: loopscale init' }], apps: 0 }));

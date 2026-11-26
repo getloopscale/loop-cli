@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2025-2026 The LoopScale Authors
 
-import type { TheoYaml } from './theo-yaml';
-import { DESCRIPTOR_FILE_NAME } from './theo-yaml';
+import type { LoopScaleYaml } from './loopscale-yaml';
+import { DESCRIPTOR_FILE_NAME } from './loopscale-yaml';
 
 /** The runtimes the platform builds an image for. The API's manifest schema has the same list. */
 export const SUPPORTED_RUNTIMES: readonly string[] = ['node', 'python'];
@@ -43,7 +43,7 @@ export class DescriptorManifestError extends Error {
  * build, so they take a value derived from the app.
  */
 export function manifestFromDescriptor(
-  config: Pick<TheoYaml, 'project'> & { apps: Record<string, unknown> },
+  config: Pick<LoopScaleYaml, 'project'> & { apps: Record<string, unknown> },
   selectedApps?: readonly string[],
 ): ServicesManifest {
   const services: ManifestService[] = [];

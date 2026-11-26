@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 //
 // Phase 4 T4.2 — `deploy` register integration test.
 // 7 subcommands. Existing cli-e2e covers happy-path against real API;
@@ -7,7 +7,7 @@
 
 import { describe, it, expect, afterEach } from '@jest/globals';
 import {
-  spawnTheo,
+  spawnLoopScale,
   mkTmpHome,
   cleanupTmpHome,
   writeFakeAuthConfig,
@@ -23,20 +23,20 @@ describe('loopscale deploy --help', () => {
   it('exit 0', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
-    const r = await spawnTheo({ args: ['deploy', '--help'], cwd: tmp });
+    const r = await spawnLoopScale({ args: ['deploy', '--help'], cwd: tmp });
     expect(r.exitCode).toBe(0);
     expect(r.stdout).toMatch(/deploy/);
   });
 });
 
 describe('loopscale validate', () => {
-  it('exit 0 with valid theo.yaml', async () => {
+  it('exit 0 with valid loopscale.yaml', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
     const fs = await import('fs');
     const path = await import('path');
     fs.writeFileSync(
-      path.join(tmp, 'theo.yaml'),
+      path.join(tmp, 'loopscale.yaml'),
       `version: 1
 project: itest
 apps:
@@ -51,7 +51,7 @@ environments:
 `,
     );
 
-    const r = await spawnTheo({
+    const r = await spawnLoopScale({
       args: ['validate', '--json'],
       cwd: tmp,
       timeoutMs: 15_000,
@@ -62,10 +62,10 @@ environments:
     expect([0, 1]).toContain(r.exitCode);
   });
 
-  it('exit 1 without theo.yaml', async () => {
+  it('exit 1 without loopscale.yaml', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
-    const r = await spawnTheo({
+    const r = await spawnLoopScale({
       args: ['validate', '--json'],
       cwd: tmp,
       timeoutMs: 10_000,
@@ -79,7 +79,7 @@ describe('loopscale cancel', () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
     writeFakeAuthConfig(tmp);
-    const r = await spawnTheo({
+    const r = await spawnLoopScale({
       args: ['cancel', '--json'],
       cwd: tmp,
       timeoutMs: 10_000,
@@ -93,7 +93,7 @@ describe('loopscale logs', () => {
   it('exit 4 without auth', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
-    const r = await spawnTheo({
+    const r = await spawnLoopScale({
       args: ['logs', '--build', 'b-test', '--json'],
       cwd: tmp,
       timeoutMs: 10_000,
@@ -106,7 +106,7 @@ describe('loopscale status', () => {
   it('exit 4 without auth', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
-    const r = await spawnTheo({
+    const r = await spawnLoopScale({
       args: ['status', '--json'],
       cwd: tmp,
       timeoutMs: 10_000,

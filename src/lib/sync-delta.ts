@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 //
-// Plan theo-storage-sync T1.1 (ADR D1/D2) — the 3-state delta classifier.
+// Plan loopstore-sync T1.1 (ADR D1/D2) — the 3-state delta classifier.
 //
 // Ports rclone's bisync delta model (references/rclone/cmd/bisync/deltas.go):
 // compare each side's current content hash against the manifest (last-synced)

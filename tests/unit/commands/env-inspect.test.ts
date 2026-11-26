@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { EnvInspectCommand, EnvInspectDeps } from '../../../src/commands/env-inspect';
 
@@ -14,8 +14,8 @@ describe('EnvInspectCommand', () => {
         name,
         status: 'active',
         projects: [
-          { name: 'my-api', release_id: 'rel-abc123', url: 'https://my-api-staging.dev.usetheo.dev' },
-          { name: 'my-web', release_id: 'rel-def456', url: 'https://my-web-staging.dev.usetheo.dev' },
+          { name: 'my-api', release_id: 'rel-abc123', url: 'https://my-api-staging.dev.getloopscale.com' },
+          { name: 'my-web', release_id: 'rel-def456', url: 'https://my-web-staging.dev.getloopscale.com' },
         ],
       }),
       writeTo: (msg: string) => output.push(msg),
@@ -90,7 +90,7 @@ describe('EnvInspectCommand', () => {
       const allOutput = output.join('\n');
       expect(allOutput).toContain('my-api');
       expect(allOutput).toContain('rel-abc123');
-      expect(allOutput).toContain('https://my-api-staging.dev.usetheo.dev');
+      expect(allOutput).toContain('https://my-api-staging.dev.getloopscale.com');
       expect(allOutput).toContain('my-web');
       expect(allOutput).toContain('rel-def456');
     });
@@ -154,7 +154,7 @@ describe('EnvInspectCommand', () => {
       expect(parsed.projects).toHaveLength(2);
       expect(parsed.projects[0].name).toBe('my-api');
       expect(parsed.projects[0].release_id).toBe('rel-abc123');
-      expect(parsed.projects[0].url).toBe('https://my-api-staging.dev.usetheo.dev');
+      expect(parsed.projects[0].url).toBe('https://my-api-staging.dev.getloopscale.com');
     });
 
     it('outputs JSON on error', async () => {

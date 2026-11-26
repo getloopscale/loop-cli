@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 //
 // Phase 4 T4.2 — `infra` register integration test.
 // `infra.ts` register hosts the most subcommands of any register
@@ -9,7 +9,7 @@
 
 import { describe, it, expect, afterEach } from '@jest/globals';
 import {
-  spawnTheo,
+  spawnLoopScale,
   mkTmpHome,
   cleanupTmpHome,
   writeFakeAuthConfig,
@@ -28,7 +28,7 @@ describe('loopscale build --help', () => {
   it('exit 0 + lists list/inspect/cancel', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
-    const r = await spawnTheo({ args: ['build', '--help'], cwd: tmp });
+    const r = await spawnLoopScale({ args: ['build', '--help'], cwd: tmp });
     expect(r.exitCode).toBe(0);
     expect(r.stdout).toMatch(/list/);
     expect(r.stdout).toMatch(/inspect/);
@@ -40,7 +40,7 @@ describe('loopscale build list', () => {
   it('exit 4 without auth', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
-    const r = await spawnTheo({
+    const r = await spawnLoopScale({
       args: ['build', 'list', '--json'],
       cwd: tmp,
       timeoutMs: 10_000,
@@ -53,7 +53,7 @@ describe('loopscale secret --help', () => {
   it('exit 0 + lists set/list/delete', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
-    const r = await spawnTheo({ args: ['secret', '--help'], cwd: tmp });
+    const r = await spawnLoopScale({ args: ['secret', '--help'], cwd: tmp });
     expect(r.exitCode).toBe(0);
     expect(r.stdout).toMatch(/set/);
     expect(r.stdout).toMatch(/list/);
@@ -65,7 +65,7 @@ describe('loopscale audit', () => {
   it('exit 4 without auth', async () => {
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
-    const r = await spawnTheo({
+    const r = await spawnLoopScale({
       args: ['audit', '--json'],
       cwd: tmp,
       timeoutMs: 10_000,
@@ -84,9 +84,9 @@ describe('loopscale audit', () => {
 
     const tmp = mkTmpHome();
     tmpHomes.push(tmp);
-    writeFakeAuthConfig(tmp, { theoUrl: server.url });
+    writeFakeAuthConfig(tmp, { loopscaleUrl: server.url });
 
-    const r = await spawnTheo({
+    const r = await spawnLoopScale({
       args: ['audit', '--json'],
       cwd: tmp,
       env: { LOOPSCALE_URL: server.url },

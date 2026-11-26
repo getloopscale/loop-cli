@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 //
 // T1.2 (CHG-2026-04-29-DOGFOOD) — Exit code contract test fork-based.
 //
 // **What this test enforces (Rule 4 — exit codes are permanent):**
 // Para cada comando CLI que aceita `--json`, quando o comando emite um
-// erro typed (TheoError com `exit_code`), o **processo Node real** DEVE
+// erro typed (LoopScaleError com `exit_code`), o **processo Node real** DEVE
 // terminar com `process.exit_status === parseInt(json.exit_code)`.
 //
 // **Por que `child_process.spawnSync` em vez de chamar Command.execute
@@ -40,21 +40,21 @@ interface ContractCase {
 // Configurations:
 // - sem ~/.loopscale/config.json válido
 // - LOOPSCALE_URL apontando para port unreachable
-// - cwd = tmp dir SEM theo.yaml (provoca MISSING_CONFIG em alguns) ou COM
-//   theo.yaml (puro auth gate)
+// - cwd = tmp dir SEM loopscale.yaml (provoca MISSING_CONFIG em alguns) ou COM
+//   loopscale.yaml (puro auth gate)
 //
 // Cada comando é avaliado no contexto onde produz o erro mais limpo.
 const cases: ContractCase[] = [
-  // === Auth-only gate (sem theo.yaml requirement) ===
+  // === Auth-only gate (sem loopscale.yaml requirement) ===
   { name: 'whoami', args: ['whoami'], expectedCodes: [4] },
   { name: 'project list', args: ['project', 'list'], expectedCodes: [4] },
   { name: 'team list', args: ['team', 'list'], expectedCodes: [4] },
   { name: 'env list', args: ['env', 'list'], expectedCodes: [4] },
 
   // === Validate (config-only — não requer auth) ===
-  { name: 'validate (no theo.yaml)', args: ['validate'], expectedCodes: [1] },
+  { name: 'validate (no loopscale.yaml)', args: ['validate'], expectedCodes: [1] },
 
-  // === Auth-required + theo.yaml-required ===
+  // === Auth-required + loopscale.yaml-required ===
   { name: 'deploy (no auth)', args: ['deploy'], expectedCodes: [4] },
   { name: 'status (no auth)', args: ['status'], expectedCodes: [4] },
   { name: 'logs (no auth)', args: ['logs'], expectedCodes: [4] },

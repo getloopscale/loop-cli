@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { promptConfirm } from '../output/prompt-confirm';
 import { createHash } from 'crypto';
@@ -14,7 +14,7 @@ import { PromoteCommand } from '../commands/promote';
 import { CancelCommand } from '../commands/cancel';
 import { API_REQUEST_TIMEOUT_MS, DEPLOY_TIMEOUT_MS } from '../config/constants';
 import { hasGitRepo, hasUncommittedChanges, hasLockfile, getSourceIdentifier, getGitRoot, createSourceBundle, checkSensitiveFiles } from '../adapters/git';
-import { findTheoYaml } from '../adapters/theo-yaml';
+import { findLoopScaleYaml } from '../adapters/loopscale-yaml';
 import { findServicesJson } from '../adapters/services-json';
 import { cleanupFile } from '../adapters/source-bundle';
 import { uploadSource } from '../adapters/source-upload';
@@ -54,9 +54,9 @@ export function registerDeployCommands(deps: CommandDeps): void {
 
       const deployCmd = new DeployCommand({
         getToken: () => configStore.getToken(),
-        findTheoYaml: () => {
+        findLoopScaleYaml: () => {
           const gitRoot = getGitRoot() ?? process.cwd();
-          return findTheoYaml(process.cwd(), gitRoot);
+          return findLoopScaleYaml(process.cwd(), gitRoot);
         },
         // Plan v1.1 T1.2 — services.json discovery for upload payload.
         // EC-4 absorbed: `--services-json <path>` override threaded via opts.
@@ -227,9 +227,9 @@ export function registerDeployCommands(deps: CommandDeps): void {
       const jsonMode = Boolean(cmdOpts.json || globalOpts.json);
 
       const validateCmd = new ValidateCommand({
-        findTheoYaml: () => {
+        findLoopScaleYaml: () => {
           const gitRoot = getGitRoot() ?? process.cwd();
-          return findTheoYaml(process.cwd(), gitRoot);
+          return findLoopScaleYaml(process.cwd(), gitRoot);
         },
         writeTo,
         writeError,
@@ -251,9 +251,9 @@ export function registerDeployCommands(deps: CommandDeps): void {
 
       const statusCmd = new StatusCommand({
         getToken: () => configStore.getToken(),
-        findTheoYaml: () => {
+        findLoopScaleYaml: () => {
           const gitRoot = getGitRoot() ?? process.cwd();
-          return findTheoYaml(process.cwd(), gitRoot);
+          return findLoopScaleYaml(process.cwd(), gitRoot);
         },
         getStatus: async (project: string, environment: string) => {
           return apiClient.get(
@@ -298,9 +298,9 @@ export function registerDeployCommands(deps: CommandDeps): void {
 
       const logsCmd = new LogsCommand({
         getToken: () => configStore.getToken(),
-        findTheoYaml: () => {
+        findLoopScaleYaml: () => {
           const gitRoot = getGitRoot() ?? process.cwd();
-          return findTheoYaml(process.cwd(), gitRoot);
+          return findLoopScaleYaml(process.cwd(), gitRoot);
         },
         getLogs: async (buildID: string, opts: { tail?: number; step?: string; since?: string }) => {
           const params = new URLSearchParams();
@@ -311,7 +311,7 @@ export function registerDeployCommands(deps: CommandDeps): void {
           const path = `/api/v1/builds/${encodeURIComponent(buildID)}/logs${query ? `?${query}` : ''}`;
           return apiClient.get(path);
         },
-        // Red Team theo-cloud#160: PRIMARY build inference source — same
+        // Red Team loop-console#160: PRIMARY build inference source — same
         // endpoint `loopscale build list` uses. Fixes "No builds found" silent lie
         // when builds exist but no active release binds them yet.
         listBuilds: async (project: string, env?: string, limit?: number) => {
@@ -428,9 +428,9 @@ export function registerDeployCommands(deps: CommandDeps): void {
 
       const rollbackCmd = new RollbackCommand({
         getToken: () => configStore.getToken(),
-        findTheoYaml: () => {
+        findLoopScaleYaml: () => {
           const gitRoot = getGitRoot() ?? process.cwd();
-          return findTheoYaml(process.cwd(), gitRoot);
+          return findLoopScaleYaml(process.cwd(), gitRoot);
         },
         rollback: async (project: string, environment: string, toReleaseId?: string) => {
           const body: Record<string, string> = { environment };
@@ -485,9 +485,9 @@ export function registerDeployCommands(deps: CommandDeps): void {
 
       const promoteCmd = new PromoteCommand({
         getToken: () => configStore.getToken(),
-        findTheoYaml: () => {
+        findLoopScaleYaml: () => {
           const gitRoot = getGitRoot() ?? process.cwd();
-          return findTheoYaml(process.cwd(), gitRoot);
+          return findLoopScaleYaml(process.cwd(), gitRoot);
         },
         promote: async (project: string, from: string, to: string) => {
           return apiClient.post(

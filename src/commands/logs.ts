@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { ApiError } from '../api/client';
 import { classifyNetworkError } from '../output/error-message';
-import type { TheoYamlResult } from '../adapters/theo-yaml';
+import type { LoopScaleYamlResult } from '../adapters/loopscale-yaml';
 
 export interface LogEntry {
   step: string;
@@ -56,7 +56,7 @@ export type StreamRuntimeLogsFn = (
  * BuildListResponse — canonical shape returned by /api/v1/projects/{name}/builds
  * (same as build-list.ts). Kept structurally compatible so LogsCommand can call
  * the SAME source of truth `loopscale build list` uses when inferring the last build.
- * Red Team theo-cloud#160: previously the CLI only had getProjectStatus (whose
+ * Red Team loop-console#160: previously the CLI only had getProjectStatus (whose
  * last_build reflects the release-active build, not the "most recent build in
  * env"), which returned null in valid scenarios (e.g., preview env with recent
  * CANCELLED + SUCCEEDED builds) → "No builds found" silent lie.
@@ -74,7 +74,7 @@ interface BuildListResp {
 
 export interface LogsDeps {
   getToken: () => string | null;
-  findTheoYaml: () => TheoYamlResult | null;
+  findLoopScaleYaml: () => LoopScaleYamlResult | null;
   getLogs: (buildID: string, opts: { tail?: number; step?: string; since?: string }) => Promise<LogsApiResponse>;
   /**
    * Red Team #160: PRIMARY inference source — the SAME endpoint `loopscale build list`
@@ -109,7 +109,7 @@ export interface LogsOptions {
   tail?: number;
   step?: string;
   env?: string;
-  /** Plan T2.3 D6 — explicit project override; otherwise inferred from theo.yaml */
+  /** Plan T2.3 D6 — explicit project override; otherwise inferred from loopscale.yaml */
   project?: string;
   json?: boolean;
   /** Follow mode: stream logs in real-time via SSE. */
@@ -159,16 +159,16 @@ export class LogsCommand {
     // 2. Resolve build ID — explicit --build or infer from last build
     if (!opts.build) {
       // F-03: Infer from project status when --build not provided.
-      // Plan T2.3 D6 — --project flag overrides theo.yaml lookup.
+      // Plan T2.3 D6 — --project flag overrides loopscale.yaml lookup.
       let projectName: string | undefined = opts.project;
       if (!projectName) {
-        const yaml = this.deps.findTheoYaml();
+        const yaml = this.deps.findLoopScaleYaml();
         if (!yaml?.content?.project) {
           return this.exitWithError(opts, 'No loopscale.yaml found. Specify --build <id>, run from a project directory, or pass --project <name>.', 1, 'MISSING_CONFIG');
         }
         projectName = yaml.content.project;
       }
-      // Red Team theo-cloud#160: prefer listBuilds (same SoT as `loopscale build list`)
+      // Red Team loop-console#160: prefer listBuilds (same SoT as `loopscale build list`)
       // over getProjectStatus.last_build. The latter reflects the ACTIVE release's
       // build (release-bound view), NOT the most recent build in env (build-history
       // view). The two diverge in real scenarios (e.g., preview env with a recent
@@ -260,7 +260,7 @@ export class LogsCommand {
         this.exitWithError(opts, 'Runtime log streaming is not available in this build.', 1, 'STREAM_UNAVAILABLE'),
       );
     }
-    const yaml = this.deps.findTheoYaml();
+    const yaml = this.deps.findLoopScaleYaml();
     if (!yaml?.content?.project) {
       return Promise.resolve(
         this.exitWithError(opts, 'No loopscale.yaml found. Run from a project directory.', 1, 'MISSING_CONFIG'),

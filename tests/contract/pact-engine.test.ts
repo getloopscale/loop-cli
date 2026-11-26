@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 // T2.2 of plan canonical-tests-rewrite-v2 v1.0 per ADR-2026-06-17-T3 D7.
 // Consumer-side Pact contract test. Asserts the pact-engine.json shape +
@@ -33,9 +33,9 @@ describe('Pact engine contract (T2.2)', () => {
     pact = JSON.parse(raw);
   });
 
-  it('declares theo-cli as consumer and theo-engine as provider', () => {
-    expect(pact.consumer.name).toBe('theo-cli');
-    expect(pact.provider.name).toBe('theo-engine');
+  it('declares loopscale-cli as consumer and loop-runtime as provider', () => {
+    expect(pact.consumer.name).toBe('loopscale-cli');
+    expect(pact.provider.name).toBe('loop-runtime');
   });
 
   it('uses Pact specification 2.0.0', () => {

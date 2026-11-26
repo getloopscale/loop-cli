@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 //
-// Plan theo-storage-sync — engine tests. This file grows across T0.2 (ports +
+// Plan loopstore-sync — engine tests. This file grows across T0.2 (ports +
 // path-safety + fs LocalPort), T2.1 (plan), T2.2 (apply/idempotency/conflict).
 
 import { promises as fs } from 'fs';
@@ -73,15 +73,15 @@ describe('storage-sync T0.2 — ports + path safety', () => {
     expect(resolveWithinRoot(root, 'a/../../x')).toBeNull();
   });
 
-  it('createFsLocalPort.walk excludes the .theo control dir (EC-2)', async () => {
+  it('createFsLocalPort.walk excludes the .loopscale control dir (EC-2)', async () => {
     const dir = await tmp();
     await fs.writeFile(path.join(dir, 'keep.txt'), 'k');
-    await fs.mkdir(path.join(dir, '.theo'), { recursive: true });
-    await fs.writeFile(path.join(dir, '.theo', '.sync-manifest.json'), '{}');
+    await fs.mkdir(path.join(dir, '.loopscale'), { recursive: true });
+    await fs.writeFile(path.join(dir, '.loopscale', '.sync-manifest.json'), '{}');
     const local: LocalPort = createFsLocalPort(dir);
     const walked = await local.walk();
     expect(walked).toContain('keep.txt');
-    expect(walked.some((p) => p.startsWith('.theo/'))).toBe(false);
+    expect(walked.some((p) => p.startsWith('.loopscale/'))).toBe(false);
   });
 
   it('createFsLocalPort.walk does not follow symlinks (EC-3)', async () => {
@@ -226,7 +226,7 @@ describe('storage-sync T2.2 — apply / idempotency / conflict', () => {
     // Winner (remote 'C') is on disk; the local loser 'B' is backed up.
     expect((await fs.readFile(path.join(dir, 'x.txt'))).toString()).toBe('C');
     const entries = await fs.readdir(dir);
-    const backup = entries.find((e) => e.startsWith('x.txt.theo-backup-'));
+    const backup = entries.find((e) => e.startsWith('x.txt.loopscale-backup-'));
     expect(backup).toBeDefined();
     expect((await fs.readFile(path.join(dir, backup!))).toString()).toBe('B');
   });
@@ -262,14 +262,14 @@ describe('storage-sync T2.2 — apply / idempotency / conflict', () => {
     // desestruturacao — o lint o acusava, e nao era assercao faltando.
     const { engine, dir } = await engineFor({ 'x.txt': 'C' }, { 'x.txt': 'B' });
     await writeManifestFor(dir, { 'x.txt': hashBytes(Buffer.from('A')) });
-    await engine.run('backup'); // creates x.txt.theo-backup-<...> locally
+    await engine.run('backup'); // creates x.txt.loopscale-backup-<...> locally
     const local2 = createFsLocalPort(dir);
     const walked = await local2.walk();
-    expect(walked.some((p) => p.includes('.theo-backup-'))).toBe(false); // excluded from walk
+    expect(walked.some((p) => p.includes('.loopscale-backup-'))).toBe(false); // excluded from walk
     // A subsequent sync must not upload the backup to the remote prefix.
     const remote2 = new FakeRemote(new Map([['x.txt', { buf: Buffer.from('C'), contentType: 'text/plain' }]]));
     await new SyncEngine(remote2, local2, dir, '').run();
-    expect([...remote2.store.keys()].some((k) => k.includes('.theo-backup-'))).toBe(false);
+    expect([...remote2.store.keys()].some((k) => k.includes('.loopscale-backup-'))).toBe(false);
   });
 
   it('a remote deletion removes the local file and the manifest key', async () => {
@@ -290,13 +290,13 @@ describe('storage-sync T2.2 — apply / idempotency / conflict', () => {
     expect(remote.store.get('x.txt')!.buf.toString()).toBe('C');
   });
 
-  it('.theo control dir never syncs and stays idempotent (EC-2)', async () => {
+  it('.loopscale control dir never syncs and stays idempotent (EC-2)', async () => {
     const { engine, dir } = await engineFor({ 'k.txt': 'K' }, {});
     await engine.run();
     // The manifest itself must not have been pushed to the remote.
     const local2 = createFsLocalPort(dir);
     const walked = await local2.walk();
-    expect(walked.some((p) => p.startsWith('.theo/'))).toBe(false);
+    expect(walked.some((p) => p.startsWith('.loopscale/'))).toBe(false);
     const remote2 = new FakeRemote(new Map([['k.txt', { buf: Buffer.from('K'), contentType: 'text/plain' }]]));
     const second = await new SyncEngine(remote2, local2, dir, '').run();
     expect(second.applied).toEqual([]);
@@ -360,9 +360,9 @@ describe('storage-sync T2.2 — apply / idempotency / conflict', () => {
   });
 });
 
-describe('storage-sync — .theoignore predicate (injected, gitignore-style)', () => {
+describe('storage-sync — .loopscaleignore predicate (injected, gitignore-style)', () => {
   // The engine is pure over the ports (ADR D3): the ignore matcher is injected as
-  // a predicate, so the fs read of .theoignore happens at the composition root and
+  // a predicate, so the fs read of .loopscaleignore happens at the composition root and
   // the engine stays testable with an in-memory function.
   it('never pushes a locally ignored path (knowledge-base/)', async () => {
     const dir = await tmp();

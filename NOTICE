@@ -1,8 +1,8 @@
-Theo CLI — the deploy CLI for TheoCloud
-Copyright 2025-2026 usetheo.dev
+LoopScale CLI — the deploy CLI for LoopConsole
+Copyright 2025-2026 getloopscale.com
 
-This product includes software developed at usetheo.dev
-(https://usetheo.dev).
+This product includes software developed at getloopscale.com
+(https://getloopscale.com).
 
 Licensed under the Apache License, Version 2.0 (the "License").
 You may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ each under its own license:
   * ignore (MIT)
   * OpenTelemetry JS (Apache-2.0)
 
-Trademarks: "Theo", "TheoCloud", "TheoKit", "@usetheo/cli", and the Theo
-logo are trademarks of usetheo.dev. This Apache-2.0 license does not grant
-permission to use these trademarks. See https://usetheo.dev for trademark
+Trademarks: "LoopScale", "LoopConsole", "LoopZero", "@getloopscale/loop-cli", and the LoopScale
+logo are trademarks of getloopscale.com. This Apache-2.0 license does not grant
+permission to use these trademarks. See https://getloopscale.com for trademark
 policy.

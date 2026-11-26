@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 //
-// Plan theo-storage-sync — .theoignore support. A gitignore-style ignore file at
+// Plan loopstore-sync — .loopscaleignore support. A gitignore-style ignore file at
 // the sync root scopes what `loopscale storage sync` walks/pushes/pulls, so a large
 // or sensitive dir (e.g. knowledge-base/, *.local.*) is excluded declaratively
 // instead of via repeated --exclude globs. Reuses the `ignore` package (Rule 9).
@@ -26,7 +26,7 @@ describe('loadSyncIgnore — gitignore-style matcher for the sync root', () => {
 
   it('excludes a directory pattern (knowledge-base/) and everything under it', async () => {
     const dir = await tmp();
-    await fs.writeFile(path.join(dir, '.theoignore'), 'knowledge-base/\n');
+    await fs.writeFile(path.join(dir, '.loopscaleignore'), 'knowledge-base/\n');
     const ig = await loadSyncIgnore(dir);
     // The engine only ever queries FILE paths (walkDir pushes e.isFile() only),
     // so matching every path UNDER the dir is exactly what's needed. `ignore`
@@ -40,7 +40,7 @@ describe('loadSyncIgnore — gitignore-style matcher for the sync root', () => {
   it('supports glob + anchored + negation like git', async () => {
     const dir = await tmp();
     await fs.writeFile(
-      path.join(dir, '.theoignore'),
+      path.join(dir, '.loopscaleignore'),
       ['*.local.json', 'agents/**', '!agents/keep.md', '/only-root.txt'].join('\n'),
     );
     const ig = await loadSyncIgnore(dir);
@@ -52,12 +52,12 @@ describe('loadSyncIgnore — gitignore-style matcher for the sync root', () => {
     expect(ig('settings.json')).toBe(false);
   });
 
-  it('merges .theoignore and .gitignore (both honored)', async () => {
+  it('merges .loopscaleignore and .gitignore (both honored)', async () => {
     const dir = await tmp();
-    await fs.writeFile(path.join(dir, '.theoignore'), 'from-theoignore/\n');
+    await fs.writeFile(path.join(dir, '.loopscaleignore'), 'from-loopscaleignore/\n');
     await fs.writeFile(path.join(dir, '.gitignore'), 'from-gitignore/\n');
     const ig = await loadSyncIgnore(dir);
-    expect(ig('from-theoignore/a')).toBe(true);
+    expect(ig('from-loopscaleignore/a')).toBe(true);
     expect(ig('from-gitignore/b')).toBe(true);
   });
 });

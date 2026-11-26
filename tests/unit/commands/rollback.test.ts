@@ -4,8 +4,8 @@ import { ApiError } from '../../../src/api/client';
 function createMockDeps(overrides: Partial<RollbackDeps> = {}): RollbackDeps {
   return {
     getToken: jest.fn().mockReturnValue('test-token'),
-    findTheoYaml: jest.fn().mockReturnValue({
-      path: '/project/theo.yaml',
+    findLoopScaleYaml: jest.fn().mockReturnValue({
+      path: '/project/loopscale.yaml',
       content: { project: 'my-app', apps: { web: { path: '.', framework: 'express', port: 3000 } } },
     }),
     rollback: jest.fn().mockResolvedValue({
@@ -13,7 +13,7 @@ function createMockDeps(overrides: Partial<RollbackDeps> = {}): RollbackDeps {
       rolled_back_release: 'rel-def456',
       reactivated_release: 'rel-abc123',
       environment: 'production',
-      url: 'https://my-app-production.dev.usetheo.dev',
+      url: 'https://my-app-production.dev.getloopscale.com',
     }),
     writeTo: jest.fn(),
     writeError: jest.fn(),
@@ -34,7 +34,7 @@ describe('RollbackCommand', () => {
       const output = (deps.writeTo as jest.Mock).mock.calls.map((c: string[]) => c[0]).join('\n');
       expect(output).toContain('rel-def456');
       expect(output).toContain('rel-abc123');
-      expect(output).toContain('https://my-app-production.dev.usetheo.dev');
+      expect(output).toContain('https://my-app-production.dev.getloopscale.com');
     });
 
     it('should pass --to release ID to API', async () => {
@@ -93,7 +93,7 @@ describe('RollbackCommand', () => {
       expect(parsed.rolled_back_release).toBe('rel-def456');
       expect(parsed.active_release).toBe('rel-abc123');
       expect(parsed.environment).toBe('production');
-      expect(parsed.url).toBe('https://my-app-production.dev.usetheo.dev');
+      expect(parsed.url).toBe('https://my-app-production.dev.getloopscale.com');
       expect(typeof parsed.duration_seconds).toBe('number');
     });
   });
@@ -112,8 +112,8 @@ describe('RollbackCommand', () => {
   });
 
   describe('missing config', () => {
-    it('should return exit code 1 when theo.yaml is missing', async () => {
-      const deps = createMockDeps({ findTheoYaml: jest.fn().mockReturnValue(null) });
+    it('should return exit code 1 when loopscale.yaml is missing', async () => {
+      const deps = createMockDeps({ findLoopScaleYaml: jest.fn().mockReturnValue(null) });
       const cmd = new RollbackCommand(deps);
 
       const exitCode = await cmd.execute({});
@@ -332,7 +332,7 @@ describe('RollbackCommand, when the API accepts the rollback with 202', () => {
     expect(payload).toMatchObject({ status: 'completed', active_release: 'rel-old', rolled_back_release: 'rel-new' });
   });
 
-  // The API records each rollback (getloopscale/loopzero#128) and names the
+  // The API records each rollback (getloopscale/loop-runtime#128) and names the
   // record in the 202. The id is what finds it later in the console.
   describe('with the id of the rollback record', () => {
     const recorded = { ...accepted, rollback_id: 'rb-0011223344556677' };

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 //
 // T2.6 of plan 2026-05-26-maturity-3-62-to-4-0-roadmap:
 // Wire the `loopscale doctor` command (commands/doctor.ts, M01 audit gap).
@@ -12,7 +12,7 @@ import { readFileSync, existsSync } from 'fs';
 
 import { ApiClient, ApiError } from '../api/client';
 import { DoctorCommand } from '../commands/doctor';
-import { DESCRIPTOR_FILE_NAMES, findTheoYaml } from '../adapters/theo-yaml';
+import { DESCRIPTOR_FILE_NAMES, findLoopScaleYaml } from '../adapters/loopscale-yaml';
 import { CommandDeps } from './types';
 
 function getCliVersion(): string {
@@ -74,7 +74,7 @@ export function registerDiagnosticsCommands(deps: CommandDeps): void {
           const cwd = process.cwd();
           const gitRoot = findRepoRoot(cwd);
           try {
-            const result = findTheoYaml(cwd, gitRoot);
+            const result = findLoopScaleYaml(cwd, gitRoot);
             if (!result) {
               const present = DESCRIPTOR_FILE_NAMES.find((name) => existsSync(resolve(cwd, name)));
               if (present) {

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import * as fs from 'fs';
 import { DeployCommand, DeployDeps } from '../../../src/commands/deploy';
@@ -14,8 +14,8 @@ function createMockDeps(overrides: Partial<DeployDeps> = {}): DeployDeps {
   return {
     getToken: jest.fn().mockReturnValue('ghp_test123'),
     hasUncommittedChanges: jest.fn().mockReturnValue(false),
-    findTheoYaml: jest.fn().mockReturnValue({
-      path: '/project/theo.yaml',
+    findLoopScaleYaml: jest.fn().mockReturnValue({
+      path: '/project/loopscale.yaml',
       content: {
         project: 'my-saas',
         apps: {
@@ -25,7 +25,7 @@ function createMockDeps(overrides: Partial<DeployDeps> = {}): DeployDeps {
       },
     }),
     // Plan v1.1 T1.2 — services.json discovery for upload payload.
-    findServicesJson: jest.fn().mockReturnValue({ path: '/project/.theo/services.json' }),
+    findServicesJson: jest.fn().mockReturnValue({ path: '/project/.loopscale/services.json' }),
     hasGitRepo: jest.fn().mockReturnValue(true),
     hasLockfile: jest.fn().mockReturnValue(true),
     getSourceIdentifier: jest.fn().mockReturnValue('abc1234'),
@@ -72,7 +72,7 @@ describe('DeployCommand', () => {
       const exitCode = await cmd.execute({ env: 'production', wait: true });
 
       expect(deps.getToken).toHaveBeenCalled();
-      expect(deps.findTheoYaml).toHaveBeenCalled();
+      expect(deps.findLoopScaleYaml).toHaveBeenCalled();
       expect(deps.hasGitRepo).toHaveBeenCalled();
       expect(deps.getSourceIdentifier).toHaveBeenCalled();
       expect(deps.createSourceBundle).toHaveBeenCalled();
@@ -149,8 +149,8 @@ describe('DeployCommand', () => {
 
     it('should display worker apps without URL as deployed', async () => {
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue({
-          path: '/project/theo.yaml',
+        findLoopScaleYaml: jest.fn().mockReturnValue({
+          path: '/project/loopscale.yaml',
           content: {
             project: 'my-saas',
             apps: {
@@ -208,8 +208,8 @@ describe('DeployCommand', () => {
             return { close: jest.fn() };
           }
         ),
-        findTheoYaml: jest.fn().mockReturnValue({
-          path: '/project/theo.yaml',
+        findLoopScaleYaml: jest.fn().mockReturnValue({
+          path: '/project/loopscale.yaml',
           content: {
             project: 'my-saas',
             apps: { api: { path: '.', framework: 'express', port: 3000 } },
@@ -267,7 +267,7 @@ describe('DeployCommand', () => {
 
       await cmd.execute({});
 
-      expect(deps.findTheoYaml).not.toHaveBeenCalled();
+      expect(deps.findLoopScaleYaml).not.toHaveBeenCalled();
       expect(deps.hasGitRepo).not.toHaveBeenCalled();
       expect(deps.createSourceBundle).not.toHaveBeenCalled();
     });
@@ -284,7 +284,7 @@ describe('DeployCommand', () => {
       const errOutput = (deps.writeError as jest.Mock).mock.calls.map((c: string[]) => c[0]).join(' ');
       expect(errOutput).toContain('Not authenticated');
       expect(errOutput).toContain('loopscale login');
-      expect(deps.findTheoYaml).not.toHaveBeenCalled();
+      expect(deps.findLoopScaleYaml).not.toHaveBeenCalled();
       expect(deps.hasGitRepo).not.toHaveBeenCalled();
     });
 
@@ -297,7 +297,7 @@ describe('DeployCommand', () => {
       const exitCode = await cmd.execute({});
 
       expect(exitCode).toBe(4);
-      expect(deps.findTheoYaml).not.toHaveBeenCalled();
+      expect(deps.findLoopScaleYaml).not.toHaveBeenCalled();
     });
   });
 
@@ -333,8 +333,8 @@ describe('DeployCommand', () => {
   describe('single app failure', () => {
     it('should exit 2 (NOT 5) when single app fails (DA-3)', async () => {
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue({
-          path: '/project/theo.yaml',
+        findLoopScaleYaml: jest.fn().mockReturnValue({
+          path: '/project/loopscale.yaml',
           content: {
             project: 'my-saas',
             apps: { api: { path: '.', framework: 'express', port: 3000 } },
@@ -488,10 +488,10 @@ describe('DeployCommand', () => {
     });
   });
 
-  describe('no theo.yaml', () => {
-    it('should exit 1 with message when no theo.yaml found', async () => {
+  describe('no loopscale.yaml', () => {
+    it('should exit 1 with message when no loopscale.yaml found', async () => {
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue(null),
+        findLoopScaleYaml: jest.fn().mockReturnValue(null),
       });
       const cmd = new DeployCommand(deps);
 
@@ -522,7 +522,7 @@ describe('DeployCommand', () => {
       const cmd2 = new DeployCommand(deps2);
       await cmd2.execute({});
 
-      const deps3 = createMockDeps({ findTheoYaml: jest.fn().mockReturnValue(null) });
+      const deps3 = createMockDeps({ findLoopScaleYaml: jest.fn().mockReturnValue(null) });
       const cmd3 = new DeployCommand(deps3);
       await cmd3.execute({});
 
@@ -629,11 +629,11 @@ describe('DeployCommand', () => {
     });
   });
 
-  describe('0 apps in theo.yaml', () => {
-    it('should exit 1 when theo.yaml has no apps', async () => {
+  describe('0 apps in loopscale.yaml', () => {
+    it('should exit 1 when loopscale.yaml has no apps', async () => {
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue({
-          path: '/project/theo.yaml',
+        findLoopScaleYaml: jest.fn().mockReturnValue({
+          path: '/project/loopscale.yaml',
           content: { project: 'my-saas', apps: {} },
         }),
       });
@@ -662,7 +662,7 @@ describe('DeployCommand', () => {
       expect(deps.uploadSource).not.toHaveBeenCalled();
     });
 
-    it('should accept valid --app names that exist in theo.yaml', async () => {
+    it('should accept valid --app names that exist in loopscale.yaml', async () => {
       const deps = createMockDeps();
       const cmd = new DeployCommand(deps);
 
@@ -682,21 +682,21 @@ describe('DeployCommand', () => {
     });
   });
 
-  describe('theo.yaml search walks up to git root', () => {
-    it('should search from cwd up to git root for theo.yaml', async () => {
-      const findTheoYaml = jest.fn().mockReturnValue({
-        path: '/project/theo.yaml',
+  describe('loopscale.yaml search walks up to git root', () => {
+    it('should search from cwd up to git root for loopscale.yaml', async () => {
+      const findLoopScaleYaml = jest.fn().mockReturnValue({
+        path: '/project/loopscale.yaml',
         content: {
           project: 'my-saas',
           apps: { api: { path: '.', framework: 'express', port: 3000 } },
         },
       });
-      const deps = createMockDeps({ findTheoYaml });
+      const deps = createMockDeps({ findLoopScaleYaml });
       const cmd = new DeployCommand(deps);
 
       await cmd.execute({});
 
-      expect(findTheoYaml).toHaveBeenCalled();
+      expect(findLoopScaleYaml).toHaveBeenCalled();
     });
   });
 
@@ -747,8 +747,8 @@ describe('DeployCommand', () => {
   describe('deploy failure from SSE stream', () => {
     it('should exit 3 when deploy status indicates deploy failure', async () => {
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue({
-          path: '/project/theo.yaml',
+        findLoopScaleYaml: jest.fn().mockReturnValue({
+          path: '/project/loopscale.yaml',
           content: {
             project: 'my-saas',
             apps: { api: { path: '.', framework: 'express', port: 3000 } },
@@ -796,7 +796,7 @@ describe('DeployCommand', () => {
     it('should prefix server-side upload errors with "Upload rejected:" in human mode', async () => {
       const deps = createMockDeps({
         uploadSource: jest.fn().mockRejectedValue(
-          new ApiError('theo.yaml is required', 1, 422, 'VALIDATION_FAILED')
+          new ApiError('loopscale.yaml is required', 1, 422, 'VALIDATION_FAILED')
         ),
       });
       const cmd = new DeployCommand(deps);
@@ -806,13 +806,13 @@ describe('DeployCommand', () => {
       expect(exitCode).toBe(1);
       const errOutput = (deps.writeError as jest.Mock).mock.calls.map((c: string[]) => c[0]).join(' ');
       expect(errOutput).toContain('Upload rejected:');
-      expect(errOutput).toContain('theo.yaml is required');
+      expect(errOutput).toContain('loopscale.yaml is required');
     });
 
     it('should prefix server-side upload errors with "Upload rejected:" in JSON mode', async () => {
       const deps = createMockDeps({
         uploadSource: jest.fn().mockRejectedValue(
-          new ApiError('theo.yaml is required', 1, 422, 'VALIDATION_FAILED')
+          new ApiError('loopscale.yaml is required', 1, 422, 'VALIDATION_FAILED')
         ),
       });
       const cmd = new DeployCommand(deps);
@@ -823,7 +823,7 @@ describe('DeployCommand', () => {
       const output = (deps.writeTo as jest.Mock).mock.calls.map((c: string[]) => c[0]).join('');
       const parsed = JSON.parse(output);
       expect(parsed.error).toContain('Upload rejected:');
-      expect(parsed.error).toContain('theo.yaml is required');
+      expect(parsed.error).toContain('loopscale.yaml is required');
     });
   });
 
@@ -1003,8 +1003,8 @@ describe('DeployCommand', () => {
   describe('secrets validation pre-deploy', () => {
     it('should continue deploy when all declared secrets are configured', async () => {
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue({
-          path: '/project/theo.yaml',
+        findLoopScaleYaml: jest.fn().mockReturnValue({
+          path: '/project/loopscale.yaml',
           content: {
             project: 'my-saas',
             apps: {
@@ -1025,8 +1025,8 @@ describe('DeployCommand', () => {
 
     it('should exit 1 with list of missing secrets when secrets are not configured', async () => {
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue({
-          path: '/project/theo.yaml',
+        findLoopScaleYaml: jest.fn().mockReturnValue({
+          path: '/project/loopscale.yaml',
           content: {
             project: 'my-saas',
             apps: {
@@ -1050,10 +1050,10 @@ describe('DeployCommand', () => {
       expect(deps.uploadSource).not.toHaveBeenCalled();
     });
 
-    it('should continue deploy when no secrets are declared in theo.yaml', async () => {
+    it('should continue deploy when no secrets are declared in loopscale.yaml', async () => {
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue({
-          path: '/project/theo.yaml',
+        findLoopScaleYaml: jest.fn().mockReturnValue({
+          path: '/project/loopscale.yaml',
           content: {
             project: 'my-saas',
             apps: {
@@ -1074,8 +1074,8 @@ describe('DeployCommand', () => {
 
     it('should NOT suggest loopscale secret set in error message (DA-8)', async () => {
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue({
-          path: '/project/theo.yaml',
+        findLoopScaleYaml: jest.fn().mockReturnValue({
+          path: '/project/loopscale.yaml',
           content: {
             project: 'my-saas',
             apps: {
@@ -1096,8 +1096,8 @@ describe('DeployCommand', () => {
 
     it('should include documentation URL in missing secrets message', async () => {
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue({
-          path: '/project/theo.yaml',
+        findLoopScaleYaml: jest.fn().mockReturnValue({
+          path: '/project/loopscale.yaml',
           content: {
             project: 'my-saas',
             apps: {
@@ -1117,8 +1117,8 @@ describe('DeployCommand', () => {
 
     it('should aggregate secrets from all apps and deduplicate', async () => {
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue({
-          path: '/project/theo.yaml',
+        findLoopScaleYaml: jest.fn().mockReturnValue({
+          path: '/project/loopscale.yaml',
           content: {
             project: 'my-saas',
             apps: {
@@ -1141,8 +1141,8 @@ describe('DeployCommand', () => {
 
     it('should pass project and environment to getSecrets', async () => {
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue({
-          path: '/project/theo.yaml',
+        findLoopScaleYaml: jest.fn().mockReturnValue({
+          path: '/project/loopscale.yaml',
           content: {
             project: 'my-saas',
             apps: {
@@ -1161,8 +1161,8 @@ describe('DeployCommand', () => {
 
     it('should only check secrets for selected apps when --app is used (F-02)', async () => {
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue({
-          path: '/project/theo.yaml',
+        findLoopScaleYaml: jest.fn().mockReturnValue({
+          path: '/project/loopscale.yaml',
           content: {
             project: 'my-saas',
             apps: {
@@ -1186,8 +1186,8 @@ describe('DeployCommand', () => {
 
     it('should check only selected app secrets when --app selects app with secrets (F-02)', async () => {
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue({
-          path: '/project/theo.yaml',
+        findLoopScaleYaml: jest.fn().mockReturnValue({
+          path: '/project/loopscale.yaml',
           content: {
             project: 'my-saas',
             apps: {
@@ -1211,13 +1211,13 @@ describe('DeployCommand', () => {
     });
   });
 
-  describe('malformed theo.yaml (F-05)', () => {
-    it('should exit 1 with parse error when theo.yaml is malformed', async () => {
+  describe('malformed loopscale.yaml (F-05)', () => {
+    it('should exit 1 with parse error when loopscale.yaml is malformed', async () => {
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue({
-          path: '/project/theo.yaml',
+        findLoopScaleYaml: jest.fn().mockReturnValue({
+          path: '/project/loopscale.yaml',
           content: { project: '', apps: {} },
-          fileName: 'theo.yaml',
+          fileName: 'loopscale.yaml',
           parseError: 'unexpected token at line 1',
         }),
       });
@@ -1227,16 +1227,16 @@ describe('DeployCommand', () => {
 
       expect(exitCode).toBe(1);
       const errOutput = (deps.writeError as jest.Mock).mock.calls.map((c: string[]) => c[0]).join(' ');
-      expect(errOutput).toContain('Invalid theo.yaml');
+      expect(errOutput).toContain('Invalid loopscale.yaml');
       expect(errOutput).toContain('unexpected token');
     });
 
     it('should not say "No apps defined" when YAML is malformed', async () => {
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue({
-          path: '/project/theo.yaml',
+        findLoopScaleYaml: jest.fn().mockReturnValue({
+          path: '/project/loopscale.yaml',
           content: { project: '', apps: {} },
-          fileName: 'theo.yaml',
+          fileName: 'loopscale.yaml',
           parseError: 'invalid syntax',
         }),
       });
@@ -1246,7 +1246,7 @@ describe('DeployCommand', () => {
 
       const errOutput = (deps.writeError as jest.Mock).mock.calls.map((c: string[]) => c[0]).join(' ');
       expect(errOutput).not.toContain('No apps defined');
-      expect(errOutput).toContain('Invalid theo.yaml');
+      expect(errOutput).toContain('Invalid loopscale.yaml');
     });
   });
 
@@ -1305,11 +1305,11 @@ describe('DeployCommand', () => {
     });
   });
 
-  describe('theo.yaml version field', () => {
+  describe('loopscale.yaml version field', () => {
     it('should not warn about format regardless of version field presence', async () => {
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue({
-          path: '/project/theo.yaml',
+        findLoopScaleYaml: jest.fn().mockReturnValue({
+          path: '/project/loopscale.yaml',
           content: {
             project: 'my-saas',
             apps: {
@@ -1368,9 +1368,9 @@ describe('DeployCommand', () => {
       expect(exitCode).toBe(0);
     });
 
-    it('should output JSON when --json and no theo.yaml', async () => {
+    it('should output JSON when --json and no loopscale.yaml', async () => {
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue(null),
+        findLoopScaleYaml: jest.fn().mockReturnValue(null),
       });
       const cmd = new DeployCommand(deps);
 
@@ -1383,10 +1383,10 @@ describe('DeployCommand', () => {
       expect(deps.writeError).not.toHaveBeenCalled();
     });
 
-    it('should output JSON when --json and no apps in theo.yaml', async () => {
+    it('should output JSON when --json and no apps in loopscale.yaml', async () => {
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue({
-          path: '/project/theo.yaml',
+        findLoopScaleYaml: jest.fn().mockReturnValue({
+          path: '/project/loopscale.yaml',
           content: { project: 'my-saas', apps: {} },
         }),
       });
@@ -1416,8 +1416,8 @@ describe('DeployCommand', () => {
 
     it('should output JSON when --json and missing secrets', async () => {
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue({
-          path: '/project/theo.yaml',
+        findLoopScaleYaml: jest.fn().mockReturnValue({
+          path: '/project/loopscale.yaml',
           content: {
             project: 'my-saas',
             apps: {
@@ -1510,8 +1510,8 @@ describe('DeployCommand', () => {
             return { close: jest.fn() };
           }
         ),
-        findTheoYaml: jest.fn().mockReturnValue({
-          path: '/project/theo.yaml',
+        findLoopScaleYaml: jest.fn().mockReturnValue({
+          path: '/project/loopscale.yaml',
           content: {
             project: 'my-saas',
             apps: { api: { path: 'apps/api', framework: 'express', port: 3000 } },
@@ -1548,8 +1548,8 @@ describe('DeployCommand', () => {
             return { close: jest.fn() };
           }
         ),
-        findTheoYaml: jest.fn().mockReturnValue({
-          path: '/project/theo.yaml',
+        findLoopScaleYaml: jest.fn().mockReturnValue({
+          path: '/project/loopscale.yaml',
           content: {
             project: 'my-saas',
             apps: { api: { path: 'apps/api', framework: 'express', port: 3000 } },
@@ -1563,7 +1563,7 @@ describe('DeployCommand', () => {
       expect(exitCode).toBe(0);
       const output = (deps.writeTo as jest.Mock).mock.calls.map((c: string[]) => c[0]).join('\n');
       // O intento deste teste (F-04) continua: o numero exibido tem de vir do SERVIDOR, nao do
-      // relogio de parede. O que mudou foi a FORMA, em `41fbae1` (fecho do theo-cloud#84): o total
+      // relogio de parede. O que mudou foi a FORMA, em `41fbae1` (fecho do loop-console#84): o total
       // passou a ser pos-build + build, com o build repetido entre parenteses, porque
       // `duration_seconds` mede so a fase pos-build e sozinho subestimava o custo em ate 7x.
       //
@@ -1601,8 +1601,8 @@ describe('DeployCommand', () => {
             return { close: jest.fn() };
           }
         ),
-        findTheoYaml: jest.fn().mockReturnValue({
-          path: '/project/theo.yaml',
+        findLoopScaleYaml: jest.fn().mockReturnValue({
+          path: '/project/loopscale.yaml',
           content: {
             project: 'my-saas',
             apps: { api: { path: 'apps/api', framework: 'express', port: 3000 } },
@@ -1642,8 +1642,8 @@ describe('DeployCommand', () => {
             return { close: jest.fn() };
           }
         ),
-        findTheoYaml: jest.fn().mockReturnValue({
-          path: '/project/theo.yaml',
+        findLoopScaleYaml: jest.fn().mockReturnValue({
+          path: '/project/loopscale.yaml',
           content: {
             project: 'my-saas',
             apps: {
@@ -1683,8 +1683,8 @@ describe('DeployCommand', () => {
             return { close: jest.fn() };
           }
         ),
-        findTheoYaml: jest.fn().mockReturnValue({
-          path: '/project/theo.yaml',
+        findLoopScaleYaml: jest.fn().mockReturnValue({
+          path: '/project/loopscale.yaml',
           content: {
             project: 'my-saas',
             apps: {
@@ -2256,13 +2256,13 @@ describe('DeployCommand', () => {
   });
 
   // B15 (CHG-2026-04-23-B15 / MEET-2026-04-23-059): scaling config must
-  // flow from theo.yaml through the submitBuild payload so the API can
+  // flow from loopscale.yaml through the submitBuild payload so the API can
   // enforce plan caps and render Deployment/HPA correctly.
   describe('B15: scaling config forwarded to submitBuild payload', () => {
     it('forwards replicas: 3 onto the AppInput payload', async () => {
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue({
-          path: '/project/theo.yaml',
+        findLoopScaleYaml: jest.fn().mockReturnValue({
+          path: '/project/loopscale.yaml',
           content: {
             project: 'my-saas',
             apps: {
@@ -2285,8 +2285,8 @@ describe('DeployCommand', () => {
 
     it('forwards autoscaling config onto the AppInput payload', async () => {
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue({
-          path: '/project/theo.yaml',
+        findLoopScaleYaml: jest.fn().mockReturnValue({
+          path: '/project/loopscale.yaml',
           content: {
             project: 'my-saas',
             apps: {
@@ -2313,8 +2313,8 @@ describe('DeployCommand', () => {
       // Keeps the wire payload minimal and avoids forcing older APIs to
       // process a field they will ignore anyway.
       const deps = createMockDeps({
-        findTheoYaml: jest.fn().mockReturnValue({
-          path: '/project/theo.yaml',
+        findLoopScaleYaml: jest.fn().mockReturnValue({
+          path: '/project/loopscale.yaml',
           content: {
             project: 'my-saas',
             apps: {

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { execSync } from 'child_process';
 import * as fs from 'fs';
@@ -146,11 +146,11 @@ describe('computeContentHash', () => {
     expect(hashWith).toBe(hashWithout);
   });
 
-  it('should exclude theo.yaml from hash', () => {
+  it('should exclude loopscale.yaml from hash', () => {
     fs.writeFileSync(path.join(tmpDir, 'index.js'), 'code');
     const hashWithout = computeContentHash(tmpDir);
 
-    fs.writeFileSync(path.join(tmpDir, 'theo.yaml'), 'project: test');
+    fs.writeFileSync(path.join(tmpDir, 'loopscale.yaml'), 'project: test');
     const hashWith = computeContentHash(tmpDir);
 
     expect(hashWith).toBe(hashWithout);
@@ -163,12 +163,12 @@ describe('computeContentHash', () => {
     expect(hash).toBe('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855');
   });
 
-  it('should respect .theoignore patterns', () => {
+  it('should respect .loopscaleignore patterns', () => {
     fs.writeFileSync(path.join(tmpDir, 'app.js'), 'code');
     fs.writeFileSync(path.join(tmpDir, 'data.csv'), 'big data');
     const hashWithBoth = computeContentHash(tmpDir);
 
-    fs.writeFileSync(path.join(tmpDir, '.theoignore'), '*.csv');
+    fs.writeFileSync(path.join(tmpDir, '.loopscaleignore'), '*.csv');
     const hashIgnored = computeContentHash(tmpDir);
 
     expect(hashIgnored).not.toBe(hashWithBoth);

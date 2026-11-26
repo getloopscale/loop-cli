@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 // AuthRefreshCommand tests — closes F-01 + F-03 from /dogfood full
 // report (2026-05-06). Validates contract: missing refresh_token →

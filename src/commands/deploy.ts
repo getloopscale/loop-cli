@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { DeployRenderer, DeployResult } from '../output/deploy-renderer';
 import {
@@ -107,7 +107,7 @@ export class DeployCommand {
   }
 
   /**
-   * Phase 1: Validate auth, theo.yaml, environment, app selection, and secrets.
+   * Phase 1: Validate auth, loopscale.yaml, environment, app selection, and secrets.
    * Returns a PrerequisiteResult on success or an exit code on failure.
    */
   private async validatePrerequisites(
@@ -119,8 +119,8 @@ export class DeployCommand {
       return exitWithError(this.deps, opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
-    // 3. Find theo.yaml
-    const yamlResult = this.deps.findTheoYaml();
+    // 3. Find loopscale.yaml
+    const yamlResult = this.deps.findLoopScaleYaml();
     if (!yamlResult) {
       return exitWithError(this.deps, opts, 'No loopscale.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
     }
@@ -132,7 +132,7 @@ export class DeployCommand {
 
     const { content: config } = yamlResult;
 
-    // 4. Validate theo.yaml — run full validation BEFORE upload (instant feedback).
+    // 4. Validate loopscale.yaml — run full validation BEFORE upload (instant feedback).
     const projectRoot = path.dirname(yamlResult.path);
     const skipFs = !fs.existsSync(projectRoot);
     const { errors: validationErrors, warnings: validationWarnings } = validateConfig(config, projectRoot, { skipFilesystemChecks: skipFs });
@@ -180,7 +180,7 @@ export class DeployCommand {
       return secretsError;
     }
 
-    // Plan v1.1 T1.2 — discover `.theo/services.json` for the upload payload.
+    // Plan v1.1 T1.2 — discover `.loopscale/services.json` for the upload payload.
     // Pre-v1.1 the code passed `yamlResult.path` here, so the adapter was
     // shipping YAML bytes inside the `services_json` form field — Plan B v3.1
     // cutover gap. T3.1 wires auto-build into the null branch; for now we

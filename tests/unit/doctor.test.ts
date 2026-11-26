@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { describe, it, expect, jest } from '@jest/globals';
 import { DoctorCommand, DoctorDeps } from '../../src/commands/doctor';
@@ -77,7 +77,7 @@ describe('DoctorCommand', () => {
     });
   });
 
-  describe('no theo.yaml in cwd', () => {
+  describe('no loopscale.yaml in cwd', () => {
     it('warns but does not fail', async () => {
       const cmd = new DoctorCommand(makeDeps({
         readProjectConfig: () => ({ exists: false, valid: false }),
@@ -97,7 +97,7 @@ describe('DoctorCommand', () => {
     });
   });
 
-  describe('invalid theo.yaml', () => {
+  describe('invalid loopscale.yaml', () => {
     it('reports project_config fail', async () => {
       const cmd = new DoctorCommand(makeDeps({
         readProjectConfig: () => ({ exists: true, valid: false, error: 'YAML syntax error' }),
