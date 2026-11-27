@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { TeamRemoveCommand, TeamRemoveDeps } from '../../../src/commands/team-remove';
 
@@ -46,7 +46,7 @@ describe('TeamRemoveCommand', () => {
       const cmd = new TeamRemoveCommand(makeDeps({
         removeMember: async () => { throw new ApiError('Owner protected', 1, 409, 'OWNER_PROTECTED'); },
       }));
-      const code = await cmd.execute('theowner');
+      const code = await cmd.execute('teamowner');
       expect(code).toBe(1);
     });
 
@@ -98,7 +98,7 @@ describe('TeamRemoveCommand', () => {
       const cmd = new TeamRemoveCommand(makeDeps({
         removeMember: async () => { throw new ApiError('Owner protected', 1, 409, 'OWNER_PROTECTED'); },
       }));
-      await cmd.execute('theowner');
+      await cmd.execute('teamowner');
       expect(errors[0]).toBe('Cannot remove the team owner.');
     });
 

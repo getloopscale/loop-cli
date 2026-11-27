@@ -9,8 +9,8 @@ import { ApiError } from '../../../src/api/client';
 function createMockDeps(overrides: Partial<PreviewDeps> = {}): PreviewDeps {
   return {
     getToken: jest.fn().mockReturnValue('test-token'),
-    findTheoYaml: jest.fn().mockReturnValue({
-      path: '/project/theo.yaml',
+    findLoopScaleYaml: jest.fn().mockReturnValue({
+      path: '/project/loopscale.yaml',
       content: { project: 'my-app', apps: { web: { path: '.', framework: 'express', port: 3000 } } },
     }),
     listPreviews: jest.fn().mockResolvedValue({
@@ -19,7 +19,7 @@ function createMockDeps(overrides: Partial<PreviewDeps> = {}): PreviewDeps {
           id: 'prev-abc123',
           pr_number: 42,
           branch: 'feat/new-feature',
-          url: 'https://pr-42-my-app.dev.usetheo.dev',
+          url: 'https://pr-42-my-app.dev.getloopscale.com',
           status: 'active',
           created_at: new Date(Date.now() - 3600000).toISOString(),
         },
@@ -27,7 +27,7 @@ function createMockDeps(overrides: Partial<PreviewDeps> = {}): PreviewDeps {
           id: 'prev-def456',
           pr_number: 43,
           branch: 'fix/bug',
-          url: 'https://pr-43-my-app.dev.usetheo.dev',
+          url: 'https://pr-43-my-app.dev.getloopscale.com',
           status: 'active',
           created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
         },
@@ -37,12 +37,12 @@ function createMockDeps(overrides: Partial<PreviewDeps> = {}): PreviewDeps {
       id: 'prev-abc123',
       pr_number: 42,
       branch: 'feat/new-feature',
-      url: 'https://pr-42-my-app.dev.usetheo.dev',
+      url: 'https://pr-42-my-app.dev.getloopscale.com',
       status: 'active',
       created_at: '2026-04-20T10:00:00Z',
       updated_at: '2026-04-20T10:05:00Z',
       apps: [
-        { name: 'web', status: 'running', url: 'https://pr-42-my-app.dev.usetheo.dev' },
+        { name: 'web', status: 'running', url: 'https://pr-42-my-app.dev.getloopscale.com' },
       ],
       ttl_expires_at: '2026-04-27T10:00:00Z',
     }),
@@ -114,8 +114,8 @@ describe('PreviewListCommand', () => {
   });
 
   describe('missing config', () => {
-    it('should return exit code 1 when theo.yaml is missing', async () => {
-      const deps = createMockDeps({ findTheoYaml: jest.fn().mockReturnValue(null) });
+    it('should return exit code 1 when loopscale.yaml is missing', async () => {
+      const deps = createMockDeps({ findLoopScaleYaml: jest.fn().mockReturnValue(null) });
       const cmd = new PreviewListCommand(deps);
 
       const exitCode = await cmd.execute({});

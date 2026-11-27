@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { normalizeApp, normalizeApps } from '../../../src/adapters/app-unit';
 
@@ -112,8 +112,8 @@ describe('normalizeApp', () => {
   });
 
   // Plan B v3.1 T-B.1 (2026-06-05) — framework-string heuristic removed post
-  // TheoKit-only cutover. Frontends now declare `type: "frontend"` explicitly
-  // em `.theo/services.json` (or em the AppSpec migration path). Test
+  // LoopZero-only cutover. Frontends now declare `type: "frontend"` explicitly
+  // em `.loopscale/services.json` (or em the AppSpec migration path). Test
   // updated to assert the explicit-type contract: absent `type` defaults
   // to "server"; explicit `type: "frontend"` still resolves to frontend.
   it('defaults to type: server when type and framework are unspecified', () => {

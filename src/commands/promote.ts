@@ -1,6 +1,6 @@
 import { ApiError } from '../api/client';
 import { classifyNetworkError } from '../output/error-message';
-import type { TheoYamlResult } from '../adapters/theo-yaml';
+import type { LoopScaleYamlResult } from '../adapters/loopscale-yaml';
 
 interface PromoteApiResponse {
   promotion_id: string;
@@ -14,14 +14,14 @@ interface PromoteApiResponse {
 
 export interface PromoteDeps {
   getToken: () => string | null;
-  findTheoYaml: () => TheoYamlResult | null;
+  findLoopScaleYaml: () => LoopScaleYamlResult | null;
   promote: (project: string, from: string, to: string) => Promise<PromoteApiResponse>;
   confirm?: (message: string) => Promise<boolean>;
   writeTo: (msg: string) => void;
   writeError: (msg: string) => void;
   isCI?: boolean;
   /**
-   * Red Team theo-cloud#161: true when stdin has no TTY (e.g., pipes /
+   * Red Team loop-console#161: true when stdin has no TTY (e.g., pipes /
    * redirects / harnesses). Without this, `loopscale promote --from X --to Y`
    * without `--yes` hung on the [y/N] prompt reading a stdin that would
    * never produce input, and the outer withTimeout wrapper eventually
@@ -54,14 +54,14 @@ export class PromoteCommand {
       return this.exitWithError(opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
-    // 2. Find theo.yaml
-    const yamlResult = this.deps.findTheoYaml();
+    // 2. Find loopscale.yaml
+    const yamlResult = this.deps.findLoopScaleYaml();
     if (!yamlResult) {
-      return this.exitWithError(opts, 'No theo.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
+      return this.exitWithError(opts, 'No loopscale.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
     }
 
     if (yamlResult.parseError) {
-      return this.exitWithError(opts, `Invalid theo.yaml: ${yamlResult.parseError}`, 1, 'INVALID_CONFIG');
+      return this.exitWithError(opts, `Invalid ${yamlResult.fileName}: ${yamlResult.parseError}`, 1, 'INVALID_CONFIG');
     }
 
     const project = yamlResult.content.project;

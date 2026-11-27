@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import * as fs from 'fs';
 import * as path from 'path';
-import type { TheoYaml } from './theo-yaml';
+import type { LoopScaleYaml } from './loopscale-yaml';
+import { SUPPORTED_RUNTIMES } from './descriptor-manifest';
 
 export interface ValidationError {
   field: string;
@@ -17,7 +18,7 @@ export interface ValidateConfigOptions {
 }
 
 /**
- * Validate a parsed TheoYaml config strictly.
+ * Validate a parsed LoopScaleYaml config strictly.
  * Returns an array of errors. Empty array = valid.
  *
  * Checks:
@@ -27,7 +28,7 @@ export interface ValidateConfigOptions {
  *   - Unknown fields (warning-level, returned in warnings)
  */
 export function validateConfig(
-  config: TheoYaml,
+  config: LoopScaleYaml,
   projectRoot: string,
   opts?: ValidateConfigOptions,
 ): { errors: ValidationError[]; warnings: string[] } {
@@ -118,6 +119,23 @@ export function validateConfig(
       // Custom (user-provided Dockerfile)
       'custom',
     ];
+    // An app that declares `runtime` is built by the API from `runtime` and `start`,
+    // as on a push: no framework and no Dockerfile are needed.
+    if (app.runtime !== undefined) {
+      if (!SUPPORTED_RUNTIMES.includes(app.runtime)) {
+        errors.push({
+          field: `apps.${name}.runtime`,
+          message: `App '${name}': unknown runtime '${app.runtime}'. Supported: ${SUPPORTED_RUNTIMES.join(', ')}.`,
+        });
+      }
+      if (!app.start) {
+        errors.push({
+          field: `apps.${name}.start`,
+          message: `App '${name}': runtime '${app.runtime}' requires a start command. Add \`start\` to loopscale.yaml.`,
+        });
+      }
+      continue;
+    }
     const fw = app.framework ?? 'custom';
     if (fw !== 'unknown' && !knownFrameworks.includes(fw)) {
       errors.push({
@@ -144,12 +162,12 @@ export function validateConfig(
       const appPathResolved = path.resolve(projectRoot, app.path);
       const dockerfilePath = path.resolve(appPathResolved, 'Dockerfile');
       if (fs.existsSync(dockerfilePath)) {
-        warnings.push(`App '${name}': Dockerfile found at ${app.path}/Dockerfile but build is '${app.build ?? 'buildpack'}'. Set 'build: dockerfile' in theo.yaml to use your custom Dockerfile, or remove it to use the auto-generated one.`);
+        warnings.push(`App '${name}': Dockerfile found at ${app.path}/Dockerfile but build is '${app.build ?? 'buildpack'}'. Set 'build: dockerfile' in loopscale.yaml to use your custom Dockerfile, or remove it to use the auto-generated one.`);
       }
     }
 
     // Frontend rendering validation — frontends are ALWAYS static (enforced in normalizeApp).
-    // This check catches theo.yaml files that explicitly set render: server on frontends.
+    // This check catches loopscale.yaml files that explicitly set render: server on frontends.
     if (appType === 'frontend' && app.render === 'server') {
       errors.push({
         field: `apps.${name}.render`,

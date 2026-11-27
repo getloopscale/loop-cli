@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { validateConfig } from '../../../src/adapters/validate-config';
-import { TheoYaml } from '../../../src/adapters/theo-yaml';
+import { LoopScaleYaml } from '../../../src/adapters/loopscale-yaml';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -15,7 +15,7 @@ describe('validateConfig', () => {
   it('should pass for valid config with existing paths', () => {
     const dir = tmpDir();
     fs.mkdirSync(path.join(dir, 'apps', 'api'), { recursive: true });
-    const config: TheoYaml = {
+    const config: LoopScaleYaml = {
       version: 1,
       project: 'test',
       apps: {
@@ -28,7 +28,7 @@ describe('validateConfig', () => {
 
   it('should error when path does not exist', () => {
     const dir = tmpDir();
-    const config: TheoYaml = {
+    const config: LoopScaleYaml = {
       project: 'test',
       apps: {
         api: { path: 'apps/nonexistent', framework: 'express', port: 3000 },
@@ -42,7 +42,7 @@ describe('validateConfig', () => {
   it('should error when server has no port', () => {
     const dir = tmpDir();
     fs.mkdirSync(path.join(dir, 'api'), { recursive: true });
-    const config: TheoYaml = {
+    const config: LoopScaleYaml = {
       project: 'test',
       apps: {
         api: { path: 'api', framework: 'express', type: 'server', port: null },
@@ -55,7 +55,7 @@ describe('validateConfig', () => {
   it('should error when worker has port', () => {
     const dir = tmpDir();
     fs.mkdirSync(path.join(dir, 'worker'), { recursive: true });
-    const config: TheoYaml = {
+    const config: LoopScaleYaml = {
       project: 'test',
       apps: {
         worker: { path: 'worker', framework: 'node', type: 'worker', port: 3000 },
@@ -68,7 +68,7 @@ describe('validateConfig', () => {
   it('should pass for frontend without port', () => {
     const dir = tmpDir();
     fs.mkdirSync(path.join(dir, 'web'), { recursive: true });
-    const config: TheoYaml = {
+    const config: LoopScaleYaml = {
       project: 'test',
       apps: {
         web: { path: 'web', framework: 'nextjs', type: 'frontend', port: null, render: 'static' },
@@ -81,7 +81,7 @@ describe('validateConfig', () => {
   it('should error when dockerfile build but Dockerfile missing', () => {
     const dir = tmpDir();
     fs.mkdirSync(path.join(dir, 'api'), { recursive: true });
-    const config: TheoYaml = {
+    const config: LoopScaleYaml = {
       project: 'test',
       apps: {
         api: { path: 'api', framework: 'custom', type: 'server', port: 3000, build: 'dockerfile' },
@@ -96,7 +96,7 @@ describe('validateConfig', () => {
     const apiDir = path.join(dir, 'api');
     fs.mkdirSync(apiDir, { recursive: true });
     fs.writeFileSync(path.join(apiDir, 'Dockerfile'), 'FROM alpine');
-    const config: TheoYaml = {
+    const config: LoopScaleYaml = {
       project: 'test',
       apps: {
         api: { path: 'api', framework: 'custom', type: 'server', port: 3000, build: 'dockerfile' },
@@ -109,7 +109,7 @@ describe('validateConfig', () => {
   it('should error for invalid env key', () => {
     const dir = tmpDir();
     fs.mkdirSync(path.join(dir, 'api'), { recursive: true });
-    const config: TheoYaml = {
+    const config: LoopScaleYaml = {
       project: 'test',
       apps: {
         api: {
@@ -135,7 +135,7 @@ describe('validateConfig', () => {
           foo: 'bar',  // genuinely unknown field
         },
       },
-    } as unknown as TheoYaml;
+    } as unknown as LoopScaleYaml;
     const { warnings } = validateConfig(config, dir);
     expect(warnings.some(w => w.includes("Unknown field 'apps.api.foo'"))).toBe(true);
   });
@@ -143,7 +143,7 @@ describe('validateConfig', () => {
   it('should error for unsupported version', () => {
     const dir = tmpDir();
     fs.mkdirSync(path.join(dir, 'api'), { recursive: true });
-    const config: TheoYaml = {
+    const config: LoopScaleYaml = {
       version: 99,
       project: 'test',
       apps: {
@@ -162,7 +162,7 @@ describe('validateConfig', () => {
     it('should ERROR on unknown framework (not just warning)', () => {
       const dir = tmpDir();
       fs.mkdirSync(path.join(dir, 'api'), { recursive: true });
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: { path: 'api', framework: 'cobol', type: 'server', port: 4567 },
@@ -177,7 +177,7 @@ describe('validateConfig', () => {
     it('should accept all known Node.js frameworks', () => {
       const nodeFrameworks = ['express', 'nestjs', 'fastify', 'nextjs', 'next', 'vite', 'remix', 'node', 'react', 'vue', 'svelte', 'astro', 'angular'];
       for (const fw of nodeFrameworks) {
-        const config: TheoYaml = {
+        const config: LoopScaleYaml = {
           project: 'test',
           apps: {
             app: { path: '.', framework: fw, type: 'server', port: 3000 },
@@ -191,7 +191,7 @@ describe('validateConfig', () => {
 
     it('should accept Go, Python, Ruby, Java, PHP, Rust frameworks', () => {
       for (const fw of ['go', 'gin', 'fastapi', 'django', 'python', 'sinatra', 'rails', 'ruby', 'spring', 'spring-boot', 'java', 'laravel', 'slim', 'php', 'axum', 'actix', 'rocket', 'rust']) {
-        const config: TheoYaml = {
+        const config: LoopScaleYaml = {
           project: 'test',
           apps: {
             app: { path: '.', framework: fw, type: 'server', port: 8080 },
@@ -208,7 +208,7 @@ describe('validateConfig', () => {
       const apiDir = path.join(dir, 'api');
       fs.mkdirSync(apiDir, { recursive: true });
       fs.writeFileSync(path.join(apiDir, 'Dockerfile'), 'FROM alpine');
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: { path: 'api', framework: 'custom', type: 'server', port: 8080 },
@@ -227,7 +227,7 @@ describe('validateConfig', () => {
     it('should accept frontend without explicit render (auto-inferred as static)', () => {
       const dir = tmpDir();
       fs.mkdirSync(path.join(dir, 'web'), { recursive: true });
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           web: { path: 'web', framework: 'vite', type: 'frontend', port: null },
@@ -242,7 +242,7 @@ describe('validateConfig', () => {
     it('should ERROR when frontend explicitly sets render: server', () => {
       const dir = tmpDir();
       fs.mkdirSync(path.join(dir, 'web'), { recursive: true });
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           web: { path: 'web', framework: 'react', type: 'frontend', port: null, render: 'server' },
@@ -255,7 +255,7 @@ describe('validateConfig', () => {
     it('should accept frontend with explicit render: static', () => {
       const dir = tmpDir();
       fs.mkdirSync(path.join(dir, 'web'), { recursive: true });
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           web: { path: 'web', framework: 'vite', type: 'frontend', port: null, render: 'static' },
@@ -273,7 +273,7 @@ describe('validateConfig', () => {
 
   describe('pod limit validation', () => {
     it('should allow 1 server + 1 worker + N frontends', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: { path: '.', framework: 'express', type: 'server', port: 3000 },
@@ -288,7 +288,7 @@ describe('validateConfig', () => {
     });
 
     it('should ERROR on 2 servers', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: { path: '.', framework: 'express', type: 'server', port: 3000 },
@@ -300,7 +300,7 @@ describe('validateConfig', () => {
     });
 
     it('should ERROR on 2 workers', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           w1: { path: '.', framework: 'node', type: 'worker', port: null },
@@ -312,7 +312,7 @@ describe('validateConfig', () => {
     });
 
     it('should NOT count frontends as pods', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: { path: '.', framework: 'express', type: 'server', port: 3000 },
@@ -336,7 +336,7 @@ describe('validateConfig', () => {
       const dir = tmpDir();
       fs.mkdirSync(path.join(dir, 'api'), { recursive: true });
       // No Dockerfile created
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: { path: 'api', framework: 'custom', type: 'server', port: 8080 },
@@ -351,7 +351,7 @@ describe('validateConfig', () => {
       const apiDir = path.join(dir, 'api');
       fs.mkdirSync(apiDir, { recursive: true });
       fs.writeFileSync(path.join(apiDir, 'Dockerfile'), 'FROM golang:1.25');
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: { path: 'api', framework: 'custom', type: 'server', port: 8080 },
@@ -372,7 +372,7 @@ describe('validateConfig', () => {
       const apiDir = path.join(dir, 'api');
       fs.mkdirSync(apiDir, { recursive: true });
       fs.writeFileSync(path.join(apiDir, 'Dockerfile'), 'FROM node:20');
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: { path: 'api', framework: 'express', type: 'server', port: 3000, build: 'buildpack' },
@@ -387,7 +387,7 @@ describe('validateConfig', () => {
       const apiDir = path.join(dir, 'api');
       fs.mkdirSync(apiDir, { recursive: true });
       fs.writeFileSync(path.join(apiDir, 'Dockerfile'), 'FROM node:20');
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: { path: 'api', framework: 'express', type: 'server', port: 3000, build: 'dockerfile' },
@@ -410,7 +410,7 @@ describe('validateConfig', () => {
       fs.mkdirSync(apiDir, { recursive: true });
       fs.mkdirSync(webDir, { recursive: true });
       fs.writeFileSync(path.join(apiDir, 'Dockerfile'), 'FROM python:3.12');
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'aquim-test',
         apps: {
           api: { path: 'api', framework: 'python', type: 'server', port: 8000, build: 'dockerfile' },
@@ -422,7 +422,7 @@ describe('validateConfig', () => {
     });
 
     it('should fail: both apps as server (no type: frontend)', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'aquim-test',
         apps: {
           api: { path: 'api', framework: 'python', type: 'server', port: 8000 },
@@ -435,7 +435,7 @@ describe('validateConfig', () => {
 
     it('should fail: unknown framework react without mapping', () => {
       // This test verifies that 'react' IS now a known framework
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           web: { path: '.', framework: 'react', type: 'frontend', port: null },
@@ -453,7 +453,7 @@ describe('validateConfig', () => {
 
   describe('loopscale-stacks templates', () => {
     it('monorepo-turbo: api (server) + web (frontend) should pass', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'my-app',
         apps: {
           api: { path: 'apps/api', framework: 'express', type: 'server', port: 3001 },
@@ -465,7 +465,7 @@ describe('validateConfig', () => {
     });
 
     it('monorepo-python: api (server) + worker should pass', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'my-app',
         apps: {
           api: { path: 'apps/api', framework: 'fastapi', type: 'server', port: 8000 },
@@ -478,7 +478,7 @@ describe('validateConfig', () => {
     });
 
     it('single app: python-fastapi should pass', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'my-api',
         apps: {
           api: { path: '.', framework: 'fastapi', type: 'server', port: 8000 },
@@ -501,7 +501,7 @@ describe('validateConfig', () => {
     it('should allow type: server on a frontend framework (user wants container, not CDN)', () => {
       // User explicitly sets type: server on a React app — they want SSR/container
       // This is valid: user overrides detection. But render stays "server" (container).
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           web: { path: '.', framework: 'react', type: 'server', port: 3000 },
@@ -515,7 +515,7 @@ describe('validateConfig', () => {
 
     it('should count omitted type as server (default) for pod limit', () => {
       // 3 apps without type — all default to server → exceeds limit
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: { path: '.', framework: 'express', port: 3000 },
@@ -530,7 +530,7 @@ describe('validateConfig', () => {
     it('should treat empty string framework as custom', () => {
       const dir = tmpDir();
       fs.mkdirSync(path.join(dir, 'api'), { recursive: true });
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -545,7 +545,7 @@ describe('validateConfig', () => {
     it('should treat omitted framework as custom', () => {
       const dir = tmpDir();
       fs.mkdirSync(path.join(dir, 'api'), { recursive: true });
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -558,7 +558,7 @@ describe('validateConfig', () => {
     });
 
     it('should reject port: 0 on server', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: { path: '.', framework: 'express', type: 'server', port: 0 },
@@ -569,7 +569,7 @@ describe('validateConfig', () => {
     });
 
     it('should reject port: -1 on server', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: { path: '.', framework: 'express', type: 'server', port: -1 },
@@ -581,7 +581,7 @@ describe('validateConfig', () => {
 
     it('should allow type: frontend on Go framework (unusual but valid user choice)', () => {
       // User wants to serve Go output as static files (e.g., WASM)
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           wasm: { path: '.', framework: 'go', type: 'frontend', port: null },
@@ -595,7 +595,7 @@ describe('validateConfig', () => {
 
     it('should silently ignore render: static on server type (normalizeApp forces server)', () => {
       // User tries to set render: static on a server app — normalizeApp ignores it
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -613,7 +613,7 @@ describe('validateConfig', () => {
       // CLI only checks if path exists. ../../etc resolves to /etc which exists.
       // This test documents the defense-in-depth: CLI doesn't crash, server rejects.
       const dir = tmpDir();
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: { path: '../../etc', framework: 'express', type: 'server', port: 3000 },
@@ -625,7 +625,7 @@ describe('validateConfig', () => {
     });
 
     it('should handle app with no path (defaults to .)', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -641,7 +641,7 @@ describe('validateConfig', () => {
     it('should handle type: frontend + framework: express (user mismatch)', () => {
       // User sets frontend type but uses a server framework
       // This is allowed — user knows what they're doing (maybe serving static from express build)
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           web: { path: '.', framework: 'express', type: 'frontend', port: null },
@@ -656,7 +656,7 @@ describe('validateConfig', () => {
 
   describe('app name RFC 1123 validation', () => {
     it('should error on app name starting with a digit', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           '1api': { path: '.', framework: 'express', type: 'server', port: 3000 },
@@ -667,7 +667,7 @@ describe('validateConfig', () => {
     });
 
     it('should error on app name with uppercase letters', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           MyApp: { path: '.', framework: 'express', type: 'server', port: 3000 },
@@ -678,7 +678,7 @@ describe('validateConfig', () => {
     });
 
     it('should error on app name ending with a hyphen', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           'api-': { path: '.', framework: 'express', type: 'server', port: 3000 },
@@ -689,7 +689,7 @@ describe('validateConfig', () => {
     });
 
     it('should error on app name with underscores', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           my_app: { path: '.', framework: 'express', type: 'server', port: 3000 },
@@ -700,7 +700,7 @@ describe('validateConfig', () => {
     });
 
     it('should accept valid app names', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: { path: '.', framework: 'express', type: 'server', port: 3000 },
@@ -714,7 +714,7 @@ describe('validateConfig', () => {
 
     it('should error on app name exceeding 63 characters', () => {
       const longName = 'a' + 'b'.repeat(63);
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           [longName]: { path: '.', framework: 'express', type: 'server', port: 3000 },
@@ -727,7 +727,7 @@ describe('validateConfig', () => {
 
   describe('error message quality', () => {
     it('unknown framework error should list all supported frameworks', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: { path: '.', framework: 'fortran', type: 'server', port: 3000 },
@@ -743,7 +743,7 @@ describe('validateConfig', () => {
     });
 
     it('pod limit error should name the offending apps', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: { path: '.', framework: 'express', type: 'server', port: 3000 },
@@ -760,7 +760,7 @@ describe('validateConfig', () => {
     it('custom Dockerfile error should suggest alternatives', () => {
       const dir = tmpDir();
       fs.mkdirSync(path.join(dir, 'api'), { recursive: true });
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: { path: 'api', framework: 'custom', type: 'server', port: 8080 },
@@ -777,7 +777,7 @@ describe('validateConfig', () => {
   // are valid known fields; invalid values must be rejected with actionable errors.
   describe('B15: replicas and autoscaling scaling fields', () => {
     it('accepts replicas: 2 without any warning or error', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: { path: '.', framework: 'express', type: 'server', port: 3000, replicas: 2 },
@@ -789,7 +789,7 @@ describe('validateConfig', () => {
     });
 
     it('accepts autoscaling: {min:1, max:3} without warning', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: {
@@ -807,7 +807,7 @@ describe('validateConfig', () => {
     });
 
     it('rejects replicas: 0 with exit-1 error', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: { path: '.', framework: 'express', type: 'server', port: 3000, replicas: 0 },
@@ -821,7 +821,7 @@ describe('validateConfig', () => {
     });
 
     it('rejects replicas: 101 (over service cap)', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: { path: '.', framework: 'express', type: 'server', port: 3000, replicas: 101 },
@@ -834,7 +834,7 @@ describe('validateConfig', () => {
     });
 
     it('rejects autoscaling.max < autoscaling.min', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: {
@@ -854,7 +854,7 @@ describe('validateConfig', () => {
     });
 
     it('rejects autoscaling.targetCPU: 0', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: {
@@ -871,7 +871,7 @@ describe('validateConfig', () => {
     });
 
     it('rejects autoscaling.targetCPU: 101', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: {
@@ -888,7 +888,7 @@ describe('validateConfig', () => {
     });
 
     it('rejects both replicas AND autoscaling set (mutual exclusion)', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: {
@@ -921,7 +921,7 @@ describe('validateConfig', () => {
             foo: 'bar', // genuinely unknown
           },
         },
-      } as unknown as TheoYaml;
+      } as unknown as LoopScaleYaml;
       const { warnings } = validateConfig(config, '/tmp', { skipFilesystemChecks: true });
       expect(warnings.find(w => w.includes('apps.api.foo'))).toBeDefined();
     });
@@ -930,7 +930,7 @@ describe('validateConfig', () => {
   // KEDA scale-to-zero validation
   describe('scale-to-zero (KEDA)', () => {
     it('accepts autoscaling.min: 0 for server apps', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: {
@@ -948,7 +948,7 @@ describe('validateConfig', () => {
     });
 
     it('accepts autoscaling.min: 0 for frontend apps', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           web: {
@@ -966,7 +966,7 @@ describe('validateConfig', () => {
     });
 
     it('rejects autoscaling.min: 0 for workers (no HTTP wake-up)', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           processor: {
@@ -986,7 +986,7 @@ describe('validateConfig', () => {
     });
 
     it('rejects autoscaling.min: -1', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: {
@@ -1004,7 +1004,7 @@ describe('validateConfig', () => {
     });
 
     it('accepts cooldown: 300 (valid)', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: {
@@ -1022,7 +1022,7 @@ describe('validateConfig', () => {
     });
 
     it('rejects cooldown: 10 (below minimum 30)', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: {
@@ -1042,7 +1042,7 @@ describe('validateConfig', () => {
     });
 
     it('rejects cooldown: 5000 (above maximum 3600)', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: {
@@ -1060,7 +1060,7 @@ describe('validateConfig', () => {
     });
 
     it('accepts missing cooldown (defaults to 300 server-side)', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: {
@@ -1078,7 +1078,7 @@ describe('validateConfig', () => {
     });
 
     it('warns on unknown autoscaling sub-field', () => {
-      const config: TheoYaml = {
+      const config: LoopScaleYaml = {
         project: 'test',
         apps: {
           api: {
@@ -1096,5 +1096,35 @@ describe('validateConfig', () => {
       expect(w).toBeDefined();
       expect(w).toContain('autoscaling.bogusField');
     });
+  });
+
+  it('accepts an app that declares runtime and start, with no framework and no Dockerfile', () => {
+    const dir = tmpDir();
+    const config = {
+      project: 'hello',
+      apps: { web: { path: '.', port: 8080, runtime: 'node', start: 'node server.js' } },
+    } as LoopScaleYaml;
+    const { errors } = validateConfig(config, dir);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('refuses a runtime the platform does not build', () => {
+    const dir = tmpDir();
+    const config = {
+      project: 'hello',
+      apps: { web: { path: '.', port: 8080, runtime: 'ruby', start: 'ruby app.rb' } },
+    } as LoopScaleYaml;
+    const { errors } = validateConfig(config, dir);
+    expect(errors.map((e) => e.message).join(' ')).toMatch(/App 'web': unknown runtime 'ruby'\. Supported: node, python/);
+  });
+
+  it('refuses a runtime with no start command', () => {
+    const dir = tmpDir();
+    const config = {
+      project: 'hello',
+      apps: { web: { path: '.', port: 8080, runtime: 'node' } },
+    } as LoopScaleYaml;
+    const { errors } = validateConfig(config, dir);
+    expect(errors.map((e) => e.field)).toContain('apps.web.start');
   });
 });

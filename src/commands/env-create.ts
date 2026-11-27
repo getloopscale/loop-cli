@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { ApiError } from '../api/client';
 import { classifyNetworkError } from '../output/error-message';
@@ -13,7 +13,7 @@ interface EnvCreateResponse {
 export interface EnvCreateDeps {
   getToken: () => string | null;
   // M2 v1.2 T6.1: createEnvironment carries project so the canonical
-  // `theo-<tenant>-<project>-<env>` namespace lands on the workload cluster.
+  // `loopscale-<tenant>-<project>-<env>` namespace lands on the workload cluster.
   createEnvironment: (name: string, project: string) => Promise<EnvCreateResponse>;
   writeTo: (msg: string) => void;
   writeError: (msg: string) => void;

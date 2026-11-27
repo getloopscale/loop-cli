@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
-import { parseTheoYaml } from '../../../src/adapters/theo-yaml';
+import { parseLoopScaleYaml } from '../../../src/adapters/loopscale-yaml';
 
-describe('parseTheoYaml', () => {
+describe('parseLoopScaleYaml', () => {
   it('should parse project name', () => {
     const yaml = `project: my-app\napps:\n  api:\n    path: ./api\n    port: 3000\n`;
-    const result = parseTheoYaml(yaml);
+    const result = parseLoopScaleYaml(yaml);
     expect(result.project).toBe('my-app');
   });
 
   it('should parse app with type, framework, port', () => {
     const yaml = `project: my-app\napps:\n  api:\n    type: server\n    framework: nestjs\n    path: apps/api\n    port: 3000\n`;
-    const result = parseTheoYaml(yaml);
+    const result = parseLoopScaleYaml(yaml);
     expect(result.apps.api).toEqual({
       type: 'server',
       framework: 'nestjs',
@@ -41,7 +41,7 @@ describe('parseTheoYaml', () => {
       '      - REDIS_URL',
     ].join('\n');
 
-    const result = parseTheoYaml(yaml);
+    const result = parseLoopScaleYaml(yaml);
 
     expect(result.apps.api.secrets).toEqual(['DATABASE_URL', 'JWT_SECRET']);
     expect(result.apps.worker.secrets).toEqual(['DATABASE_URL', 'REDIS_URL']);
@@ -71,7 +71,7 @@ describe('parseTheoYaml', () => {
       '    path: apps/web',
     ].join('\n');
 
-    const result = parseTheoYaml(yaml);
+    const result = parseLoopScaleYaml(yaml);
 
     expect(Object.keys(result.apps)).toEqual(['api', 'gateway', 'worker', 'web']);
     expect(result.apps.worker.type).toBe('worker');
@@ -80,12 +80,12 @@ describe('parseTheoYaml', () => {
 
   it('should throw for malformed yaml', () => {
     const yaml = 'this is not valid yaml for loopscale';
-    expect(() => parseTheoYaml(yaml)).toThrow('could not parse theo.yaml');
+    expect(() => parseLoopScaleYaml(yaml)).toThrow('could not parse loopscale.yaml');
   });
 
   it('should handle app without secrets', () => {
     const yaml = `project: test\napps:\n  api:\n    path: .\n    port: 3000\n`;
-    const result = parseTheoYaml(yaml);
+    const result = parseLoopScaleYaml(yaml);
     expect(result.apps.api.secrets).toBeUndefined();
   });
 
@@ -95,7 +95,7 @@ describe('parseTheoYaml', () => {
 
   it('should parse version field', () => {
     const yaml = `version: 1\nproject: my-app\napps:\n  api:\n    path: .\n    port: 3000\n`;
-    const result = parseTheoYaml(yaml);
+    const result = parseLoopScaleYaml(yaml);
     expect(result.version).toBe(1);
   });
 
@@ -111,19 +111,19 @@ describe('parseTheoYaml', () => {
       '    path: .',
       '    port: 3000',
     ].join('\n');
-    const result = parseTheoYaml(yaml);
+    const result = parseLoopScaleYaml(yaml);
     expect(result.ignore).toEqual(['node_modules', '.git']);
   });
 
   it('should parse build strategy', () => {
     const yaml = `version: 1\nproject: my-app\napps:\n  api:\n    path: .\n    port: 3000\n    build: dockerfile\n`;
-    const result = parseTheoYaml(yaml);
+    const result = parseLoopScaleYaml(yaml);
     expect(result.apps.api.build).toBe('dockerfile');
   });
 
   it('should parse dockerfile field', () => {
     const yaml = `version: 1\nproject: my-app\napps:\n  api:\n    path: .\n    port: 3000\n    build: dockerfile\n    dockerfile: Dockerfile.prod\n`;
-    const result = parseTheoYaml(yaml);
+    const result = parseLoopScaleYaml(yaml);
     expect(result.apps.api.dockerfile).toBe('Dockerfile.prod');
   });
 
@@ -139,13 +139,13 @@ describe('parseTheoYaml', () => {
       '      NODE_ENV: production',
       '      LOG_LEVEL: info',
     ].join('\n');
-    const result = parseTheoYaml(yaml);
+    const result = parseLoopScaleYaml(yaml);
     expect(result.apps.api.env).toEqual({ NODE_ENV: 'production', LOG_LEVEL: 'info' });
   });
 
   it('should reject invalid build strategy', () => {
     const yaml = `version: 1\nproject: my-app\napps:\n  api:\n    path: .\n    port: 3000\n    build: invalid\n`;
-    const result = parseTheoYaml(yaml);
+    const result = parseLoopScaleYaml(yaml);
     expect(result.apps.api.build).toBeUndefined(); // invalid values are ignored
   });
 
@@ -174,7 +174,7 @@ describe('parseTheoYaml', () => {
       '    build: dockerfile',
       '    dockerfile: Dockerfile.worker',
     ].join('\n');
-    const result = parseTheoYaml(yaml);
+    const result = parseLoopScaleYaml(yaml);
 
     expect(result.version).toBe(1);
     expect(result.project).toBe('roundtrip-test');
@@ -189,7 +189,7 @@ describe('parseTheoYaml', () => {
 
   it('should handle legacy yaml without v2 fields', () => {
     const yaml = `project: legacy\napps:\n  api:\n    path: .\n    port: 3000\n`;
-    const result = parseTheoYaml(yaml);
+    const result = parseLoopScaleYaml(yaml);
     expect(result.version).toBeUndefined();
     expect(result.ignore).toBeUndefined();
     expect(result.apps.api.build).toBeUndefined();
@@ -209,7 +209,7 @@ describe('parseTheoYaml', () => {
       '    port: 3000',
       '    replicas: 3',
     ].join('\n');
-    const result = parseTheoYaml(yaml);
+    const result = parseLoopScaleYaml(yaml);
     expect(result.apps.api.replicas).toBe(3);
   });
 
@@ -224,7 +224,7 @@ describe('parseTheoYaml', () => {
       '    port: 3000',
       '    replicas: 0',
     ].join('\n');
-    const result = parseTheoYaml(yaml);
+    const result = parseLoopScaleYaml(yaml);
     expect(result.apps.api.replicas).toBe(0);
   });
 
@@ -239,7 +239,7 @@ describe('parseTheoYaml', () => {
       '      min: 5',
       '      max: 2',
     ].join('\n');
-    const result = parseTheoYaml(yaml);
+    const result = parseLoopScaleYaml(yaml);
     expect(result.apps.api.autoscaling).toBeDefined();
     expect(result.apps.api.autoscaling!.min).toBe(5);
     expect(result.apps.api.autoscaling!.max).toBe(2);
@@ -257,7 +257,7 @@ describe('parseTheoYaml', () => {
       '      max: 10',
       '      targetCPU: 75',
     ].join('\n');
-    const result = parseTheoYaml(yaml);
+    const result = parseLoopScaleYaml(yaml);
     expect(result.apps.api.autoscaling).toEqual({
       min: 2,
       max: 10,
@@ -275,7 +275,7 @@ describe('parseTheoYaml', () => {
       '    autoscaling:',
       '      min: 2',
     ].join('\n');
-    const result = parseTheoYaml(yaml);
+    const result = parseLoopScaleYaml(yaml);
     expect(result.apps.api.autoscaling).toBeDefined();
     expect(result.apps.api.autoscaling!.min).toBe(2);
     expect(result.apps.api.autoscaling!.max).toBeUndefined();
@@ -294,7 +294,7 @@ describe('parseTheoYaml', () => {
       '    autoscaling:',
       '      targetCPU: 150',
     ].join('\n');
-    const result = parseTheoYaml(yaml);
+    const result = parseLoopScaleYaml(yaml);
     expect(result.apps.api.autoscaling).toBeDefined();
     expect(result.apps.api.autoscaling!.targetCPU).toBe(150);
   });
@@ -307,7 +307,7 @@ describe('parseTheoYaml', () => {
       '    path: .',
       '    port: 3000',
     ].join('\n');
-    const result = parseTheoYaml(yaml);
+    const result = parseLoopScaleYaml(yaml);
     expect(result.apps.api.autoscaling).toBeUndefined();
     expect(result.apps.api.replicas).toBeUndefined();
   });
@@ -325,7 +325,7 @@ describe('parseTheoYaml', () => {
       '      targetCPU: 80',
       '      cooldown: 600',
     ].join('\n');
-    const result = parseTheoYaml(yaml);
+    const result = parseLoopScaleYaml(yaml);
     expect(result.apps.api.autoscaling).toEqual({
       min: 0,
       max: 5,
@@ -345,8 +345,13 @@ describe('parseTheoYaml', () => {
       '      min: 0',
       '      max: 5',
     ].join('\n');
-    const result = parseTheoYaml(yaml);
+    const result = parseLoopScaleYaml(yaml);
     expect(result.apps.api.autoscaling).toBeDefined();
     expect(result.apps.api.autoscaling!.cooldown).toBeUndefined();
+  });
+
+  it('keeps the runtime and the start command of an app', () => {
+    const result = parseLoopScaleYaml('project: hello\napps:\n  web:\n    path: .\n    port: 8080\n    runtime: node\n    start: node server.js\n');
+    expect(result.apps.web).toMatchObject({ runtime: 'node', start: 'node server.js', port: 8080 });
   });
 });

@@ -4,8 +4,8 @@ import { ApiError } from '../../../src/api/client';
 function createMockDeps(overrides: Partial<ScaleDeps> = {}): ScaleDeps {
   return {
     getToken: jest.fn().mockReturnValue('test-token'),
-    findTheoYaml: jest.fn().mockReturnValue({
-      path: '/project/theo.yaml',
+    findLoopScaleYaml: jest.fn().mockReturnValue({
+      path: '/project/loopscale.yaml',
       content: { project: 'my-app', apps: { api: { path: '.', framework: 'express', port: 3000 } } },
     }),
     scale: jest.fn().mockResolvedValue({
@@ -183,8 +183,8 @@ describe('ScaleCommand', () => {
   });
 
   describe('missing config', () => {
-    it('should return exit code 1 when theo.yaml is missing', async () => {
-      const deps = createMockDeps({ findTheoYaml: jest.fn().mockReturnValue(null) });
+    it('should return exit code 1 when loopscale.yaml is missing', async () => {
+      const deps = createMockDeps({ findLoopScaleYaml: jest.fn().mockReturnValue(null) });
       const cmd = new ScaleCommand(deps);
 
       const exitCode = await cmd.execute({ app: 'api', replicas: 3 });

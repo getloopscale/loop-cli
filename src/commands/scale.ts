@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { ApiError } from '../api/client';
 import { classifyNetworkError } from '../output/error-message';
-import type { TheoYamlResult } from '../adapters/theo-yaml';
+import type { LoopScaleYamlResult } from '../adapters/loopscale-yaml';
 
 interface ScaleApiResponse {
   app: string;
@@ -19,7 +19,7 @@ interface ScaleApiResponse {
 
 export interface ScaleDeps {
   getToken: () => string | null;
-  findTheoYaml: () => TheoYamlResult | null;
+  findLoopScaleYaml: () => LoopScaleYamlResult | null;
   scale: (project: string, environment: string, app: string, config: ScaleConfig) => Promise<ScaleApiResponse>;
   writeTo: (msg: string) => void;
   writeError: (msg: string) => void;
@@ -51,7 +51,7 @@ export interface ScaleOptions {
  *
  * Exit codes:
  *   0 — success
- *   1 — usage error (missing app, invalid config, no theo.yaml)
+ *   1 — usage error (missing app, invalid config, no loopscale.yaml)
  *   3 — scale failed (API error, not found)
  *   4 — auth error
  */
@@ -120,14 +120,14 @@ export class ScaleCommand {
       }
     }
 
-    // 6. Find theo.yaml
-    const yamlResult = this.deps.findTheoYaml();
+    // 6. Find loopscale.yaml
+    const yamlResult = this.deps.findLoopScaleYaml();
     if (!yamlResult) {
-      return this.exitWithError(opts, 'No theo.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
+      return this.exitWithError(opts, 'No loopscale.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
     }
 
     if (yamlResult.parseError) {
-      return this.exitWithError(opts, `Invalid theo.yaml: ${yamlResult.parseError}`, 1, 'INVALID_CONFIG');
+      return this.exitWithError(opts, `Invalid ${yamlResult.fileName}: ${yamlResult.parseError}`, 1, 'INVALID_CONFIG');
     }
 
     const project = yamlResult.content.project;
@@ -190,7 +190,7 @@ export class ScaleCommand {
       default:
         // Legacy "acknowledged" path.
         this.deps.writeTo('Scaling configuration acknowledged. Changes take effect on the next deploy.');
-        this.deps.writeTo('Update autoscaling in theo.yaml, then run `loopscale deploy`.');
+        this.deps.writeTo('Update autoscaling in loopscale.yaml, then run `loopscale deploy`.');
     }
 
     return 0;

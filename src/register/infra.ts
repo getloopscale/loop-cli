@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import * as childProcess from 'child_process';
 import { ApiClient } from '../api/client';
@@ -12,27 +12,27 @@ import { BillingCommand } from '../commands/billing';
 import { ConnectCommand, DisconnectCommand, type ConnectionInfo } from '../commands/connect';
 import { API_REQUEST_TIMEOUT_MS } from '../config/constants';
 import { getGitRoot } from '../adapters/git';
-import { findTheoYaml, type TheoYamlResult } from '../adapters/theo-yaml';
-import { findServicesJson, theoYamlFromServicesJson } from '../adapters/services-json';
+import { findLoopScaleYaml, type LoopScaleYamlResult } from '../adapters/loopscale-yaml';
+import { findServicesJson, loopscaleYamlFromServicesJson } from '../adapters/services-json';
 import { openBrowser } from '../auth/open-browser';
 import { CommandDeps } from './types';
 
 /**
- * theo#165 — resolve o manifesto do projeto por AMBOS os formatos: o `theo.yaml` legado (preferido,
- * por compatibilidade) e, na ausencia dele, o `.theo/services.json` v2 que o theokit gera.
+ * loopscale#165 — resolve o manifesto do projeto por AMBOS os formatos: o `loopscale.yaml` legado (preferido,
+ * por compatibilidade) e, na ausencia dele, o `.loopscale/services.json` v2 que o loopzero gera.
  *
  * `deploy`, `status` e `logs` ja liam o v2; `secret` nao, entao um projeto v2-puro deployava e nao
  * conseguia gerenciar secrets. A escolha da fonte fica AQUI, na raiz de composicao — os comandos
- * seguem consumindo um unico `TheoYamlResult`.
+ * seguem consumindo um unico `LoopScaleYamlResult`.
  */
-function findProjectManifest(): TheoYamlResult | null {
+function findProjectManifest(): LoopScaleYamlResult | null {
   const gitRoot = getGitRoot() ?? process.cwd();
-  const legacy = findTheoYaml(process.cwd(), gitRoot);
+  const legacy = findLoopScaleYaml(process.cwd(), gitRoot);
   if (legacy) {
     return legacy;
   }
   const servicesJson = findServicesJson(process.cwd(), gitRoot);
-  return servicesJson ? theoYamlFromServicesJson(servicesJson.path) : null;
+  return servicesJson ? loopscaleYamlFromServicesJson(servicesJson.path) : null;
 }
 
 export function registerInfraCommands(deps: CommandDeps): void {
@@ -48,14 +48,14 @@ export function registerInfraCommands(deps: CommandDeps): void {
     .description('List recent builds')
     .option('--env <name>', 'Filter by environment')
     .option('--limit <n>', 'Max builds to show')
-    .option('--project <name>', 'Project name (overrides theo.yaml lookup; plan T2.3 D6)')
+    .option('--project <name>', 'Project name (overrides loopscale.yaml lookup; plan T2.3 D6)')
     .action(async (cmdOpts: { env?: string; limit?: string; project?: string }) => {
       const globalOpts = getGlobalOpts();
       const apiClient = new ApiClient({ baseURL: apiUrl, token: configStore.getToken() ?? undefined, onUnauthorized: handleUnauthorized });
 
       const buildListCmd = new BuildListCommand({
         getToken: () => configStore.getToken(),
-        findTheoYaml: findProjectManifest,
+        findLoopScaleYaml: findProjectManifest,
         listBuilds: async (project: string, env?: string, limit?: number) => {
           const params = new URLSearchParams();
           if (env) params.set('env', env);
@@ -168,7 +168,7 @@ export function registerInfraCommands(deps: CommandDeps): void {
 
       const cmd = new SecretSetCommand({
         getToken: () => configStore.getToken(),
-        findTheoYaml: findProjectManifest,
+        findLoopScaleYaml: findProjectManifest,
         setSecret: async (project: string, name: string, value: string, env: string, app: string) => {
           return apiClient.post<{ name: string; environment: string; app: string; created: boolean }>(`/api/v1/secrets?project=${encodeURIComponent(project)}`, {
             name, value, environment: env, app,
@@ -204,7 +204,7 @@ export function registerInfraCommands(deps: CommandDeps): void {
 
       const cmd = new SecretListCommand({
         getToken: () => configStore.getToken(),
-        findTheoYaml: findProjectManifest,
+        findLoopScaleYaml: findProjectManifest,
         setSecret: async () => ({ name: '', environment: '', app: '', created: false }),
         listSecrets: async (project: string, env: string) => {
           return apiClient.get<{ secrets: Array<{ name: string; environment: string; app: string }> }>(`/api/v1/secrets?project=${encodeURIComponent(project)}&env=${encodeURIComponent(env)}`);
@@ -244,7 +244,7 @@ export function registerInfraCommands(deps: CommandDeps): void {
 
       const cmd = new SecretDeleteCommand({
         getToken: () => configStore.getToken(),
-        findTheoYaml: () => yamlResult,
+        findLoopScaleYaml: () => yamlResult,
         setSecret: async () => ({ name: '', environment: '', app: '', created: false }),
         listSecrets: async () => ({ secrets: [] as Array<{ name: string; environment: string; app: string }> }),
         deleteSecret: async (_proj: string, secretName: string, env: string, app: string) => {
@@ -294,7 +294,7 @@ export function registerInfraCommands(deps: CommandDeps): void {
             return childProcess.execSync('git remote get-url origin', { encoding: 'utf-8' }).trim();
           } catch { return null; }
         },
-        // theo#165 — mesma lacuna do `secret`: `connect`/`disconnect` liam so o `theo.yaml`
+        // loopscale#165 — mesma lacuna do `secret`: `connect`/`disconnect` liam so o `loopscale.yaml`
         // legado, entao num projeto v2-puro nao havia nome de projeto para resolver.
         getProjectName: () => findProjectManifest()?.content?.project ?? null,
         connectRepo: async (project, body) => apiClient.post(`/api/v1/projects/${encodeURIComponent(project)}/connect`, body),
@@ -321,7 +321,7 @@ export function registerInfraCommands(deps: CommandDeps): void {
       const cmd = new DisconnectCommand({
         getToken: () => configStore.getToken(),
         getGitRemote: () => null,
-        // theo#165 — mesma lacuna do `secret`: `connect`/`disconnect` liam so o `theo.yaml`
+        // loopscale#165 — mesma lacuna do `secret`: `connect`/`disconnect` liam so o `loopscale.yaml`
         // legado, entao num projeto v2-puro nao havia nome de projeto para resolver.
         getProjectName: () => findProjectManifest()?.content?.project ?? null,
         connectRepo: async () => { throw new Error('not used'); },

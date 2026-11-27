@@ -1,5 +1,5 @@
 import { ApiError } from '../api/client';
-import type { TheoYamlResult } from '../adapters/theo-yaml';
+import type { LoopScaleYamlResult } from '../adapters/loopscale-yaml';
 import { classifyNetworkError } from '../output/error-message';
 
 interface SecretListResponse {
@@ -20,7 +20,7 @@ interface SecretDeleteResponse {
 
 export interface SecretDeps {
   getToken: () => string | null;
-  findTheoYaml: () => TheoYamlResult | null;
+  findLoopScaleYaml: () => LoopScaleYamlResult | null;
   setSecret: (project: string, name: string, value: string, env: string, app: string) => Promise<SecretSetResponse>;
   listSecrets: (project: string, env: string) => Promise<SecretListResponse>;
   deleteSecret: (project: string, name: string, env: string, app: string) => Promise<SecretDeleteResponse>;
@@ -69,10 +69,10 @@ export class SecretSetCommand {
       return this.exitWithError(opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
-    // 2. Find theo.yaml
-    const yamlResult = this.deps.findTheoYaml();
+    // 2. Find loopscale.yaml
+    const yamlResult = this.deps.findLoopScaleYaml();
     if (!yamlResult) {
-      return this.exitWithError(opts, 'No theo.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
+      return this.exitWithError(opts, 'No loopscale.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
     }
 
     // 3. Parse name=value
@@ -155,9 +155,9 @@ export class SecretListCommand {
       return this.exitWithError(opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
-    const yamlResult = this.deps.findTheoYaml();
+    const yamlResult = this.deps.findLoopScaleYaml();
     if (!yamlResult) {
-      return this.exitWithError(opts, 'No theo.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
+      return this.exitWithError(opts, 'No loopscale.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
     }
 
     const env = opts.env ?? 'production';
@@ -224,9 +224,9 @@ export class SecretDeleteCommand {
       return this.exitWithError(opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
-    const yamlResult = this.deps.findTheoYaml();
+    const yamlResult = this.deps.findLoopScaleYaml();
     if (!yamlResult) {
-      return this.exitWithError(opts, 'No theo.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
+      return this.exitWithError(opts, 'No loopscale.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
     }
 
     if (!opts.name) {

@@ -14,7 +14,7 @@ Apache-2.0.
 [![Tests](https://img.shields.io/badge/tests-1%2C300%2B%20passing-brightgreen?style=flat-square)](#testing)
 [![Node](https://img.shields.io/badge/node-%E2%89%A520-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org)
 [![Commander](https://img.shields.io/badge/Commander.js-12-555?style=flat-square)](https://github.com/tj/commander.js)
-[![npm](https://img.shields.io/badge/npm-%40getloopscale%2Fcli-CB3837?style=flat-square&logo=npm&logoColor=white)](https://www.npmjs.com/package/@getloopscale/cli)
+[![npm](https://img.shields.io/badge/npm-%40getloopscale%2Floop--cli-CB3837?style=flat-square&logo=npm&logoColor=white)](https://www.npmjs.com/package/@getloopscale/loop-cli)
 [![Status](https://img.shields.io/badge/status-pre--release-orange?style=flat-square)](#status)
 
 [Quickstart](#quickstart) · [Why](#why-loopscale-cli) · [Commands](#commands) · [CI/CD](#cicd) · [Contracts](#contracts) · [Architecture](#architecture) · [Comparison](#comparison) · [Roadmap](#roadmap) · [Contributing](#contributing)
@@ -48,8 +48,8 @@ fast to install, and decoupled from the platform's internals.
 
 ## Features
 
-- **Zero-config deploy** — `loopscale` with no subcommand routes to `loopscale deploy`; a
-  missing `.theo/services.json` triggers a `theokit build` automatically.
+- **Zero-config deploy** — `loopscale` with no subcommand routes to `loopscale deploy`,
+  which builds its manifest from `loopscale.yaml` when the project has no `services.json`.
 - **Monorepo-native** — deploys multiple apps from one repo in a single command,
   with per-app runtime, scaling, secrets, and domains.
 - **Scriptable by contract** — a permanent exit-code table (`0` success · `1`
@@ -62,8 +62,6 @@ fast to install, and decoupled from the platform's internals.
   retrying.
 - **Device-flow auth (RFC 8628)** — browser login for humans, `LOOPSCALE_TOKEN` for
   CI; tokens persisted with `0o600` perms and refreshed transparently on `401`.
-- **CI/prebuilt mode** — `--prebuilt` / `--skip-build` for pipelines that split
-  build and deploy across stages (Vercel-style).
 - **Progressive delivery aware** — renders canary rollout progress and surfaces
   aborts with the right exit code.
 - **OpenTelemetry tracing** — opt-in via `LOOPSCALE_TRACING_ENABLED`; W3C trace
@@ -79,7 +77,7 @@ npm you can run it from source.
 
 ```bash
 # From source
-git clone https://github.com/getloopscale/cli.git
+git clone https://github.com/getloopscale/loop-cli.git
 cd cli
 npm ci
 npm run build
@@ -88,15 +86,15 @@ node bin/loopscale --help
 
 ```bash
 # Once published (pinned in your project — recommended)
-npm install --save-dev @getloopscale/cli
+npm install --save-dev @getloopscale/loop-cli
 
 # Or globally
-npm install -g @getloopscale/cli
+npm install -g @getloopscale/loop-cli
 ```
 
-You also need [TheoKit](https://github.com/usetheo/theokit) so `loopscale deploy` can
-build the `.theo/services.json` artifact automatically. In typical TheoKit
-projects it is already a dev dependency (`npm install theokit`).
+You also need [LoopZero](https://github.com/getloopscale/loopzero) so `loopscale deploy` can
+build the `.loopscale/services.json` artifact automatically. In typical LoopZero
+projects it is already a dev dependency (`npm install loopzero`).
 
 Then drive it end to end:
 
@@ -106,13 +104,6 @@ loopscale                          # zero-config deploy — build + upload + str
 loopscale status                   # current release state
 loopscale logs --build <id>        # tail build/runtime logs
 loopscale rollback                 # restore the previous release
-```
-
-The legacy two-step flow still works:
-
-```bash
-theokit build --target theo-cloud   # explicit build
-loopscale deploy --prebuilt              # upload only — skip auto-build
 ```
 
 ## Configuration
@@ -135,8 +126,10 @@ loopscale deploy --prebuilt              # upload only — skip auto-build
 | `LOOPSCALE_OTEL_ENDPOINT` | OTLP/HTTP traces endpoint | `http://localhost:4318/v1/traces` |
 | `LOOPSCALE_ENV` | `deployment.environment` trace attribute | `development` |
 
-Project files read by `loopscale deploy` keep the TheoKit names: `theo.yaml`,
-`.theo/services.json` and `.theoignore`.
+The project descriptor is `loopscale.yaml`. A project that still has `loopzero.yaml` keeps
+working: the CLI reads the first of the two it finds, in that order, and a push deploy does the
+same. The LoopZero framework's manifest is read from `.loopzero/services.json`, and files listed
+in `.loopscaleignore` are left out of the upload.
 
 ## Commands
 
@@ -168,7 +161,7 @@ end-user CLI.)
 | `loopscale rollback` | Roll back to a previous release |
 | `loopscale promote` | Promote a release from one environment to another |
 | `loopscale cancel <build-id>` | Cancel a running or queued build |
-| `loopscale validate` | Validate `theo.yaml` configuration |
+| `loopscale validate` | Validate `loopscale.yaml` configuration |
 
 </details>
 
@@ -196,7 +189,7 @@ end-user CLI.)
 local directory (conflict-safe, `--dry-run`, `--exclude` globs). Wire it to Claude
 Code's `SessionStart`/`SessionEnd` hooks to pull your shared `.claude/` on session
 start and push edits on end — see
-[`integrations/claude-code/`](https://github.com/getloopscale/cli/tree/develop/integrations/claude-code)
+[`integrations/claude-code/`](https://github.com/getloopscale/loop-cli/tree/develop/integrations/claude-code)
 for the example `settings.json` and the safety notes (executable config is fenced
 out of the sync by default).
 
@@ -225,30 +218,19 @@ out of the sync by default).
 
 ## CI/CD
 
-CI pipelines that split build and deploy across stages use `--prebuilt` (an
-alias of `--skip-build`) and authenticate with `LOOPSCALE_TOKEN`:
+A pipeline authenticates with `LOOPSCALE_TOKEN` and deploys the checked-out project:
 
 ```yaml
 jobs:
-  build:
-    steps:
-      - run: npm ci
-      - run: npx theokit build --target theo-cloud
-      - uses: actions/upload-artifact@v4
-        with: { path: .theo/services.json }
   deploy:
-    needs: build
     steps:
-      - run: npm ci
-      - uses: actions/download-artifact@v4
-      - run: npx @getloopscale/cli deploy --prebuilt
+      - uses: actions/checkout@v4
+      - run: npx @getloopscale/loop-cli deploy
         env:
           LOOPSCALE_TOKEN: ${{ secrets.LOOPSCALE_TOKEN }}
 ```
 
-Tune the `theokit build` subprocess with `THEOKIT_BUILD_TIMEOUT_MS` (default
-`600000`) and `THEOKIT_BIN` (override the auto-resolved binary). For a custom
-`distDir`, point at the artifact explicitly: `loopscale deploy --services-json ./out/services.json`.
+For a manifest outside the default locations, point at it: `loopscale deploy --services-json ./out/services.json`.
 
 ## Contracts
 
@@ -289,10 +271,10 @@ src/
 ├── commands/             use-case orchestration (deploy, domain, env, scale, …)
 ├── api/                  HTTP client + SSE stream (the only cross-repo seam)
 ├── auth/                 device-flow OAuth, token refresh, browser opener
-├── adapters/             theo.yaml · services.json · source bundle + multipart upload · git
+├── adapters/             loopscale.yaml · services.json · source bundle + multipart upload · git
 ├── config/              ConfigStore (XDG, 0o600 tokens) + constants
 ├── output/               renderers, formatter (CI/json detection), prompts
-├── lib/                  exit-code contract, theokit bin/build helpers
+├── lib/                  exit-code contract, loopzero bin/build helpers
 └── tracing/              OpenTelemetry init + W3C context propagation
 ```
 
@@ -352,20 +334,20 @@ command.
 
 ## Roadmap
 
-The CLI was extracted from the `theo` monorepo (history preserved) at M2 of
+The CLI was extracted from the `loopscale` monorepo (history preserved) at M2 of
 the platform decomposition and now ships as a standalone repo.
 
 | Area | Status |
 |---|---|
 | Standalone extraction (HTTP-only, zero engine code) | **Shipped** |
-| Zero-config deploy + TheoKit auto-build | **Shipped** |
+| Zero-config deploy + LoopZero auto-build | **Shipped** |
 | SSE build/deploy stream (reconnect, replay, polling fallback) | **Shipped** |
 | Exit-code + `--json` contracts | **Shipped** |
 | Device-flow auth + transparent token refresh | **Shipped** |
 | Consumer-driven engine contract test (+ Pact) | **Shipped** |
 | OpenTelemetry tracing | **Shipped** |
 | Scope CLI to end-user experience (platform/operator tooling removed) | **Shipped** |
-| Publish `@getloopscale/cli` to npm | Planned |
+| Publish `@getloopscale/loop-cli` to npm | **Shipped** |
 | TS import-boundary lint (enforce HTTP-only mechanically) | Planned |
 
 ## Status
@@ -380,7 +362,7 @@ the platform decomposition and now ships as a standalone repo.
 ## Contributing
 
 ```bash
-git clone https://github.com/getloopscale/cli.git
+git clone https://github.com/getloopscale/loop-cli.git
 cd cli
 npm ci
 npm test
@@ -392,11 +374,11 @@ never import engine code).
 
 ## License
 
-[Apache-2.0](./LICENSE) — Copyright 2025-2026 [usetheo.dev](https://usetheo.dev). See [NOTICE](./NOTICE) for third-party attributions.
+[Apache-2.0](./LICENSE) — Copyright 2025-2026 [getloopscale.com](https://getloopscale.com). See [NOTICE](./NOTICE) for third-party attributions.
 
 <div align="center">
 
-**If LoopScale CLI is useful to you, [give it a ⭐](https://github.com/getloopscale/cli) — it's the signal that keeps the project moving.**
+**If LoopScale CLI is useful to you, [give it a ⭐](https://github.com/getloopscale/loop-cli) — it's the signal that keeps the project moving.**
 
 
 **Part of [LoopScale](https://getloopscale.com).**

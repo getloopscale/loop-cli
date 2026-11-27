@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { ValidateCommand, ValidateDeps } from '../../../src/commands/validate';
 import * as fs from 'fs';
@@ -10,11 +10,11 @@ function tmpDir(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'loopscale-validate-'));
 }
 
-function createDeps(yamlResult: ReturnType<ValidateDeps['findTheoYaml']>): ValidateDeps & { output: string[]; errors: string[] } {
+function createDeps(yamlResult: ReturnType<ValidateDeps['findLoopScaleYaml']>): ValidateDeps & { output: string[]; errors: string[] } {
   const output: string[] = [];
   const errors: string[] = [];
   return {
-    findTheoYaml: () => yamlResult,
+    findLoopScaleYaml: () => yamlResult,
     writeTo: (msg: string) => output.push(msg),
     writeError: (msg: string) => errors.push(msg),
     output,
@@ -27,10 +27,11 @@ describe('ValidateCommand', () => {
     const dir = tmpDir();
     const apiDir = path.join(dir, 'apps', 'api');
     fs.mkdirSync(apiDir, { recursive: true });
-    const yamlPath = path.join(dir, 'theo.yaml');
+    const yamlPath = path.join(dir, 'loopscale.yaml');
 
     const deps = createDeps({
       path: yamlPath,
+      fileName: 'loopscale.yaml',
       content: {
         version: 1,
         project: 'test',
@@ -47,7 +48,7 @@ describe('ValidateCommand', () => {
     expect(deps.output.some(o => o.includes('1 app'))).toBe(true);
   });
 
-  it('should return 1 when no theo.yaml found', async () => {
+  it('should return 1 when no loopscale.yaml found', async () => {
     const deps = createDeps(null);
     const cmd = new ValidateCommand(deps);
     const code = await cmd.execute({});
@@ -57,10 +58,11 @@ describe('ValidateCommand', () => {
 
   it('should return 1 for invalid config', async () => {
     const dir = tmpDir();
-    const yamlPath = path.join(dir, 'theo.yaml');
+    const yamlPath = path.join(dir, 'loopscale.yaml');
 
     const deps = createDeps({
       path: yamlPath,
+      fileName: 'loopscale.yaml',
       content: {
         project: 'test',
         apps: {
@@ -78,10 +80,11 @@ describe('ValidateCommand', () => {
     const dir = tmpDir();
     const apiDir = path.join(dir, 'apps', 'api');
     fs.mkdirSync(apiDir, { recursive: true });
-    const yamlPath = path.join(dir, 'theo.yaml');
+    const yamlPath = path.join(dir, 'loopscale.yaml');
 
     const deps = createDeps({
       path: yamlPath,
+      fileName: 'loopscale.yaml',
       content: {
         version: 1,
         project: 'test',
@@ -103,10 +106,11 @@ describe('ValidateCommand', () => {
 
   it('should output JSON with errors for invalid config', async () => {
     const dir = tmpDir();
-    const yamlPath = path.join(dir, 'theo.yaml');
+    const yamlPath = path.join(dir, 'loopscale.yaml');
 
     const deps = createDeps({
       path: yamlPath,
+      fileName: 'loopscale.yaml',
       content: {
         project: 'test',
         apps: {
@@ -126,7 +130,8 @@ describe('ValidateCommand', () => {
 
   it('should report parse errors', async () => {
     const deps = createDeps({
-      path: '/tmp/theo.yaml',
+      path: '/tmp/loopscale.yaml',
+      fileName: 'loopscale.yaml',
       content: { project: '', apps: {} },
       parseError: 'invalid syntax on line 3',
     });

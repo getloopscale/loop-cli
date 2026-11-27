@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
-import type { TheoYamlResult } from '../adapters/theo-yaml';
+import type { LoopScaleYamlResult } from '../adapters/loopscale-yaml';
 
 export interface UploadResult {
   commit_sha: string;
@@ -80,10 +80,10 @@ export interface BuildStatus {
 
 export interface DeployDeps {
   getToken: () => string | null;
-  findTheoYaml: () => TheoYamlResult | null;
+  findLoopScaleYaml: () => LoopScaleYamlResult | null;
   /**
-   * Plan v1.1 T1.2 (theo-cli-vercel-like-ux) — locates the
-   * `.theo/services.json` artifact for the upload payload. Optional in the
+   * Plan v1.1 T1.2 (loopscale-cli-vercel-like-ux) — locates the
+   * `.loopscale/services.json` artifact for the upload payload. Optional in the
    * interface so `register/promote.ts`, `register/rollback.ts`, and
    * `register/validate.ts` keep compiling without injecting this dep (EC-9
    * absorbed — they don't upload bundles). The deploy command runtime-checks
@@ -92,14 +92,6 @@ export interface DeployDeps {
    * CLI flag (EC-4 absorbed).
    */
   findServicesJson?: (overridePath?: string) => { path: string } | null;
-  /**
-   * Plan v1.1 T3.1 — auto-build trigger. When `.theo/services.json` is
-   * missing AND `skipBuild` is false, the deploy command invokes this to run
-   * `theokit build --target theo-cloud` as a subprocess. Optional in the
-   * interface so promote/rollback/validate registrations continue to compile
-   * without injecting it.
-   */
-  runTheokitBuild?: (opts: { cwd: string; target?: string }) => Promise<void>;
   hasGitRepo: () => boolean;
   hasUncommittedChanges: () => boolean;
   hasLockfile: () => boolean;
@@ -143,14 +135,9 @@ export interface DeployOptions {
   json?: boolean;
   noCache?: boolean;
   /**
-   * Plan v1.1 T1.1 (EC-4) — explicit path to `.theo/services.json`. When set,
-   * bypasses the walk-up discovery. Required when `theo.config.ts` declares
+   * Plan v1.1 T1.1 (EC-4) — explicit path to `.loopscale/services.json`. When set,
+   * bypasses the walk-up discovery. Required when `loopscale.config.ts` declares
    * a custom `distDir` (e.g. emit lands at `out/services.json`).
    */
   servicesJson?: string;
-  /**
-   * Plan v1.1 T3.1 (and Phase 5 `--prebuilt` alias). Skip the auto-build
-   * branch. Used by CI pipelines that produce the artifact in a prior stage.
-   */
-  skipBuild?: boolean;
 }

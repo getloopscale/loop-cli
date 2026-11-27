@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 //
 // Beta Logs Gate Criterion 4 — actionable error messages.
 // Tests for the mapSyncFailureReason catalog: every known reason
@@ -111,14 +111,14 @@ describe('mapSyncFailureReason (Beta Logs Gate Criterion 4)', () => {
       // floor is built-in. We assert the catalogued message ALSO
       // contains a concrete next step BEFORE that hint:
       //   - explicit CLI command (`loopscale status`, `loopscale rollback`, `loopscale secrets list`, `loopscale domains list`)
-      //   - explicit file path (`theo.yaml`, `lockfile`)
+      //   - explicit file path (`loopscale.yaml`, `lockfile`)
       //   - retry directive ("retry the deploy", "retry")
       //   - support handoff ("contact support")
       //   - external system reference ("Let's Encrypt", "registry", "cosign")
       //   - explicit measurable threshold ("5min", "30s")
       const actionableMarkers = [
         /\bloopscale\s+\w+/, // loopscale command
-        /theo\.yaml/i,
+        /loopscale\.yaml/i,
         /lockfile/i,
         /retry/i,
         /contact support/i,

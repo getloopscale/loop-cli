@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { promises as fsPromises } from 'fs';
 import * as path from 'path';
@@ -29,12 +29,12 @@ async function fileBlob(filePath: string, contentType: string): Promise<Blob> {
 }
 
 /**
- * Plan B v3.1 T-B.3 (2026-06-05) — `theoYamlPath` parameter renamed to
- * `servicesJsonPath`; multipart form field `theo_yaml` renamed to
+ * Plan B v3.1 T-B.3 (2026-06-05) — `loopscaleYamlPath` parameter renamed to
+ * `servicesJsonPath`; multipart form field `loopscale_yaml` renamed to
  * `services_json` per ADR D4. Caller passes the path to the
- * `.theo/services.json` emitted by `theokit build` (Plan A v2.2 thin
+ * `.loopscale/services.json` emitted by `loopzero build` (Plan A v2.2 thin
  * adapter). API-side payload inspection (per blueprint v2 D8) keeps
- * legacy `theo_yaml` field rejected with actionable E-009 error during
+ * legacy `loopscale_yaml` field rejected with actionable E-009 error during
  * the transition window.
  */
 export async function uploadSource(
@@ -115,8 +115,10 @@ export async function uploadSource(
   if (!resp.ok) {
     let serverMessage: string | null = null;
     let serverCode: string | undefined;
+    let upgradeUrl: string | undefined;
     try {
-      const body = (await resp.json()) as { code?: string; message?: string };
+      const body = (await resp.json()) as { code?: string; message?: string; upgrade_url?: string };
+      upgradeUrl = body.upgrade_url;
       if (body.message) {
         serverMessage = body.message;
       }
@@ -129,7 +131,7 @@ export async function uploadSource(
 
     // Reuse the same exit code mapping as ApiClient.mapError to avoid
     // divergence (previously had a duplicate mapStatusToExitCode here).
-    throw ApiError.fromHttpStatus(resp.status, serverMessage, serverCode);
+    throw ApiError.fromHttpStatus(resp.status, serverMessage, serverCode, upgradeUrl);
   }
 
   return resp.json() as Promise<UploadResult>;

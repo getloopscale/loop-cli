@@ -42,7 +42,7 @@ export interface BuildInspectOptions {
 /**
  * BuildInspectCommand shows detailed information about a single build.
  *
- * Does NOT require theo.yaml — the build ID is sufficient.
+ * Does NOT require loopscale.yaml — the build ID is sufficient.
  *
  * Exit codes:
  *   0 — success

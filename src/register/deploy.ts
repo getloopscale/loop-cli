@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { promptConfirm } from '../output/prompt-confirm';
 import { createHash } from 'crypto';
@@ -9,15 +9,13 @@ import { DeployCommand } from '../commands/deploy';
 import { ValidateCommand } from '../commands/validate';
 import { StatusCommand } from '../commands/status';
 import { LogsCommand } from '../commands/logs';
-import { RollbackCommand } from '../commands/rollback';
+import { RollbackCommand, ROLLBACK_DEADLINE_MS } from '../commands/rollback';
 import { PromoteCommand } from '../commands/promote';
 import { CancelCommand } from '../commands/cancel';
 import { API_REQUEST_TIMEOUT_MS, DEPLOY_TIMEOUT_MS } from '../config/constants';
 import { hasGitRepo, hasUncommittedChanges, hasLockfile, getSourceIdentifier, getGitRoot, createSourceBundle, checkSensitiveFiles } from '../adapters/git';
-import { findTheoYaml } from '../adapters/theo-yaml';
+import { findLoopScaleYaml } from '../adapters/loopscale-yaml';
 import { findServicesJson } from '../adapters/services-json';
-import { resolveTheokitBin } from '../lib/resolve-theokit-bin';
-import { runTheokitBuild } from '../lib/run-theokit-build';
 import { cleanupFile } from '../adapters/source-bundle';
 import { uploadSource } from '../adapters/source-upload';
 import { CommandDeps } from './types';
@@ -37,15 +35,7 @@ export function registerDeployCommands(deps: CommandDeps): void {
     .option('--json', 'Output in JSON format')
     .option(
       '--services-json <path>',
-      'Path to .theo/services.json artifact (override for custom distDir; Plan v1.1 EC-4)',
-    )
-    .option(
-      '--skip-build',
-      'Skip auto-build of .theo/services.json (CI prebuilt artifact mode)',
-    )
-    .option(
-      '--prebuilt',
-      'Alias for --skip-build (Vercel parity; Plan v1.1 T5.1)',
+      'Path to a services.json manifest to upload in place of the one built from loopscale.yaml',
     )
     .action(async (cmdOpts) => {
       const globalOpts = getGlobalOpts();
@@ -64,22 +54,15 @@ export function registerDeployCommands(deps: CommandDeps): void {
 
       const deployCmd = new DeployCommand({
         getToken: () => configStore.getToken(),
-        findTheoYaml: () => {
+        findLoopScaleYaml: () => {
           const gitRoot = getGitRoot() ?? process.cwd();
-          return findTheoYaml(process.cwd(), gitRoot);
+          return findLoopScaleYaml(process.cwd(), gitRoot);
         },
         // Plan v1.1 T1.2 — services.json discovery for upload payload.
         // EC-4 absorbed: `--services-json <path>` override threaded via opts.
         findServicesJson: (overridePath?: string) => {
           const gitRoot = getGitRoot() ?? process.cwd();
           return findServicesJson(process.cwd(), gitRoot, overridePath);
-        },
-        // Plan v1.1 T3.1 — auto-build subprocess. resolveTheokitBin throws
-        // TheokitBinaryNotFoundError when no binary found; handleError in
-        // deploy.ts routes the typed error to a friendly install hint.
-        runTheokitBuild: async (buildOpts) => {
-          const bin = resolveTheokitBin(buildOpts.cwd);
-          await runTheokitBuild({ theokitBin: bin, cwd: buildOpts.cwd, target: buildOpts.target });
         },
         hasGitRepo,
         hasUncommittedChanges,
@@ -203,7 +186,6 @@ export function registerDeployCommands(deps: CommandDeps): void {
           noCache: cmdOpts.noCache ?? false,
           // Plan v1.1 T1.1 + T5.1 — forward new opts to deploy command.
           servicesJson: cmdOpts.servicesJson,
-          skipBuild: Boolean(cmdOpts.skipBuild || cmdOpts.prebuilt),
         }),
         DEPLOY_TIMEOUT_MS + 30_000,
         'Deploy command timed out waiting for completion.',
@@ -238,16 +220,16 @@ export function registerDeployCommands(deps: CommandDeps): void {
   // --- validate ---
   program
     .command('validate')
-    .description('Validate theo.yaml configuration')
+    .description('Validate loopscale.yaml configuration')
     .option('--json', 'Output in JSON format')
     .action(async (cmdOpts) => {
       const globalOpts = getGlobalOpts();
       const jsonMode = Boolean(cmdOpts.json || globalOpts.json);
 
       const validateCmd = new ValidateCommand({
-        findTheoYaml: () => {
+        findLoopScaleYaml: () => {
           const gitRoot = getGitRoot() ?? process.cwd();
-          return findTheoYaml(process.cwd(), gitRoot);
+          return findLoopScaleYaml(process.cwd(), gitRoot);
         },
         writeTo,
         writeError,
@@ -262,16 +244,16 @@ export function registerDeployCommands(deps: CommandDeps): void {
     .command('status')
     .description('Show environment status for the current project')
     .option('--env <name>', 'Target environment', 'production')
-    .option('--project <name>', 'Project name (overrides theo.yaml lookup; plan T2.3 D6)')
+    .option('--project <name>', 'Project name (overrides loopscale.yaml lookup; plan T2.3 D6)')
     .action(async (cmdOpts) => {
       const globalOpts = getGlobalOpts();
       const apiClient = new ApiClient({ baseURL: apiUrl, token: configStore.getToken() ?? undefined, onUnauthorized: handleUnauthorized });
 
       const statusCmd = new StatusCommand({
         getToken: () => configStore.getToken(),
-        findTheoYaml: () => {
+        findLoopScaleYaml: () => {
           const gitRoot = getGitRoot() ?? process.cwd();
-          return findTheoYaml(process.cwd(), gitRoot);
+          return findLoopScaleYaml(process.cwd(), gitRoot);
         },
         getStatus: async (project: string, environment: string) => {
           return apiClient.get(
@@ -309,16 +291,16 @@ export function registerDeployCommands(deps: CommandDeps): void {
     .option('--runtime', 'Stream runtime logs from the workload namespace instead of build logs')
     .option('--since <duration>', 'Restrict to entries newer than NOW - <duration>. Accepts "24h", "7d", "30m", or raw seconds. Default: 7d.')
     .option('-f, --follow', 'Stream logs in real-time')
-    .option('--project <name>', 'Project name (overrides theo.yaml lookup; plan T2.3 D6)')
+    .option('--project <name>', 'Project name (overrides loopscale.yaml lookup; plan T2.3 D6)')
     .action(async (cmdOpts) => {
       const globalOpts = getGlobalOpts();
       const apiClient = new ApiClient({ baseURL: apiUrl, token: configStore.getToken() ?? undefined, onUnauthorized: handleUnauthorized });
 
       const logsCmd = new LogsCommand({
         getToken: () => configStore.getToken(),
-        findTheoYaml: () => {
+        findLoopScaleYaml: () => {
           const gitRoot = getGitRoot() ?? process.cwd();
-          return findTheoYaml(process.cwd(), gitRoot);
+          return findLoopScaleYaml(process.cwd(), gitRoot);
         },
         getLogs: async (buildID: string, opts: { tail?: number; step?: string; since?: string }) => {
           const params = new URLSearchParams();
@@ -329,7 +311,7 @@ export function registerDeployCommands(deps: CommandDeps): void {
           const path = `/api/v1/builds/${encodeURIComponent(buildID)}/logs${query ? `?${query}` : ''}`;
           return apiClient.get(path);
         },
-        // Red Team theo-cloud#160: PRIMARY build inference source — same
+        // Red Team loop-console#160: PRIMARY build inference source — same
         // endpoint `loopscale build list` uses. Fixes "No builds found" silent lie
         // when builds exist but no active release binds them yet.
         listBuilds: async (project: string, env?: string, limit?: number) => {
@@ -438,15 +420,17 @@ export function registerDeployCommands(deps: CommandDeps): void {
     .option('--env <name>', 'Target environment', 'production')
     .option('--to <release-id>', 'Rollback to a specific release')
     .option('--yes', 'Skip confirmation prompt')
+    .option('--wait', 'Wait for the rollback to complete', true)
+    .option('--no-wait', 'Return right after the rollback is accepted')
     .action(async (cmdOpts) => {
       const globalOpts = getGlobalOpts();
       const apiClient = new ApiClient({ baseURL: apiUrl, token: configStore.getToken() ?? undefined, onUnauthorized: handleUnauthorized });
 
       const rollbackCmd = new RollbackCommand({
         getToken: () => configStore.getToken(),
-        findTheoYaml: () => {
+        findLoopScaleYaml: () => {
           const gitRoot = getGitRoot() ?? process.cwd();
-          return findTheoYaml(process.cwd(), gitRoot);
+          return findLoopScaleYaml(process.cwd(), gitRoot);
         },
         rollback: async (project: string, environment: string, toReleaseId?: string) => {
           const body: Record<string, string> = { environment };
@@ -455,6 +439,12 @@ export function registerDeployCommands(deps: CommandDeps): void {
             `/api/v1/projects/${encodeURIComponent(project)}/rollback`,
             body,
           );
+        },
+        getActiveReleaseId: async (project: string, environment: string) => {
+          const status = await apiClient.get<{ active_release?: { id?: string } | null }>(
+            `/api/v1/projects/${encodeURIComponent(project)}/status?env=${encodeURIComponent(environment)}`,
+          );
+          return status.active_release?.id ?? null;
         },
         // #164 — este era o ULTIMO `readline` inline sem handler de `close`: em EOF a Promise
         // nunca resolvia e o `withTimeout` abaixo surgia como "timed out. Check your connection".
@@ -466,8 +456,10 @@ export function registerDeployCommands(deps: CommandDeps): void {
       });
 
       const exitCode = await withTimeout(
-        rollbackCmd.execute({ env: cmdOpts.env, to: cmdOpts.to, json: globalOpts.json, yes: cmdOpts.yes }),
-        API_REQUEST_TIMEOUT_MS + 10_000,
+        rollbackCmd.execute({ env: cmdOpts.env, to: cmdOpts.to, json: globalOpts.json, yes: cmdOpts.yes, wait: cmdOpts.wait }),
+        // Waiting follows the rollback to the API's own deadline; without it the
+        // command is one request.
+        cmdOpts.wait === false ? API_REQUEST_TIMEOUT_MS + 10_000 : ROLLBACK_DEADLINE_MS + API_REQUEST_TIMEOUT_MS + 10_000,
         'Rollback timed out. Check your connection and try again.',
       ).catch((err: Error) => {
         if (globalOpts.json) {
@@ -493,9 +485,9 @@ export function registerDeployCommands(deps: CommandDeps): void {
 
       const promoteCmd = new PromoteCommand({
         getToken: () => configStore.getToken(),
-        findTheoYaml: () => {
+        findLoopScaleYaml: () => {
           const gitRoot = getGitRoot() ?? process.cwd();
-          return findTheoYaml(process.cwd(), gitRoot);
+          return findLoopScaleYaml(process.cwd(), gitRoot);
         },
         promote: async (project: string, from: string, to: string) => {
           return apiClient.post(

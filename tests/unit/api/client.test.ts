@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { ApiClient, ApiError } from '../../../src/api/client';
 
@@ -93,39 +93,13 @@ describe('ApiClient', () => {
       expect(fetchFn.lastUrl).toBe('http://api.example.com/tenants');
     });
 
-    it('should ignore the THEO_API_URL env var', () => {
-      const original = process.env.THEO_API_URL;
-      const originalUrl = process.env.LOOPSCALE_URL;
-      process.env.THEO_API_URL = 'http://custom-api:8080';
-      delete process.env.LOOPSCALE_URL;
-
-      try {
-        const client = new ApiClient({ fetchFn: fakeFetch(200) });
-        expect((client as unknown as { baseURL: string }).baseURL).toBe('http://localhost:8080');
-      } finally {
-        if (original !== undefined) {
-          process.env.THEO_API_URL = original;
-        } else {
-          delete process.env.THEO_API_URL;
-        }
-        if (originalUrl !== undefined) {
-          process.env.LOOPSCALE_URL = originalUrl;
-        }
-      }
-    });
-
     it('should fallback to localhost:8080 when no env var', () => {
-      const original = process.env.THEO_API_URL;
       const originalUrl = process.env.LOOPSCALE_URL;
-      delete process.env.THEO_API_URL;
       delete process.env.LOOPSCALE_URL;
 
       const client = new ApiClient({ fetchFn: fakeFetch(200) });
       expect((client as unknown as { baseURL: string }).baseURL).toBe('http://localhost:8080');
 
-      if (original !== undefined) {
-        process.env.THEO_API_URL = original;
-      }
       if (originalUrl !== undefined) {
         process.env.LOOPSCALE_URL = originalUrl;
       }

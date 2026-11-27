@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 //
-// Plan theo-storage-sync T1.1 — the 3-state delta classifier (rclone truth
+// Plan loopstore-sync T1.1 — the 3-state delta classifier (rclone truth
 // table, references/rclone/cmd/bisync/deltas.go). Pure + total: every
 // (local, remote, manifest) combination maps to exactly one Kind.
 

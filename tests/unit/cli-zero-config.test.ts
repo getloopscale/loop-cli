@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 //
-// Plan v1.1 T4.1 (theo-cli-vercel-like-ux) — `loopscale` (no args) zero-config
+// Plan v1.1 T4.1 (loopscale-cli-vercel-like-ux) — `loopscale` (no args) zero-config
 // delegation + EC-8 help/version position-independence.
 
 import { execSync } from 'child_process';
@@ -9,7 +9,7 @@ import * as path from 'path';
 
 const binPath = path.resolve(__dirname, '../../bin/loopscale');
 
-function runTheo(args: string[]): { exitCode: number; stdout: string; stderr: string } {
+function runLoopScale(args: string[]): { exitCode: number; stdout: string; stderr: string } {
   try {
     const out = execSync(`node ${binPath} ${args.join(' ')}`, {
       encoding: 'utf-8',
@@ -24,7 +24,7 @@ function runTheo(args: string[]): { exitCode: number; stdout: string; stderr: st
 
 describe('Plan v1.1 T4.1 — `loopscale` zero-config delegates to deploy', () => {
   it('`loopscale` (no args) attempts to deploy (exits non-zero in CI without auth/project)', () => {
-    const { exitCode, stderr, stdout } = runTheo([]);
+    const { exitCode, stderr, stdout } = runLoopScale([]);
     expect(exitCode).not.toBe(0);
     const combined = stdout + stderr;
     // The delegation reaches deploy; deploy fails (no auth or no project).
@@ -33,7 +33,7 @@ describe('Plan v1.1 T4.1 — `loopscale` zero-config delegates to deploy', () =>
   });
 
   it('`loopscale --json` delegates to deploy with --json output', () => {
-    const { exitCode, stdout } = runTheo(['--json']);
+    const { exitCode, stdout } = runLoopScale(['--json']);
     expect(exitCode).not.toBe(0);
     // Output should be parseable JSON (deploy's error envelope), not the
     // pre-v1.1 "No command specified" JSON.
@@ -48,14 +48,14 @@ describe('Plan v1.1 T4.1 — `loopscale` zero-config delegates to deploy', () =>
 
 describe('Plan v1.1 EC-8 — --help/--version win regardless of position', () => {
   it('`loopscale --help` shows help (does not trigger deploy)', () => {
-    const { exitCode, stdout } = runTheo(['--help']);
+    const { exitCode, stdout } = runLoopScale(['--help']);
     expect(exitCode).toBe(0);
     expect(stdout).toContain('Usage:');
     expect(stdout).toContain('deploy');
   });
 
   it('`loopscale --version` shows version (does not trigger deploy)', () => {
-    const { exitCode, stdout } = runTheo(['--version']);
+    const { exitCode, stdout } = runLoopScale(['--version']);
     expect(exitCode).toBe(0);
     // Version output is a single token like "0.1.0" — just confirm non-empty.
     expect(stdout.trim().length).toBeGreaterThan(0);
@@ -63,13 +63,13 @@ describe('Plan v1.1 EC-8 — --help/--version win regardless of position', () =>
   });
 
   it('`loopscale -h` short flag also shows help', () => {
-    const { exitCode, stdout } = runTheo(['-h']);
+    const { exitCode, stdout } = runLoopScale(['-h']);
     expect(exitCode).toBe(0);
     expect(stdout).toContain('Usage:');
   });
 
   it('`loopscale nonexistent-command` shows error (unknown command path preserved)', () => {
-    const { exitCode, stderr, stdout } = runTheo(['nonexistent-command']);
+    const { exitCode, stderr, stdout } = runLoopScale(['nonexistent-command']);
     expect(exitCode).not.toBe(0);
     const combined = stdout + stderr;
     expect(combined.toLowerCase()).toContain('unknown');

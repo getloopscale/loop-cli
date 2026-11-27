@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { DeployRenderer, DeployResult } from '../output/deploy-renderer';
 import {
@@ -9,8 +9,10 @@ import {
 import { normalizeApps } from '../adapters/app-unit';
 import { parseServicesRuntimes, parseServicesStarts } from '../adapters/services-json';
 import { validateConfig } from '../adapters/validate-config';
+import { DescriptorManifestError, manifestFromDescriptor } from '../adapters/descriptor-manifest';
 import { getTracer, SpanStatusCode } from '../tracing';
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 
 import type {
@@ -38,6 +40,8 @@ export type { DeployDeps, DeployOptions } from './deploy-types';
 interface PrerequisiteResult {
   config: { project: string; apps: Record<string, unknown> };
   servicesJsonPath: string;
+  /** Set when the manifest was built from the descriptor: a temporary file to remove after the upload. */
+  generatedManifestPath: string | null;
   environment: string;
   selectedApps: string[];
   appUnits: ReturnType<typeof normalizeApps>;
@@ -61,7 +65,7 @@ export class DeployCommand {
       return prereqResult;
     }
 
-    const { config, servicesJsonPath, selectedApps, appUnits } = prereqResult;
+    const { config, servicesJsonPath, generatedManifestPath, selectedApps, appUnits } = prereqResult;
 
     // Phase 2: Create source bundle and upload (traced)
     const uploadResult = await tracer.startActiveSpan('loopscale.cli.deploy.bundle', async (span) => {
@@ -75,6 +79,9 @@ export class DeployCommand {
         span.setStatus({ code: SpanStatusCode.ERROR, message: String(err) });
         throw err;
       } finally {
+        if (generatedManifestPath !== null) {
+          fs.rmSync(path.dirname(generatedManifestPath), { recursive: true, force: true });
+        }
         span.end();
       }
     });
@@ -100,7 +107,7 @@ export class DeployCommand {
   }
 
   /**
-   * Phase 1: Validate auth, theo.yaml, environment, app selection, and secrets.
+   * Phase 1: Validate auth, loopscale.yaml, environment, app selection, and secrets.
    * Returns a PrerequisiteResult on success or an exit code on failure.
    */
   private async validatePrerequisites(
@@ -112,20 +119,20 @@ export class DeployCommand {
       return exitWithError(this.deps, opts, 'Not authenticated. Run: loopscale login', 4, 'AUTH_REQUIRED');
     }
 
-    // 3. Find theo.yaml
-    const yamlResult = this.deps.findTheoYaml();
+    // 3. Find loopscale.yaml
+    const yamlResult = this.deps.findLoopScaleYaml();
     if (!yamlResult) {
-      return exitWithError(this.deps, opts, 'No theo.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
+      return exitWithError(this.deps, opts, 'No loopscale.yaml found. Run: loopscale init', 1, 'MISSING_CONFIG');
     }
 
     // 3b. Check for YAML parse errors
     if (yamlResult.parseError) {
-      return exitWithError(this.deps, opts, `Invalid theo.yaml: ${yamlResult.parseError}`, 1, 'INVALID_CONFIG');
+      return exitWithError(this.deps, opts, `Invalid ${yamlResult.fileName}: ${yamlResult.parseError}`, 1, 'INVALID_CONFIG');
     }
 
     const { content: config } = yamlResult;
 
-    // 4. Validate theo.yaml — run full validation BEFORE upload (instant feedback).
+    // 4. Validate loopscale.yaml — run full validation BEFORE upload (instant feedback).
     const projectRoot = path.dirname(yamlResult.path);
     const skipFs = !fs.existsSync(projectRoot);
     const { errors: validationErrors, warnings: validationWarnings } = validateConfig(config, projectRoot, { skipFilesystemChecks: skipFs });
@@ -147,7 +154,7 @@ export class DeployCommand {
     // 5. Validate apps exist
     const appNames = Object.keys(config.apps);
     if (appNames.length === 0) {
-      return exitWithError(this.deps, opts, 'No apps defined in theo.yaml. Add at least one app to deploy.', 1, 'INVALID_CONFIG');
+      return exitWithError(this.deps, opts, 'No apps defined in loopscale.yaml. Add at least one app to deploy.', 1, 'INVALID_CONFIG');
     }
 
     // 6. Validate --env (DA-10)
@@ -160,7 +167,7 @@ export class DeployCommand {
     const selectedApps = opts.app ?? appNames;
     for (const app of selectedApps) {
       if (!appNames.includes(app)) {
-        return exitWithError(this.deps, opts, `App "${app}" not found in theo.yaml. Available apps: ${appNames.join(', ')}`, 1, 'APP_NOT_FOUND');
+        return exitWithError(this.deps, opts, `App "${app}" not found in loopscale.yaml. Available apps: ${appNames.join(', ')}`, 1, 'APP_NOT_FOUND');
       }
     }
 
@@ -173,7 +180,7 @@ export class DeployCommand {
       return secretsError;
     }
 
-    // Plan v1.1 T1.2 — discover `.theo/services.json` for the upload payload.
+    // Plan v1.1 T1.2 — discover `.loopscale/services.json` for the upload payload.
     // Pre-v1.1 the code passed `yamlResult.path` here, so the adapter was
     // shipping YAML bytes inside the `services_json` form field — Plan B v3.1
     // cutover gap. T3.1 wires auto-build into the null branch; for now we
@@ -193,39 +200,22 @@ export class DeployCommand {
     } catch (err) {
       return exitWithError(this.deps, opts, (err as Error).message, 1, 'SERVICES_JSON_OVERRIDE_INVALID');
     }
-    // Plan v1.1 T3.1 — auto-build branch. When services.json is missing AND
-    // --skip-build / --prebuilt was NOT passed AND a runTheokitBuild dep was
-    // injected (deploy registration site), invoke it and re-discover.
-    if (servicesJsonResult === null && opts.skipBuild !== true && this.deps.runTheokitBuild) {
-      if (!opts.json) {
-        this.deps.writeTo('Building project with theokit...');
-      }
-      try {
-        await this.deps.runTheokitBuild({ cwd: process.cwd(), target: 'theo-cloud' });
-      } catch (err) {
-        return handleError(this.deps, opts, err, 'theokit build failed');
-      }
-      try {
-        servicesJsonResult = this.deps.findServicesJson(opts.servicesJson);
-      } catch (err) {
-        return exitWithError(this.deps, opts, (err as Error).message, 1, 'SERVICES_JSON_OVERRIDE_INVALID');
-      }
-      // EC-10 absorbed — theokit build returned 0 but emitted nothing.
-      if (servicesJsonResult === null) {
-        return exitWithError(
-          this.deps,
-          opts,
-          'theokit build exit 0 but no .theo/services.json was written. This is a bug in theokit — file with output of: theokit doctor',
-          1,
-          'THEOKIT_BUILD_EMPTY',
-        );
-      }
-    }
+    // A project that ships no manifest gets one built from the descriptor: the API
+    // builds each app from its `runtime` and `start`, as it does on a push.
+    let generatedManifestPath: string | null = null;
     if (servicesJsonResult === null) {
-      const hint = opts.skipBuild === true
-        ? 'No `.theo/services.json` found and --skip-build/--prebuilt was passed. Run `theokit build --target theo-cloud` first.'
-        : 'No `.theo/services.json` found. Run `theokit build --target theo-cloud` first.';
-      return exitWithError(this.deps, opts, hint, 1, 'SERVICES_JSON_NOT_FOUND');
+      let manifest;
+      try {
+        manifest = manifestFromDescriptor(config, selectedApps);
+      } catch (err) {
+        if (err instanceof DescriptorManifestError) {
+          return exitWithError(this.deps, opts, err.message, 1, err.code);
+        }
+        throw err;
+      }
+      generatedManifestPath = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'loopscale-manifest-')), 'services.json');
+      fs.writeFileSync(generatedManifestPath, JSON.stringify(manifest, null, 2), { mode: 0o600 });
+      servicesJsonResult = { path: generatedManifestPath };
     }
 
     // T3.1a (F-dom-2): the build pipeline dispatches the build strategy on the
@@ -260,7 +250,7 @@ export class DeployCommand {
         this.deps.writeError(
           `Warning: no services.json runtime for app(s) [${unmatched.join(', ')}]. ` +
             `Available services: [${available}]. The build will fail unless each app ` +
-            `has a matching service in .theo/services.json (run \`theokit build\`).`,
+            `has a matching service in the manifest.`,
         );
       }
     } catch {
@@ -271,6 +261,7 @@ export class DeployCommand {
     return {
       config,
       servicesJsonPath: servicesJsonResult.path,
+      generatedManifestPath,
       environment,
       selectedApps,
       appUnits,
@@ -557,6 +548,12 @@ export class DeployCommand {
       // Start the activity-based timeout
       resetTimeout();
 
+      // Events are handled one at a time, in the order they arrived. A handler
+      // may await before it reports (the failure branches fetch recent logs),
+      // and a second terminal event handled in that gap reported a second
+      // outcome for the same deploy.
+      let handling: Promise<void> = Promise.resolve();
+
       sseConnection = this.deps.connectSSE(buildResult.build_id, (event: SSEEvent) => {
         if (resolved) {
           return;
@@ -571,7 +568,8 @@ export class DeployCommand {
         // promise and let it resolve in the background. The activity
         // timeout is reset above so the auto-tail's 5s window doesn't
         // trigger a false timeout.
-        void this.handleSSEEvent(event, opts, buildResult, selectedApps, deployStartTime, renderer, finish)
+        handling = handling
+          .then(() => (resolved ? true : this.handleSSEEvent(event, opts, buildResult, selectedApps, deployStartTime, renderer, finish)))
           .then((handled) => {
             if (!handled) {
               // Render intermediate progress events via DeployRenderer

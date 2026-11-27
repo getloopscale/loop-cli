@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { AuditCommand, AuditDeps } from '../../../src/commands/audit';
 import { ApiError } from '../../../src/api/client';

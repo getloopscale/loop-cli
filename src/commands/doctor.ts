@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 //
 // T1.11 — `loopscale doctor` end-user health check.
 // Per MEET-2026-05-12 plan: validates the operator's local env before they
@@ -27,7 +27,7 @@ export interface DoctorDeps {
   // Network: can we reach API?
   pingAPI: () => Promise<{ ok: boolean; latencyMs?: number; error?: string }>;
 
-  // Project config: does theo.yaml exist + parse?
+  // Project config: does loopscale.yaml exist + parse?
   readProjectConfig: () => { exists: boolean; valid: boolean; error?: string };
 
   // CLI version + update channel
@@ -134,12 +134,12 @@ export class DoctorCommand {
       });
     }
 
-    // 4. Project config (theo.yaml)
+    // 4. Project config (loopscale.yaml)
     const projectConfig = this.deps.readProjectConfig();
     if (!projectConfig.exists) {
       result.checks.push({
         name: 'project_config',
-        description: 'Project configuration (theo.yaml)',
+        description: 'Project configuration (loopscale.yaml)',
         status: 'warn',
         detail: 'Not in a LoopScale project directory',
         suggested_action: 'cd into a project, or run `loopscale init` to create a new project',
@@ -147,17 +147,17 @@ export class DoctorCommand {
     } else if (!projectConfig.valid) {
       result.checks.push({
         name: 'project_config',
-        description: 'Project configuration (theo.yaml)',
+        description: 'Project configuration (loopscale.yaml)',
         status: 'fail',
-        detail: projectConfig.error || 'theo.yaml has invalid syntax or fields',
-        suggested_action: 'Fix theo.yaml syntax; run `loopscale deploy --dry-run` to validate',
+        detail: projectConfig.error || 'loopscale.yaml has invalid syntax or fields',
+        suggested_action: 'Fix loopscale.yaml syntax; run `loopscale deploy --dry-run` to validate',
       });
     } else {
       result.checks.push({
         name: 'project_config',
-        description: 'Project configuration (theo.yaml)',
+        description: 'Project configuration (loopscale.yaml)',
         status: 'ok',
-        detail: 'theo.yaml present and valid',
+        detail: 'loopscale.yaml present and valid',
       });
     }
 

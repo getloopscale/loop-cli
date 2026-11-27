@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { ProjectInspectCommand, ProjectInspectDeps } from '../../../src/commands/project-inspect';
 
@@ -13,7 +13,7 @@ describe('ProjectInspectCommand', () => {
       getProject: async () => ({
         id: 'p-1',
         name: 'my-api',
-        team: 'tn-usetheo',
+        team: 'tn-getloopscale',
         created_at: '2026-01-15T00:00:00Z',
         created_by: 'github|12345',
       }),
@@ -81,7 +81,7 @@ describe('ProjectInspectCommand', () => {
       const allOutput = output.join('\n');
       expect(allOutput).toContain('Project: my-api');
       expect(allOutput).toContain('Team:');
-      expect(allOutput).toContain('tn-usetheo');
+      expect(allOutput).toContain('tn-getloopscale');
       expect(allOutput).toContain('Created:');
       expect(allOutput).toContain('Created by:');
       expect(allOutput).toContain('github|12345');
@@ -100,7 +100,7 @@ describe('ProjectInspectCommand', () => {
         getProject: async () => ({
           id: 'p-1',
           name: 'my-api',
-          team: 'tn-usetheo',
+          team: 'tn-getloopscale',
           created_at: '2026-01-15T00:00:00Z',
         }),
       }));
@@ -155,7 +155,7 @@ describe('ProjectInspectCommand', () => {
       expect(code).toBe(0);
       const parsed = JSON.parse(output[0]);
       expect(parsed.name).toBe('my-api');
-      expect(parsed.team).toBe('tn-usetheo');
+      expect(parsed.team).toBe('tn-getloopscale');
       expect(parsed.created_at).toBe('2026-01-15T00:00:00Z');
       expect(parsed.created_by).toBe('github|12345');
     });

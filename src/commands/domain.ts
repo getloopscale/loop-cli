@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 // Custom Domain commands: add, verify, status, list, remove.
 // MEET-2026-04-05-033: Custom Domains feature.

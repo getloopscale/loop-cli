@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
-import { TheoYamlResult } from '../adapters/theo-yaml';
+import { LoopScaleYamlResult } from '../adapters/loopscale-yaml';
 import { validateConfig } from '../adapters/validate-config';
 import * as path from 'path';
 
 export interface ValidateDeps {
-  findTheoYaml: () => TheoYamlResult | null;
+  findLoopScaleYaml: () => LoopScaleYamlResult | null;
   writeTo: (msg: string) => void;
   writeError: (msg: string) => void;
 }
@@ -23,22 +23,22 @@ export class ValidateCommand {
   }
 
   async execute(opts: ValidateOptions): Promise<number> {
-    // 1. Find theo.yaml
-    const yamlResult = this.deps.findTheoYaml();
+    // 1. Find loopscale.yaml
+    const yamlResult = this.deps.findLoopScaleYaml();
     if (!yamlResult) {
       if (opts.json) {
-        this.deps.writeTo(JSON.stringify({ valid: false, errors: [{ field: 'theo.yaml', message: 'No theo.yaml found. Run: loopscale init' }], apps: 0 }));
+        this.deps.writeTo(JSON.stringify({ valid: false, errors: [{ field: 'loopscale.yaml', message: 'No loopscale.yaml found. Run: loopscale init' }], apps: 0 }));
       } else {
-        this.deps.writeError('No theo.yaml found. Run: loopscale init');
+        this.deps.writeError('No loopscale.yaml found. Run: loopscale init');
       }
       return 1;
     }
 
     if (yamlResult.parseError) {
       if (opts.json) {
-        this.deps.writeTo(JSON.stringify({ valid: false, errors: [{ field: 'theo.yaml', message: yamlResult.parseError }], apps: 0 }));
+        this.deps.writeTo(JSON.stringify({ valid: false, errors: [{ field: yamlResult.fileName, message: yamlResult.parseError }], apps: 0 }));
       } else {
-        this.deps.writeError(`Invalid theo.yaml: ${yamlResult.parseError}`);
+        this.deps.writeError(`Invalid ${yamlResult.fileName}: ${yamlResult.parseError}`);
       }
       return 1;
     }
@@ -68,9 +68,9 @@ export class ValidateCommand {
         for (const e of errors) {
           this.deps.writeError(`Error: ${e.message}`);
         }
-        this.deps.writeError(`\ntheo.yaml has ${errors.length} error(s). Fix them and try again.`);
+        this.deps.writeError(`\n${yamlResult.fileName} has ${errors.length} error(s). Fix them and try again.`);
       } else {
-        this.deps.writeTo(`theo.yaml is valid (${appCount} app${appCount !== 1 ? 's' : ''})`);
+        this.deps.writeTo(`${yamlResult.fileName} is valid (${appCount} app${appCount !== 1 ? 's' : ''})`);
       }
     }
 

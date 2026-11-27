@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 import { getDefaultApiUrl, API_REQUEST_TIMEOUT_MS } from '../config/constants';
 import { debugError } from '../lib/debug';
@@ -66,7 +66,7 @@ function withJitter(intervalMs: number): number {
  * endpoints hit the cloud root, not the engine proxy.
  *
  * Per `src/config/constants.ts:22` (MEET-040) the canonical dev-public
- * value is `LOOPSCALE_URL=https://app-dev.usetheo.dev/engine`; Caddy routes
+ * value is `LOOPSCALE_URL=https://app-dev.getloopscale.com/engine`; Caddy routes
  * `/v1/auth/*` → cloud service (13002) while `/*` falls through to the
  * dashboard/engine plane. The device-flow endpoints (`/v1/auth/device/*`)
  * live at the cloud ROOT, not under `/engine/...`. Without this strip the

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2025-2026 The Theo Authors
+// Copyright 2025-2026 The LoopScale Authors
 
 describe('CLI config/constants', () => {
   const originalEnv = process.env;
@@ -9,7 +9,7 @@ describe('CLI config/constants', () => {
     process.env = { ...originalEnv };
     // Clear all URL env vars for clean test state
     for (const name of Object.keys(process.env)) {
-      if (name.startsWith('LOOPSCALE_') || name.startsWith('THEO_')) {
+      if (name.startsWith('LOOPSCALE_')) {
         delete process.env[name];
       }
     }
@@ -45,11 +45,6 @@ describe('CLI config/constants', () => {
       expect(constants.API_REQUEST_TIMEOUT_MS).toBe(5000);
     });
 
-    it('should ignore THEO_API_TIMEOUT', () => {
-      process.env.THEO_API_TIMEOUT = '5000';
-      const constants = loadConstants();
-      expect(constants.API_REQUEST_TIMEOUT_MS).toBe(30000);
-    });
   });
 
   describe('getDefaultApiUrl (MEET-040: unified LOOPSCALE_URL)', () => {
@@ -57,25 +52,6 @@ describe('CLI config/constants', () => {
       process.env.LOOPSCALE_URL = 'https://api.example.com';
       const constants = loadConstants();
       expect(constants.getDefaultApiUrl()).toBe('https://api.example.com');
-    });
-
-    it('should ignore THEO_URL', () => {
-      process.env.THEO_URL = 'https://theo.example.com';
-      const constants = loadConstants();
-      expect(constants.getDefaultApiUrl()).toBe('http://localhost:8080');
-    });
-
-    it('should ignore THEO_API_URL', () => {
-      process.env.THEO_API_URL = 'https://theo.example.com';
-      const constants = loadConstants();
-      expect(constants.getDefaultApiUrl()).toBe('http://localhost:8080');
-    });
-
-    it('should not print anything on stderr when THEO_URL is set', () => {
-      process.env.THEO_URL = 'https://theo.example.com';
-      const constants = loadConstants();
-      constants.getDefaultApiUrl();
-      expect(process.stderr.write).not.toHaveBeenCalled();
     });
 
     it('should return fallback when no URL env vars set', () => {
@@ -91,11 +67,6 @@ describe('CLI config/constants', () => {
   });
 
   describe('getCloudUrl (MEET-040: defaults to same as API URL)', () => {
-    it('should ignore THEO_CLOUD_URL', () => {
-      process.env.THEO_CLOUD_URL = 'https://cloud.example.com';
-      const constants = loadConstants();
-      expect(constants.getCloudUrl()).toBe('http://localhost:8080');
-    });
 
     it('should return LOOPSCALE_CLOUD_URL when set', () => {
       process.env.LOOPSCALE_CLOUD_URL = 'https://cloud.example.com';
@@ -122,27 +93,13 @@ describe('CLI config/constants', () => {
     });
   });
 
-  describe('THEO_ timeout variables', () => {
-    it('should ignore THEO_DEPLOY_TIMEOUT', () => {
-      process.env.THEO_DEPLOY_TIMEOUT = '90000';
-      const constants = loadConstants();
-      expect(constants.DEPLOY_TIMEOUT_MS).toBe(30 * 60 * 1000);
-    });
-
-    it('should ignore THEO_UPLOAD_TIMEOUT', () => {
-      process.env.THEO_UPLOAD_TIMEOUT = '90000';
-      const constants = loadConstants();
-      expect(constants.UPLOAD_TIMEOUT_MS).toBe(120000);
-    });
-  });
-
   describe('envInt edge cases (via DEPLOY_TIMEOUT_MS)', () => {
     it('should return default for empty env var', () => {
       delete process.env.LOOPSCALE_DEPLOY_TIMEOUT;
       const constants = loadConstants();
       // Sprint 8 plan qa-sprint8-cleanup-2026-06-25 T3.1 (closes
-      // theo-cloud#38): bumped default 10min → 30min so canonical builds
-      // (theokit-example took 615s) don't false-report DEPLOY_TIMEOUT.
+      // loop-console#38): bumped default 10min → 30min so canonical builds
+      // (loopzero-example took 615s) don't false-report DEPLOY_TIMEOUT.
       expect(constants.DEPLOY_TIMEOUT_MS).toBe(30 * 60 * 1000);
     });
 
@@ -172,12 +129,6 @@ describe('CLI config/constants', () => {
       process.env.LOOPSCALE_DASHBOARD_URL = 'https://my-dashboard.example.com';
       const constants = loadConstants();
       expect(constants.getDashboardUrl()).toBe('https://my-dashboard.example.com');
-    });
-
-    it('should ignore THEO_DASHBOARD_URL', () => {
-      process.env.THEO_DASHBOARD_URL = 'https://theo-dashboard.example.com';
-      const constants = loadConstants();
-      expect(constants.getDashboardUrl()).toBe('https://app.getloopscale.com');
     });
 
     it('should accept http:// URLs (local dev override)', () => {

@@ -3,8 +3,8 @@ import { SecretSetCommand, SecretListCommand, SecretDeleteCommand, SecretDeps } 
 function createMockDeps(overrides: Partial<SecretDeps> = {}): SecretDeps {
   return {
     getToken: jest.fn().mockReturnValue('test-token'),
-    findTheoYaml: jest.fn().mockReturnValue({
-      path: '/project/theo.yaml',
+    findLoopScaleYaml: jest.fn().mockReturnValue({
+      path: '/project/loopscale.yaml',
       content: { project: 'my-app', apps: { api: { path: '.', framework: 'express', port: 3000 } } },
     }),
     setSecret: jest.fn().mockResolvedValue({
@@ -67,8 +67,8 @@ describe('SecretSetCommand', () => {
     expect(await cmd.execute({ nameValue: 'KEY=val' })).toBe(4);
   });
 
-  it('should return exit 1 without theo.yaml', async () => {
-    const deps = createMockDeps({ findTheoYaml: jest.fn().mockReturnValue(null) });
+  it('should return exit 1 without loopscale.yaml', async () => {
+    const deps = createMockDeps({ findLoopScaleYaml: jest.fn().mockReturnValue(null) });
     const cmd = new SecretSetCommand(deps);
 
     expect(await cmd.execute({ nameValue: 'KEY=val' })).toBe(1);
