@@ -14,7 +14,7 @@ Apache-2.0.
 [![Tests](https://img.shields.io/badge/tests-1%2C300%2B%20passing-brightgreen?style=flat-square)](#testing)
 [![Node](https://img.shields.io/badge/node-%E2%89%A520-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org)
 [![Commander](https://img.shields.io/badge/Commander.js-12-555?style=flat-square)](https://github.com/tj/commander.js)
-[![npm](https://img.shields.io/badge/npm-%40getloopscale%2Fcli-CB3837?style=flat-square&logo=npm&logoColor=white)](https://www.npmjs.com/package/@getloopscale/loop-cli)
+[![npm](https://img.shields.io/badge/npm-%40getloopscale%2Floop--cli-CB3837?style=flat-square&logo=npm&logoColor=white)](https://www.npmjs.com/package/@getloopscale/loop-cli)
 [![Status](https://img.shields.io/badge/status-pre--release-orange?style=flat-square)](#status)
 
 [Quickstart](#quickstart) · [Why](#why-loopscale-cli) · [Commands](#commands) · [CI/CD](#cicd) · [Contracts](#contracts) · [Architecture](#architecture) · [Comparison](#comparison) · [Roadmap](#roadmap) · [Contributing](#contributing)
@@ -48,8 +48,8 @@ fast to install, and decoupled from the platform's internals.
 
 ## Features
 
-- **Zero-config deploy** — `loopscale` with no subcommand routes to `loopscale deploy`; a
-  missing `.loopscale/services.json` triggers a `loopzero build` automatically.
+- **Zero-config deploy** — `loopscale` with no subcommand routes to `loopscale deploy`,
+  which builds its manifest from `loopscale.yaml` when the project has no `services.json`.
 - **Monorepo-native** — deploys multiple apps from one repo in a single command,
   with per-app runtime, scaling, secrets, and domains.
 - **Scriptable by contract** — a permanent exit-code table (`0` success · `1`
@@ -62,8 +62,6 @@ fast to install, and decoupled from the platform's internals.
   retrying.
 - **Device-flow auth (RFC 8628)** — browser login for humans, `LOOPSCALE_TOKEN` for
   CI; tokens persisted with `0o600` perms and refreshed transparently on `401`.
-- **CI/prebuilt mode** — `--prebuilt` / `--skip-build` for pipelines that split
-  build and deploy across stages (Vercel-style).
 - **Progressive delivery aware** — renders canary rollout progress and surfaces
   aborts with the right exit code.
 - **OpenTelemetry tracing** — opt-in via `LOOPSCALE_TRACING_ENABLED`; W3C trace
@@ -106,13 +104,6 @@ loopscale                          # zero-config deploy — build + upload + str
 loopscale status                   # current release state
 loopscale logs --build <id>        # tail build/runtime logs
 loopscale rollback                 # restore the previous release
-```
-
-The legacy two-step flow still works:
-
-```bash
-loopzero build --target loop-console   # explicit build
-loopscale deploy --prebuilt              # upload only — skip auto-build
 ```
 
 ## Configuration
@@ -227,30 +218,19 @@ out of the sync by default).
 
 ## CI/CD
 
-CI pipelines that split build and deploy across stages use `--prebuilt` (an
-alias of `--skip-build`) and authenticate with `LOOPSCALE_TOKEN`:
+A pipeline authenticates with `LOOPSCALE_TOKEN` and deploys the checked-out project:
 
 ```yaml
 jobs:
-  build:
-    steps:
-      - run: npm ci
-      - run: npx loopzero build --target loop-console
-      - uses: actions/upload-artifact@v4
-        with: { path: .loopscale/services.json }
   deploy:
-    needs: build
     steps:
-      - run: npm ci
-      - uses: actions/download-artifact@v4
-      - run: npx @getloopscale/loop-cli deploy --prebuilt
+      - uses: actions/checkout@v4
+      - run: npx @getloopscale/loop-cli deploy
         env:
           LOOPSCALE_TOKEN: ${{ secrets.LOOPSCALE_TOKEN }}
 ```
 
-Tune the `loopzero build` subprocess with `LOOPZERO_BUILD_TIMEOUT_MS` (default
-`600000`) and `LOOPZERO_BIN` (override the auto-resolved binary). For a custom
-`distDir`, point at the artifact explicitly: `loopscale deploy --services-json ./out/services.json`.
+For a manifest outside the default locations, point at it: `loopscale deploy --services-json ./out/services.json`.
 
 ## Contracts
 
@@ -367,7 +347,7 @@ the platform decomposition and now ships as a standalone repo.
 | Consumer-driven engine contract test (+ Pact) | **Shipped** |
 | OpenTelemetry tracing | **Shipped** |
 | Scope CLI to end-user experience (platform/operator tooling removed) | **Shipped** |
-| Publish `@getloopscale/loop-cli` to npm | Planned |
+| Publish `@getloopscale/loop-cli` to npm | **Shipped** |
 | TS import-boundary lint (enforce HTTP-only mechanically) | Planned |
 
 ## Status

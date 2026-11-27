@@ -44,8 +44,8 @@ npm run lint        # eslint
 
 ## Publishing
 
-`@getloopscale/loop-cli`. `publish.yml` publishes on a
-`v*` tag once `NPM_TOKEN` is set (owner-gated).
+`@getloopscale/loop-cli`. `publish.yml` publishes on a `v*` tag that names the version in
+`package.json`, through npm trusted publishing (OIDC, no token).
 
 ## Provenance
 
