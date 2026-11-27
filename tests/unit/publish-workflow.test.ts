@@ -20,4 +20,40 @@ describe('publish workflow', () => {
   it('runs an npm that supports trusted publishing (11.5.1 or newer)', () => {
     expect(workflow).toMatch(/npm install -g npm@11\b/);
   });
+
+  it('refuses a tag that does not name the version in package.json', () => {
+    expect(workflow).toMatch(/github\.ref_name/);
+    expect(workflow).toMatch(/does not match package\.json version/);
+  });
+
+  it('checks the tag before anything is published', () => {
+    expect(workflow.indexOf('does not match package.json version')).toBeLessThan(workflow.indexOf('npm publish'));
+  });
+
+  it('grants no permission outside the publish job', () => {
+    expect(workflow).toMatch(/^permissions: \{\}$/m);
+  });
+});
+
+describe('workflows', () => {
+  const dir = path.resolve(__dirname, '../../.github/workflows');
+  const files = fs.readdirSync(dir).filter((name) => name.endsWith('.yml'));
+
+  it.each(files)('%s pins every action to a commit', (name) => {
+    const uses = fs.readFileSync(path.join(dir, name), 'utf-8').match(/uses:\s*\S+/g) ?? [];
+    expect(uses.length).toBeGreaterThan(0);
+    for (const use of uses) {
+      expect(use).toMatch(/@[0-9a-f]{40}$/);
+    }
+  });
+
+  it.each(files)('%s bounds every job with a timeout', (name) => {
+    const text = fs.readFileSync(path.join(dir, name), 'utf-8');
+    const jobs = (text.match(/^ {4}runs-on:/gm) ?? []).length;
+    expect((text.match(/^ {4}timeout-minutes:/gm) ?? []).length).toBe(jobs);
+  });
+
+  it('runs the tests of a pull request before it is merged', () => {
+    expect(fs.readFileSync(path.join(dir, 'ci.yml'), 'utf-8')).toMatch(/^ {2}pull_request:/m);
+  });
 });
