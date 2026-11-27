@@ -14,7 +14,7 @@ Apache-2.0.
 [![Tests](https://img.shields.io/badge/tests-1%2C300%2B%20passing-brightgreen?style=flat-square)](#testing)
 [![Node](https://img.shields.io/badge/node-%E2%89%A520-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org)
 [![Commander](https://img.shields.io/badge/Commander.js-12-555?style=flat-square)](https://github.com/tj/commander.js)
-[![npm](https://img.shields.io/badge/npm-%40getloopscale%2Floop--cli-CB3837?style=flat-square&logo=npm&logoColor=white)](https://www.npmjs.com/package/@getloopscale/loop-cli)
+[![npm](https://img.shields.io/badge/npm-loopscale-CB3837?style=flat-square&logo=npm&logoColor=white)](https://www.npmjs.com/package/loopscale)
 [![Status](https://img.shields.io/badge/status-pre--release-orange?style=flat-square)](#status)
 
 [Quickstart](#quickstart) · [Why](#why-loopscale-cli) · [Commands](#commands) · [CI/CD](#cicd) · [Contracts](#contracts) · [Architecture](#architecture) · [Comparison](#comparison) · [Roadmap](#roadmap) · [Contributing](#contributing)
@@ -86,10 +86,10 @@ node bin/loopscale --help
 
 ```bash
 # Once published (pinned in your project — recommended)
-npm install --save-dev @getloopscale/loop-cli
+npm install --save-dev loopscale
 
 # Or globally
-npm install -g @getloopscale/loop-cli
+npm install -g loopscale
 ```
 
 You also need [LoopZero](https://github.com/getloopscale/loopzero) so `loopscale deploy` can
@@ -225,7 +225,7 @@ jobs:
   deploy:
     steps:
       - uses: actions/checkout@v4
-      - run: npx @getloopscale/loop-cli deploy
+      - run: npx loopscale deploy
         env:
           LOOPSCALE_TOKEN: ${{ secrets.LOOPSCALE_TOKEN }}
 ```
@@ -347,7 +347,7 @@ the platform decomposition and now ships as a standalone repo.
 | Consumer-driven engine contract test (+ Pact) | **Shipped** |
 | OpenTelemetry tracing | **Shipped** |
 | Scope CLI to end-user experience (platform/operator tooling removed) | **Shipped** |
-| Publish `@getloopscale/loop-cli` to npm | **Shipped** |
+| Publish `loopscale` to npm | **Shipped** |
 | TS import-boundary lint (enforce HTTP-only mechanically) | Planned |
 
 ## Status

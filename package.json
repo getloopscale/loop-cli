@@ -1,5 +1,5 @@
 {
-  "name": "@getloopscale/loop-cli",
+  "name": "loopscale",
   "version": "0.2.0",
   "description": "CLI-first deploys for LoopScale: one command from monorepo to running service.",
   "keywords": [
