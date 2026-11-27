@@ -7,8 +7,9 @@ import * as path from 'path';
 describe('package.json identity', () => {
   const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf-8'));
 
-  it('is published as @getloopscale/loop-cli', () => {
-    expect(pkg.name).toBe('@getloopscale/loop-cli');
+  // No scope, so that the install is `npm install -g loopscale` and `npx loopscale` runs it.
+  it('is published as loopscale', () => {
+    expect(pkg.name).toBe('loopscale');
   });
 
   it('installs a single `loopscale` command pointing at bin/loopscale', () => {

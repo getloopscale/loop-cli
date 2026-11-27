@@ -1,6 +1,6 @@
 # LoopScale CLI
 
-Standalone `@getloopscale/loop-cli`, the CLI-first client for LoopScale (TypeScript + Commander).
+Standalone `loopscale` npm package, the CLI-first client for LoopScale (TypeScript + Commander).
 Extracted from the `loopscale` monorepo at M2 of the decomposition (history preserved).
 
 ## What it is
@@ -44,7 +44,7 @@ npm run lint        # eslint
 
 ## Publishing
 
-`@getloopscale/loop-cli`. `publish.yml` publishes on a `v*` tag that names the version in
+The npm package is `loopscale`. `publish.yml` publishes on a `v*` tag that names the version in
 `package.json`, through npm trusted publishing (OIDC, no token).
 
 ## Provenance

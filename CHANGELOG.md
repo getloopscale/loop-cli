@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to `@getloopscale/loop-cli` are documented in this file.
+All notable changes to the `loopscale` package are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `loopscale rollback` prints the id of the rollback and returns it as `rollback_id` in `--json`, on success and on failure. The id names the rollback's record, which the console lists under Deployments (getloopscale/loop-runtime#128)
 
 ### Changed
-- The package is `@getloopscale/loop-cli`. `@getloopscale/cli` stops at 0.1.1: install the new name to get this version. The command is still `loopscale`.
+- The package is `loopscale`, with no scope: `npm install -g loopscale`, or `npx loopscale` with no install. `@getloopscale/cli` stops at 0.1.1. The command is still `loopscale`.
 - The project descriptor is `loopscale.yaml`. The CLI reads `loopscale.yaml`, then `loopzero.yaml`, and uses the first one it finds in the nearest directory. Messages name `loopscale.yaml`, or the file that was read when one was found. `loopscale validate --json` reports that file name in `errors[].field` (getloopscale/loop-runtime#89)
 - `loopscale deploy` no longer runs `theokit build`. A project with no `services.json` has its manifest built from `loopscale.yaml`, as a push to a connected repository does. An app with no `runtime` is refused with the lines to add (#34).
 - A command refused for a plan limit (HTTP 402) says where the plan is changed: `Plan limit reached: Starter allows 50 builds per month (current: 50). Upgrade your plan to continue. See https://app.getloopscale.com/billing to change your plan.` The address is the `upgrade_url` of the API, resolved against `LOOPSCALE_DASHBOARD_URL` when it is a path.

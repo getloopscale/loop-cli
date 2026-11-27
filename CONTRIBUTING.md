@@ -1,4 +1,4 @@
-# Contributing to LoopScale CLI (`@getloopscale/loop-cli`)
+# Contributing to LoopScale CLI (`loopscale` on npm)
 
 Notes for human contributors and downstream maintainers. The full cycle-based
 engineering contract lives in [`CLAUDE.md`](./CLAUDE.md). This file documents
