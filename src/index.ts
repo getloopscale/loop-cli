@@ -27,6 +27,7 @@ import { registerStorageCommands } from './register/storage';
 import { registerTeamCommands } from './register/team';
 import { registerEnvCommands } from './register/env';
 import { registerDomainCommands } from './register/domain';
+import { registerSandboxCommands } from './register/sandbox';
 import { registerInfraCommands } from './register/infra';
 import { registerPreviewCommands } from './register/preview';
 import { registerScaleCommands } from './register/scale';
@@ -167,6 +168,7 @@ export function createProgram(): Command {
   registerTeamCommands(deps);
   registerEnvCommands(deps);
   registerDomainCommands(deps);
+  registerSandboxCommands(deps);
   registerInfraCommands(deps);
   registerPreviewCommands(deps);
   registerScaleCommands(deps);

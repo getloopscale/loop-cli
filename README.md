@@ -166,12 +166,13 @@ end-user CLI.)
 </details>
 
 <details>
-<summary><b>Resources</b> — projects, teams, environments, domains, builds, secrets</summary>
+<summary><b>Resources</b> — projects, teams, environments, domains, builds, secrets, sandboxes</summary>
 
 | Command | Description |
 |---|---|
 | `loopscale project` | Manage projects |
 | `loopscale team` | Manage team members |
+| `loopscale sandbox list` / `kill <id>` | See and terminate code sandboxes |
 | `loopscale env` | Manage environments |
 | `loopscale domain` | Manage custom domains |
 | `loopscale build` | Manage builds |

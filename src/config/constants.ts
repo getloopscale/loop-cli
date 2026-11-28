@@ -44,6 +44,25 @@ export function getDefaultApiUrl(): string {
   return url;
 }
 
+/**
+ * Strips the trailing `/engine` suffix from a base URL so requests
+ * for the cloud service hit the cloud root, not the engine proxy.
+ *
+ * Per MEET-040 above the canonical dev-public
+ * value is `LOOPSCALE_URL=https://app-dev.getloopscale.com/engine`; Caddy routes
+ * `/v1/auth/*` → cloud service (13002) while `/*` falls through to the
+ * dashboard/engine plane. The device-flow endpoints (`/v1/auth/device/*`)
+ * live at the cloud ROOT, not under `/engine/...`. Without this strip the
+ * CLI hits `/engine/v1/auth/device/authorize` and dev-public returns 401
+ * because that path traverses the auth-required middleware to the cloud
+ * catchall.
+ *
+ * The sandbox routes (`/v1/sandboxes`) live at the same root.
+ */
+export function stripEngineSuffix(baseURL: string): string {
+  return baseURL.replace(/\/engine\/?$/, '');
+}
+
 /** HTTP request timeout for API calls (ms). Override: LOOPSCALE_API_TIMEOUT */
 export const API_REQUEST_TIMEOUT_MS = envInt('LOOPSCALE_API_TIMEOUT', 30000);
 

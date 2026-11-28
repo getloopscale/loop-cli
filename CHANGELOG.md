@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `loopscale sandbox list` shows the organization's sandboxes that are running or paused, with state, image, whether outbound network is open or restricted, and creation time. `loopscale sandbox kill <id>` terminates one. Both take `--json`, and both call the console root, so they work when `LOOPSCALE_URL` ends in `/engine` (#49).
+
 ## [0.2.0] - 2026-11-27
 
 ### Added
