@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2025-2026 The LoopScale Authors
 
-import { getDefaultApiUrl, API_REQUEST_TIMEOUT_MS } from '../config/constants';
+import { getDefaultApiUrl, API_REQUEST_TIMEOUT_MS, stripEngineSuffix } from '../config/constants';
 import { debugError } from '../lib/debug';
 
 /** Device authorization response from the cloud service. */
@@ -61,25 +61,6 @@ function withJitter(intervalMs: number): number {
  * - Jitter on polling interval prevents thundering herd
  * - Max retry count as safety limit alongside timeout
  */
-/**
- * Strips the trailing `/engine` suffix from a base URL so device-flow
- * endpoints hit the cloud root, not the engine proxy.
- *
- * Per `src/config/constants.ts:22` (MEET-040) the canonical dev-public
- * value is `LOOPSCALE_URL=https://app-dev.getloopscale.com/engine`; Caddy routes
- * `/v1/auth/*` → cloud service (13002) while `/*` falls through to the
- * dashboard/engine plane. The device-flow endpoints (`/v1/auth/device/*`)
- * live at the cloud ROOT, not under `/engine/...`. Without this strip the
- * CLI hits `/engine/v1/auth/device/authorize` and dev-public returns 401
- * because that path traverses the auth-required middleware to the cloud
- * catchall.
- *
- * Tested by `tests/unit/device-flow.test.ts § strips /engine suffix`.
- */
-function stripEngineSuffix(baseURL: string): string {
-  return baseURL.replace(/\/engine\/?$/, '');
-}
-
 export async function executeDeviceCodeFlow(deps: DeviceFlowDeps): Promise<TokenResponse | null> {
   const baseURL = stripEngineSuffix(deps.baseURL || getDefaultApiUrl());
 
